@@ -1,0 +1,38 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context.xsd">
+ 
+    <!-- evaluators -->
+    <bean id="nodeBasedCostEvaluatorFactory" class="at.srfg.graphium.routing.neo4j.evaluators.impl.NodeBasedCostEvaluatorFactoryImpl"/>
+
+    <!-- factories -->
+    <bean id="routeModelFactory" class="at.srfg.graphium.routing.model.impl.RouteModelFactoryImpl"/>
+
+	<!-- adapters -->
+	<bean id="route2RouteDTOAdapter" class="at.srfg.graphium.routing.api.adapter.impl.Route2RouteDTOAdapter"/>
+	<bean id="routeSegment2RouteSegmentDTOAdapter" class="at.srfg.graphium.routing.api.adapter.impl.RouteSegment2RouteSegmentDTOAdapter"/>
+
+    <!-- services -->
+    <bean id="neo4jRoutingService" class="at.srfg.graphium.routing.service.neo4j.impl.Neo4jRoutingServiceImpl">
+    	<property name="costEvaluatorFactory" ref="nodeBasedCostEvaluatorFactory"/>
+    	<property name="graphDatabaseProvider" ref="graphDatabaseProvider"/>
+    	<property name="graphReadDao" ref="neo4jWayGraphReadDao"/>
+    	<property name="metadataDao" ref="neo4jWayGraphVersionMetadataDao"/>
+    	<property name="modelFactory" ref="routeModelFactory"/>
+    	<property name="nodeMapper" ref="neo4jWaySegmentMapper"/>
+    </bean>
+    
+    <!-- controller -->
+    <bean id="routingApiController" 
+		class="at.srfg.graphium.routing.api.controller.WaySegmentRoutingApiController">
+		<property name="routeService" ref="neo4jRoutingService"/>
+		<property name="routingOptionsFactory" ref="routeModelFactory"/>
+		<property name="routeAdapter" ref="route2RouteDTOAdapter"/>
+		<property name="routeSegmentsAdapter" ref="routeSegment2RouteSegmentDTOAdapter"/>
+	</bean>
+
+</beans>

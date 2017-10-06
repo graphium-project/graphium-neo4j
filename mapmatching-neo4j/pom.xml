@@ -1,0 +1,58 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  	<artifactId>graphium-mapmatching-neo4j</artifactId>
+  	<packaging>jar</packaging>
+
+  	<name>graphium-mapmatching-neo4j</name>
+	<description>Module of Graphserver for Map Matching using Neo4j</description>
+
+    <parent>
+		<groupId>at.srfg.graphium</groupId>
+		<artifactId>graphium-neo4j-parent</artifactId>
+		<version>1.0.0</version>
+ 	</parent>
+ 	 
+  	<dependencies>
+  	
+  		<dependency>
+  			<groupId>at.srfg.graphium</groupId>
+			<artifactId>graphium-neo4j-core</artifactId>
+			<version>${graphium-neo4j.version}</version>
+  		</dependency>
+
+  		<dependency>
+  			<groupId>at.srfg.graphium</groupId>
+			<artifactId>graphium-routing-neo4j</artifactId>
+			<version>${graphium-neo4j.version}</version>
+  		</dependency>
+
+  		<dependency>
+  			<groupId>at.srfg.graphium</groupId>
+			<artifactId>graphium-mapmatching</artifactId>
+			<version>${graphium.version}</version>
+  		</dependency>
+ 
+		<dependency>
+		    <groupId>org.apache.commons</groupId>
+		    <artifactId>commons-collections4</artifactId>
+		    <version>4.1</version>
+		</dependency>
+  		
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.5</version>
+			<scope>test</scope>
+		</dependency>
+		
+  	</dependencies>
+
+</project>

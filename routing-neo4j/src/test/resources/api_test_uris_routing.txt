@@ -1,0 +1,3 @@
+http://localhost:7474/graphium/graphs/gip_at_frc_0_4/routing/getRoute.do?timestamp=2016-04-12&startX=13.043516&startY=47.812558&endX=13.044208&endY=47.812287
+
+http://localhost:7474/graphium/graphs/gip_at_frc_0_4/routing/getRouteSegments.do?timestamp=2016-04-12&startX=13.043516&startY=47.812558&endX=13.044208&endY=47.812287

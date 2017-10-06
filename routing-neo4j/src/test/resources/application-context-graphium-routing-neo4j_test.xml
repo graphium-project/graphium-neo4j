@@ -1,0 +1,63 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+		http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-3.0.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd">
+ 
+ 	<bean id="dbConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location" value="classpath:neo4j_db.properties" />
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+	</bean>
+	
+	<bean id="importConfigurer"
+		class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
+        <property name="location" value="#{environment.getProperty('graphium.conf.path','classpath:')}import.properties" />
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="ignoreResourceNotFound" value="true" />		
+	</bean>
+
+	<bean id="serverConfigurer"
+		class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
+        <property name="location" value="#{environment.getProperty('graphium.conf.path','classpath:')}server.properties" />
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="ignoreResourceNotFound" value="true" />		
+	</bean>
+	
+	<import resource="classpath:/application-context-graphium-neo4j-persistence.xml"/>
+	<import resource="classpath:/application-context-graphium-neo4j-aliasing.xml"/>
+	<import resource="classpath:/application-context-graphium-neo4j-service.xml"/>
+
+	<!-- graph database provider -->	
+	<bean id="graphDatabaseProvider" class="at.srfg.graphium.neo4j.persistence.configuration.GraphDatabaseProvider">
+		<property name="neo4jPropertiesFile" value="${neo4j.propertiesFile}"/>
+		<property name="neo4jGraphDBDirectory" value="${neo4j.dbDirectory}"/>
+	</bean>
+
+    <!-- evaluators -->
+    <bean id="nodeBasedCostEvaluatorFactory" class="at.srfg.graphium.routing.neo4j.evaluators.impl.NodeBasedCostEvaluatorFactoryImpl"/>
+
+    <!-- factories -->
+    <bean id="routeModelFactory" class="at.srfg.graphium.routing.model.impl.RouteModelFactoryImpl"/>
+
+    <!-- services -->
+    <bean id="neo4jRoutingService" class="at.srfg.graphium.routing.service.neo4j.impl.Neo4jRoutingServiceImpl">
+    	<property name="costEvaluatorFactory" ref="nodeBasedCostEvaluatorFactory"/>
+    	<property name="graphDatabaseProvider" ref="graphDatabaseProvider"/>
+    	<property name="graphReadDao" ref="neo4jWayGraphReadDao"/>
+    	<property name="metadataDao" ref="neo4jWayGraphVersionMetadataDao"/>
+    	<property name="modelFactory" ref="routeModelFactory"/>
+    	<property name="nodeMapper" ref="neo4jWaySegmentMapper"/>
+    </bean>
+
+</beans>

@@ -1,0 +1,53 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+		http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-3.0.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd">
+ 
+ 	<import resource="classpath:/application-context-graphium-neo4j-persistence.xml" />
+ 	
+ 	<!-- wieso werden die hier geladen? das Postgis Equivalent macht das nicht 
+ 		 Zumindest wenn man die Neo4j aus dem Test-Harness startet ist das ein Problem, offensichtlich wird der Importer 
+ 		 zu spät konfiguriert. Es kommt immer ein property not resolved und im Log ist nichts zu finden von wegen
+ 		  impoter.properties -->
+	<bean id="importConfigurer"
+		class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
+        <property name="location" value="#{environment.getProperty('graphium.conf.path','classpath:')}import.properties" />
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="ignoreResourceNotFound" value="true" />		
+	</bean>
+
+	<bean id="serverConfigurer"
+		class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
+        <property name="location" value="#{environment.getProperty('graphium.conf.path','classpath:')}server.properties" />
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="ignoreResourceNotFound" value="true" />		
+	</bean>
+
+
+    <bean id="neo4jQueuingGraphVersionImportService" class="at.srfg.graphium.neo4j.service.impl.Neo4jQueuingGraphVersionImportServiceImpl" >
+    	<property name="metadataDao" ref="neo4jWayGraphVersionMetadataDao"/>    
+    	<property name="inputFormat" ref="jacksonQueuingGraphInputFormat"/>
+    	<property name="segmentAdpaterRegistry" ref="autodetectingSegmentAdapterRegistry"/>
+    	<property name="queueSize" value="${graphium.import.queueSize}"/>
+    	<property name="batchSize" value="${graphium.import.batchSize}"/>
+    	<property name="sourceDao" ref="neo4jWayGraphSourceDao"/>
+    	<property name="writeDao" ref="neo4jWayGraphWriteDao"/>
+    	<property name="serverStatus" ref="serverStatus"/>
+    	<property name="viewDao" ref="neo4jWayGraphViewDao"/>
+    	<property name="graphDatabaseProvider" ref="graphDatabaseProvider"/>
+    	<property name="indexDao" ref="neo4jWayGraphIndexDao"/>
+    	<property name="validityPeriodValidator" ref="graphVersionValidityPeriodValidator"/>
+    </bean>
+
+</beans>

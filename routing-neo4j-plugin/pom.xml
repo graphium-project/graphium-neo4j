@@ -1,0 +1,23 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>graphium-routing-neo4j-plugin</artifactId>
+	<name>graphium-routing-neo4j-plugin</name>
+	<description>Neo4j Server Plugin providing Graphium routing api for graphs integrated in Neo4j server </description>
+
+	<parent>
+		<groupId>at.srfg.graphium</groupId>
+		<artifactId>graphium-neo4j-server-plugin-base</artifactId>
+		<version>1.0.0</version>
+		<relativePath>../neo4j-server-integration/plugin/pom.xml</relativePath>
+	</parent>
+     
+	<dependencies>
+		<dependency>
+			<groupId>at.srfg.graphium</groupId>
+			<artifactId>graphium-routing-neo4j</artifactId>
+		</dependency>
+
+	</dependencies>
+	
+</project>

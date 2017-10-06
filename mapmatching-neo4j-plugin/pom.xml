@@ -1,0 +1,55 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>graphium-mapmatching-neo4j-plugin</artifactId>
+	<name>graphium-mapmatching-neo4j-plugin</name>
+	<description>Neo4j Server Plugin providing graphium map matching api for graphs integrated in neo4j server </description>
+
+	<parent>
+		<groupId>at.srfg.graphium</groupId>
+		<artifactId>graphium-neo4j-server-plugin-base</artifactId>
+		<version>1.0.0</version>
+		<relativePath>../neo4j-server-integration/plugin/pom.xml</relativePath>
+	</parent>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>at.srfg.graphium</groupId>
+				<artifactId>graphium-routing-neo4j-plugin</artifactId>
+				<version>${graphium-neo4j.version}</version>		
+				<scope>provided</scope>	
+			</dependency>		
+			<dependency>
+				<groupId>at.srfg.graphium</groupId>
+				<artifactId>graphium-routing-neo4j</artifactId>
+				<version>${graphium-neo4j.version}</version>			
+				<scope>provided</scope>
+			</dependency>	
+		
+		</dependencies>
+			
+	</dependencyManagement>
+   	<dependencies>
+		<dependency>
+			<groupId>at.srfg.graphium</groupId>
+			<artifactId>graphium-mapmatching-neo4j</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>at.srfg.graphium</groupId>
+			<artifactId>graphium-routing-neo4j-plugin</artifactId>
+		</dependency>
+	</dependencies>
+	
+	<reporting>
+	    <plugins>
+	      	<plugin>
+		        <groupId>org.codehaus.mojo</groupId>
+		        <artifactId>license-maven-plugin</artifactId>
+		        <version>1.12</version>
+	      	</plugin>
+	    </plugins>
+  	</reporting>
+	
+</project>

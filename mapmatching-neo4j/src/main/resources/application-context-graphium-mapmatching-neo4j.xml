@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+        xmlns:context="http://www.springframework.org/schema/context"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:tx="http://www.springframework.org/schema/tx"        
+        xmlns:datagraph="http://www.springframework.org/schema/data/graph"
+        xmlns:neo4j="http://www.springframework.org/schema/data/neo4j"
+        xsi:schemaLocation="
+            http://www.springframework.org/schema/beans
+            http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+            http://www.springframework.org/schema/context
+            http://www.springframework.org/schema/context/spring-context-3.0.xsd
+            http://www.springframework.org/schema/tx
+            http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+            http://www.springframework.org/schema/data/graph
+            http://www.springframework.org/schema/data/graph/datagraph-1.0.xsd
+            http://www.springframework.org/schema/data/neo4j
+            http://www.springframework.org/schema/data/neo4j/spring-neo4j-2.0.xsd">
+	
+    <bean id="mapmatchingConfigurer"
+		class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
+        <property name="location" value="#{environment.getProperty('graphium.conf.path','classpath:')}mapmatcher.properties" />
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="ignoreResourceNotFound" value="true" />		
+	</bean>
+
+	<bean id="neo4jUtil" class="at.srfg.graphium.mapmatching.neo4j.matcher.impl.Neo4jUtil" lazy-init="true" >
+		<property name="graphDatabaseProvider" ref="graphDatabaseProvider"/>
+	</bean>
+
+	<bean id="mapMatcherGlobalStatistics" class="at.srfg.graphium.mapmatching.statistics.MapMatcherGlobalStatistics" lazy-init="true" />
+
+	<!-- Map Matcher -->
+	<bean id="neo4jMapMatcher" class="at.srfg.graphium.mapmatching.neo4j.matcher.impl.Neo4jMapMatcher" lazy-init="true" >
+		<property name="intialRadiusMeter" value="${mapmatcher.intialRadiusMeter}"/>
+		<property name="maxMatchingRadiusMeter" value="${mapmatcher.maxMatchingRadiusInMeter}"/>
+		<property name="maxNrOfBestPaths" value="${mapmatcher.maxNrOfBestPaths}"/>
+		<property name="minNrOfPoints" value="${mapmatcher.minNrOfPoints}"/>
+		<property name="minLength" value="${mapmatcher.minLength}"/>
+		<property name="minSegmentsPerSection" value="${mapmatcher.minSegmentsPerSection}"/>
+		<property name="maxSegmentsForShortestPath" value="${mapmatcher.maxSegmentsForShortestPath}"/>
+		<property name="maxCountLoopsWithoutPathExtension" value="${mapmatcher.maxCountLoopsWithoutPathExtension}"/>
+		<property name="envelopeSideLength" value="${mapmatcher.envelopeSideLengthForStartSegmentSearch}"/>
+		<property name="graphDao" ref="neo4jWayGraphReadDao"/>
+		<property name="metadataService" ref="graphVersionMetadataService"/>
+		<property name="neo4jUtil" ref="neo4jUtil"/>
+		<property name="routingService" ref="neo4jRoutingService"/>
+		<property name="csvLoggerName" value="${mapmatcher.csvLoggerName}"/>
+		<property name="globalStatistics" ref="mapMatcherGlobalStatistics"/>
+		<property name="thresholdForLowSamplingsInSecs" value="${mapmatcher.thresholdForLowSamplingsInSecs}"/>
+	</bean>
+	
+	<bean id="mapMatcherTimerService" class="at.srfg.graphium.mapmatching.timer.MapMatcherTimerService" lazy-init="true" >
+		<property name="delay" value="${mapmatcher.timeout.delay}"/>
+		<property name="expireTime" value="${mapmatcher.timeout.expireTime}"/>
+	</bean>
+
+	<bean id="timedMapMatcherTaskFactory" class="at.srfg.graphium.mapmatching.timer.TimedMapMatcherTaskFactory" lazy-init="true" >
+		<property name="mapMatcher" ref="neo4jMapMatcher"/>
+	</bean>
+		
+	<bean id="neo4jMapMatchingService" class="at.srfg.graphium.mapmatching.matcher.impl.MapMatchingServiceImpl" lazy-init="true" >
+		<property name="mapMatcherTaskFactory" ref="timedMapMatcherTaskFactory"/>
+		<property name="mapMatcherTimerService" ref="mapMatcherTimerService"/>
+	</bean>
+
+</beans>

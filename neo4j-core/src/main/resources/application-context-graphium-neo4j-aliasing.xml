@@ -1,0 +1,23 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+		http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context.xsd">
+
+	<alias name="neo4jWayGraphSourceDao" alias="wayGraphSourceDao"/>
+    <alias name="neo4jWayGraphVersionMetadataDao" alias="wayGraphVersionMetadataDao"/>
+    <alias name="neo4jWayGraphReadDao" alias="wayGraphReadDao"/>
+    <alias name="neo4jWayGraphWriteDao" alias="wayGraphWriteDao"/>
+  
+    <alias name="neo4jWayGraphViewDao" alias="wayGraphViewDao"/>    				
+    <alias name="neo4jSubscriptionDao" alias="subscriptionDao"/>
+	<alias name="neo4jBaseSegmentReadDao" alias="baseSegmentReadDao"/>
+  
+  	<alias name="neo4jQueuingGraphVersionImportService" alias="queuingGraphVersionImportService"/>
+    
+</beans>
