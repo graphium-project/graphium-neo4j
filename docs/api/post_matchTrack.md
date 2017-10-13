@@ -12,9 +12,41 @@
 | **outputVerbose**  | boolean      | if true resulting segment information will be enhanced by additional attributes; optional, default "false" |
 | **timeoutMS**      | int          | timeout in milliseconds                  |
 | **startSegmentId** | long         | ID of start segment; the map matcher tries to extend a matching path starting at this segment; needed in online matching; optional |
-| **track**          | JSON         | Track in JSON format (see TrackDTO)      |
+| **track**          | JSON         | Track in JSON format                     |
 
 Map Matching will be executed on that graph version fitting the tracks start timestamp within its validity.
+
+**Track's JSON format example**
+
+```json
+{"id":14079459,
+ "trackPoints:
+ [{
+  "id":0,
+  "timestamp":1462535672000,
+  "trackId":14079459,
+  "x":14.2717299,
+  "y":48.2733533,
+  "z":279.1,
+  "distCalc":"NaN",
+  "hcr":"NaN",
+  "vcalc":"NaN",
+  "acalc":"NaN"
+ },{
+  "id":0,
+  "timestamp":1462535682000,
+  "trackId":14079459,
+  "x":14.272935,
+  "y":48.274505,
+  "z":272.9,
+  "distCalc":156.21341,
+  "hcr":"NaN",
+  "vcalc":15.621341,
+  "acalc":"NaN"
+ },
+ ...
+}
+```
 
 ## Example URL
 

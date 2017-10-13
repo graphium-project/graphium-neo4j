@@ -65,6 +65,24 @@ Graphium Neo4j's map matching API matches trajectories onto a transport graph. I
 - [POST match track](docs/api/post_matchTrack.md)
 - [POST match track on current graph version](docs/api/post_matchTrackOnCurrentGraphVersion.md)
 
+### Examples
+
+Map Matching of a lower sampled track (for better visualization). Blue point show GPS track points, red linestring represents the map matched path on graph (thin black linestrings).
+
+<p align="center">
+<img src="docs/img/mapmatching_2.JPG" width="800">
+<br/>
+<a href="https://www.basemap.at/">Map: basemap.at</a>
+</p>
+
+Map Matching of a track whose GPS track points partially could not have been matched onto graph. The map matcher detects non matchable parts of the track and splits the map matched path.
+
+<p align="center">
+<img src="docs/img/mapmatching_1.JPG" width="800">
+<br/>
+<a href="https://www.basemap.at/">Map: basemap.at</a>
+</p>
+
 ## Plugins Development
 
 You can build your own Neo4j plugins based on Graphium Neo4j. Graphium Neo4j plugins use Spring Framework, which defines configuration information within ApplicationContexts. For integration of custom Neo4j plugins into Graphium Neo4j only one ApplicationContext with the name pattern `application-context-graphium-neo4j-plugin*.xml` has to be provided. All Beans defined within this ApplicationContext will be loaded automatically by Graphium Neo4j.
