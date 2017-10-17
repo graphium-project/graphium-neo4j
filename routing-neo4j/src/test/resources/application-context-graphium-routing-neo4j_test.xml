@@ -40,8 +40,8 @@
 
 	<!-- graph database provider -->	
 	<bean id="graphDatabaseProvider" class="at.srfg.graphium.neo4j.persistence.configuration.GraphDatabaseProvider">
-		<property name="neo4jPropertiesFile" value="${neo4j.propertiesFile}"/>
-		<property name="neo4jGraphDBDirectory" value="${neo4j.dbDirectory}"/>
+		<property name="neo4jPropertiesFile" value="${graphium.neo4j.propertiesFile}"/>
+		<property name="neo4jGraphDBDirectory" value="${graphium.neo4j.dbDirectory}"/>
 	</bean>
 
     <!-- evaluators -->

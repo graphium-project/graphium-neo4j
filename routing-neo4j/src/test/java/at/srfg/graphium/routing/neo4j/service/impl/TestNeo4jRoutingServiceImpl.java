@@ -38,6 +38,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.MultiLineString;
 
 import at.srfg.graphium.core.persistence.IWayGraphVersionMetadataDao;
 import at.srfg.graphium.model.Access;
@@ -75,8 +76,8 @@ public class TestNeo4jRoutingServiceImpl {
 	@Resource(name="neo4jWayGraphVersionMetadataDao")
 	private IWayGraphVersionMetadataDao metadataDao;
 		
-	String graphName = "gip_at_frc_0_4";
-	String graphVersion = "17_04_170713";
+	String graphName = "osm_at";
+	String graphVersion = "170920";
 	
 	//@Test
 	public void testRouteWithWaySegmentsInLoop() {
@@ -312,8 +313,8 @@ public class TestNeo4jRoutingServiceImpl {
 //		String graphVersion = "16_02_160414";
 //		String graphName = "gip_at_frc_0_8";
 //		String graphVersion = "16_04_161103_2";
-//		IRoutingOptions options = new RoutingOptionsImpl(graphName, graphVersion, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
-		IRoutingOptions options = new RoutingOptionsImpl(graphName, graphVersion, RoutingCriteria.LENGTH, RoutingMode.CAR);
+		IRoutingOptions options = new RoutingOptionsImpl(graphName, graphVersion, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
+//		IRoutingOptions options = new RoutingOptionsImpl(graphName, graphVersion, RoutingCriteria.LENGTH, RoutingMode.CAR);
 //		options.setSearchDistance(0.0003);
 //		double startX = 13.040493;
 //		double startY = 47.815719;
@@ -380,6 +381,7 @@ public class TestNeo4jRoutingServiceImpl {
 		
 		printRoute(route);
 		printRouteCSV(route);
+		printRouteGeom(route);
 		System.out.println("SRID=4326;POINT (" + startX + " " + startY + ")");
 		System.out.println("SRID=4326;POINT (" + endX + " " + endY + ")");
 		
@@ -614,6 +616,20 @@ public class TestNeo4jRoutingServiceImpl {
 			System.out.println("Route segments are null!");
 		}
 	}
+	
+	private void printRouteGeom(IRoute<IWaySegment> route) {
+		if (route.getSegments() != null && !route.getSegments().isEmpty()) {
+			
+			LineString[] lineStrings = new LineString[route.getSegments().size()];
+			for (int i = 0; i < route.getSegments().size(); i++) {
+				lineStrings[i] = route.getSegments().get(i).getGeometry();
+			}
+			MultiLineString mls = new MultiLineString(lineStrings, lineStrings[0].getFactory());
+
+			System.out.println("Route's Geometry: " + mls.toText());
+		}
+	}
+
 	
 	private boolean isStartToEnd(IWaySegment seg, IWaySegment prevSeg) {
 		
