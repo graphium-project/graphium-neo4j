@@ -1,3 +1,7 @@
+<p align="right">
+<img src="docs/img/Graphium_225x130px.svg">
+</p>
+
 # Graphium Neo4j
 
 Graphium Neo4j is an extension of the project Graphium based on Neo4j. Neo4j is a famous graph database which comes with various graph algorithms. Neo4j's graph model is built for answering graph dependent questions in a more flexible and performant way than you can do with a relational database. As transport graphs can be modeled as graphs and stored in Neo4j, we benefit from its features.
@@ -55,6 +59,16 @@ Graphium Neo4j's routing API handles routing requests between two coordinates on
 - [GET route on graph version](docs/api/get_routeOnGraphVersion.md)
 - [GET route segments](docs/api/get_routeSegments.md)
 - [GET route segments on graph version](docs/api/get_routeSegmentsOnGraphVersion.md)
+
+### Examples
+
+A visualized route calculated by Graphium Neo4j's routing engine.
+
+<p align="center">
+<img src="docs/img/routing_1.JPG" width="800">
+<br/>
+<a href="https://www.basemap.at/">Map: basemap.at</a>
+</p>
 
 ## Map Matching
 
