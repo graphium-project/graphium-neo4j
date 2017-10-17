@@ -41,6 +41,7 @@ import com.google.common.collect.Lists;
 import at.srfg.graphium.mapmatching.matcher.IMapMatcher;
 import at.srfg.graphium.mapmatching.matcher.IMapMatcherTask;
 import at.srfg.graphium.mapmatching.matcher.impl.SegmentMatcher;
+import at.srfg.graphium.mapmatching.model.Direction;
 import at.srfg.graphium.mapmatching.model.IMatchedBranch;
 import at.srfg.graphium.mapmatching.model.IMatchedWaySegment;
 import at.srfg.graphium.mapmatching.model.ITrack;
@@ -577,6 +578,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 				if (bestBranch == null) {
 					return Collections.emptyList();
 				} else {
+					postProcess(bestBranch);
 					return Collections.singletonList(bestBranch);
 				}
 			} else {
@@ -585,6 +587,20 @@ public class MapMatchingTask implements IMapMatcherTask {
 			}
 		} else {
 			return Collections.emptyList();
+		}
+	}
+
+	private void postProcess(IMatchedBranch bestBranch) {
+		// direction of first segment may not be correct
+		IMatchedWaySegment startSegment = bestBranch.getMatchedWaySegments().get(0);
+		IMatchedWaySegment nextSegment = bestBranch.getMatchedWaySegments().get(1);
+		if (bestBranch.getMatchedWaySegments().size() > 1) {
+			if (startSegment.getEndNodeId() == nextSegment.getStartNodeId() || 
+				startSegment.getEndNodeId() == nextSegment.getEndNodeId()) {
+				startSegment.setDirection(Direction.START_TO_END);
+			} else {
+				startSegment.setDirection(Direction.END_TO_START);
+			}
 		}
 	}
 
