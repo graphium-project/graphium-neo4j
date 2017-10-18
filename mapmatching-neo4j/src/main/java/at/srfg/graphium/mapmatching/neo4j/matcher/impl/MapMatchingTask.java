@@ -53,7 +53,6 @@ import at.srfg.graphium.mapmatching.statistics.MapMatcherGlobalStatistics;
 import at.srfg.graphium.mapmatching.statistics.MapMatcherStatistics;
 import at.srfg.graphium.mapmatching.weighting.IWeightingStrategyFactory;
 import at.srfg.graphium.mapmatching.weighting.impl.RouteDistanceWeightingStrategyFactory;
-import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
 
 public class MapMatchingTask implements IMapMatcherTask {
@@ -592,9 +591,9 @@ public class MapMatchingTask implements IMapMatcherTask {
 
 	private void postProcess(IMatchedBranch bestBranch) {
 		// direction of first segment may not be correct
-		IMatchedWaySegment startSegment = bestBranch.getMatchedWaySegments().get(0);
-		IMatchedWaySegment nextSegment = bestBranch.getMatchedWaySegments().get(1);
 		if (bestBranch.getMatchedWaySegments().size() > 1) {
+			IMatchedWaySegment startSegment = bestBranch.getMatchedWaySegments().get(0);
+			IMatchedWaySegment nextSegment = bestBranch.getMatchedWaySegments().get(1);
 			if (startSegment.getEndNodeId() == nextSegment.getStartNodeId() || 
 				startSegment.getEndNodeId() == nextSegment.getEndNodeId()) {
 				startSegment.setDirection(Direction.START_TO_END);
