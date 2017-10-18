@@ -68,17 +68,15 @@ import at.srfg.graphium.neo4j.bootstrap.security.GraphiumSpringSecurityDefaultCo
 @Path("/")
 public class GraphiumServerBootstrapper implements SPIPluginLifecycle {
 
-    private static final Logger log = LoggerFactory.getLogger(GraphiumServerBootstrapper.class);
+	private static final Logger log = LoggerFactory.getLogger(GraphiumServerBootstrapper.class);
 
-    private static final String GRAPHIUM_PACKAGE = "at.srfg.graphium.neo4j.bootstrap";
-    private final static String DEFAULT_SECURITY_XML = "/security/application-context-graphium-api-security.xml";
-    private static final String GRAPHIUM_SECURED_PROPERTY = "graphium.secured";
-    
-    private NeoServer neoServer;    
-    
-    private boolean bootSpringSecurity = true;
-    
-    @Override
+	private static final String GRAPHIUM_PACKAGE = "at.srfg.graphium.neo4j.bootstrap";
+	private final static String DEFAULT_SECURITY_XML = "/security/application-context-graphium-api-security.xml";
+	private static final String GRAPHIUM_SECURED_PROPERTY = "graphium.secured";
+
+	private boolean bootSpringSecurity = true;
+
+	@Override
 	public Collection<Injectable<?>> start(GraphDatabaseService dbService, Configuration config) {
 		log.info("graphium unmanaged extension is starting");
 		return Collections.emptyList();
@@ -87,162 +85,165 @@ public class GraphiumServerBootstrapper implements SPIPluginLifecycle {
 	@Override
 	public Collection<Injectable<?>> start(NeoServer neoServer) {
 		log.info("graphium unmanaged extension is starting");
-		this.neoServer = neoServer;
-		registerInitOnJettyCreated(neoServer);					 
+		registerInitOnJettyCreated(neoServer);
 		return Collections.emptyList();
 	}
-	
+
 	@Override
 	public void stop() {
 		log.info("graphium unmanaged extension stopped");
 	}
-	
+
 	private void registerInitOnJettyCreated(NeoServer neoServer) {
 		log.info("extension registered, waiting for jetty instance...");
-		Jetty9WebServer neoWebserver =(Jetty9WebServer) ((AbstractNeoServer)neoServer).getWebServer();
+		Jetty9WebServer neoWebserver = (Jetty9WebServer) ((AbstractNeoServer) neoServer).getWebServer();
 		final Config config = neoServer.getConfig();
 		bootSpringSecurity = checkSecurityEnabled(config);
-		
-		
-		neoWebserver.setJettyCreatedCallback( new Consumer<Server>() {
-			
+
+		neoWebserver.setJettyCreatedCallback(new Consumer<Server>() {
+
 			@Override
 			public void accept(Server jetty) {
 				log.info("got jetty instance, waiting for starting lifecycle event ...");
-				
-				
+
 				jetty.addLifeCycleListener(new AbstractLifeCycle.AbstractLifeCycleListener() {
-									
+
 					@Override
 					public void lifeCycleStarting(LifeCycle event) {
-					
+
 						log.info("starting spring mvc setup ... ");
-						WebApplicationInitializer webappInit = new GraphiumSpringWebAppInitializer("GraphiumSpringServlet", neoServer);
-						ServletContextHandler graphiumHandler = createGraphiumServletHandler(getContextPath(config), jetty);
-						
-						// has to be done nested, we have to react on the "starting" callback of this specific handler. 
-						// only then we can extend the behaviour with custom servletContainerInitalizers because only then
-						// the corresponding servletContext is in starting state (required in servlet spec, only then 
-						// we can add listeners in onStartup) 
-						// with this approach the contextLoaderListeners of springs classes are executed as expected
+						WebApplicationInitializer webappInit = new GraphiumSpringWebAppInitializer(
+								"GraphiumSpringServlet", neoServer);
+						ServletContextHandler graphiumHandler = createGraphiumServletHandler(getContextPath(config),
+								jetty);
+
+						// has to be done nested, we have to react on the "starting" callback of this
+						// specific handler.
+						// only then we can extend the behaviour with custom servletContainerInitalizers
+						// because only then
+						// the corresponding servletContext is in starting state (required in servlet
+						// spec, only then
+						// we can add listeners in onStartup)
+						// with this approach the contextLoaderListeners of springs classes are executed
+						// as expected
 						graphiumHandler.addLifeCycleListener(new AbstractLifeCycle.AbstractLifeCycleListener() {
 							@Override
 							public void lifeCycleStarting(LifeCycle event) {
 								log.info("graphium handler starting, registering spring WebapplicationInitalizers...");
-								ServletContainerInitializer initalizer = new SingleWebApplicationInitalizerServletContainerInitializer(webappInit);
-								 try {
-				                	initalizer.onStartup(Collections.emptySet(), graphiumHandler.getServletContext());
-				                	
-				                	log.info("booting spring security is turned " + (bootSpringSecurity ? "on" : "off"));
-				                	if(bootSpringSecurity) {
-				                		Class<?> securityConfigClass = determineSecurityConfigClass();
-				                		
-										WebApplicationInitializer securityWebAppInit = 
-												new GraphiumSpringSecurityBootstrapper(securityConfigClass);
-										ServletContainerInitializer securityInitalizer = 
-												new SingleWebApplicationInitalizerServletContainerInitializer(securityWebAppInit);
-										securityInitalizer.onStartup(Collections.emptySet(), graphiumHandler.getServletContext());										 
+								ServletContainerInitializer initalizer = new SingleWebApplicationInitalizerServletContainerInitializer(
+										webappInit);
+								try {
+									initalizer.onStartup(Collections.emptySet(), graphiumHandler.getServletContext());
+
+									log.info(
+											"booting spring security is turned " + (bootSpringSecurity ? "on" : "off"));
+									if (bootSpringSecurity) {
+										Class<?> securityConfigClass = determineSecurityConfigClass();
+
+										WebApplicationInitializer securityWebAppInit = new GraphiumSpringSecurityBootstrapper(
+												securityConfigClass);
+										ServletContainerInitializer securityInitalizer = new SingleWebApplicationInitalizerServletContainerInitializer(
+												securityWebAppInit);
+										securityInitalizer.onStartup(Collections.emptySet(),
+												graphiumHandler.getServletContext());
 									}
-				                	
+
 								} catch (ServletException e) {
-									log.error("error during registration of servlet container initializer",e);
+									log.error("error during registration of servlet container initializer", e);
 								}
 							}
-					
+
 						});
 						graphiumHandler.getServletContext().setExtendedListenerTypes(true);
 						HandlerCollection handlerCollection = getHandlerCollection(jetty);
-						handlerCollection.setHandlers(ArrayUtil.prependToArray(graphiumHandler, handlerCollection.getHandlers(), Handler.class));
-						
+						handlerCollection.setHandlers(ArrayUtil.prependToArray(graphiumHandler,
+								handlerCollection.getHandlers(), Handler.class));
 					}
-				});	
+				});
 			}
-		});	
-    }
-	
+		});
+	}
+
 	private boolean checkSecurityEnabled(Config config) {
-		Map<String,String> raw = config.getRaw();
+		Map<String, String> raw = config.getRaw();
 		return Boolean.parseBoolean(raw.get(GRAPHIUM_SECURED_PROPERTY));
 	}
 
 	private Class<?> determineSecurityConfigClass() {
 		Resource securityXml = new ClassPathResource(DEFAULT_SECURITY_XML);
-		if(securityXml.exists()) {
+		if (securityXml.exists()) {
 			return GraphiumSpringSecurityApiConfig.class;
-		}
-		else {
+		} else {
 			return GraphiumSpringSecurityDefaultConfig.class;
 		}
 	}
-	
-	// TODO: session Manager notwendig
-	// TODO: umbauen, 
-	 protected final ServletContextHandler createGraphiumServletHandler(String contextPath, Server jetty) {
-		 	
-		 	// create new handler
-	        ServletContextHandler handler = new ServletContextHandler(ServletContextHandler.SESSIONS);
-	        // with mountpoint of unmanged ext. as path
-	        handler.setContextPath(contextPath);
-	        // and register server 
-	        handler.setServer(jetty);	        	       
 
-		 	// extract existing session handler from jaxRS Mountpoints
-	        HandlerCollection handlerCollection = getHandlerCollection(jetty);
-		 	for (Handler h : handlerCollection.getHandlers()) {
-	            if (h instanceof ServletContextHandler) {
-	            	ServletContextHandler contextHandler = (ServletContextHandler) h;
-	            	if(contextHandler.getSessionHandler() != null && contextHandler.getSessionHandler().getSessionManager() != null) {	            		
-	            		handler.setSessionHandler(new SessionHandler( contextHandler.getSessionHandler().getSessionManager()));
-	            		break;
-	            	}
-	               
-	            }
-	        }
-	        return handler;
-	    }	 	   
-	    
-	    private HandlerCollection getHandlerCollection(Server jetty) {
-	    	Handler handler = jetty.getHandler();
-	    	HandlerCollection handlerCollection = null;
-			if(handler instanceof RequestLogHandler) {
-				Handler nestedHandler = ((RequestLogHandler)handler).getHandler();
-				if(nestedHandler instanceof HandlerCollection) {
-					handlerCollection = (HandlerCollection)nestedHandler;
+	protected final ServletContextHandler createGraphiumServletHandler(String contextPath, Server jetty) {
+
+		// create new handler
+		ServletContextHandler handler = new ServletContextHandler(ServletContextHandler.SESSIONS);
+		// with mountpoint of unmanged ext. as path
+		handler.setContextPath(contextPath);
+		// and register server
+		handler.setServer(jetty);
+
+		// extract existing session handler from jaxRS Mountpoints
+		HandlerCollection handlerCollection = getHandlerCollection(jetty);
+		for (Handler presentHandler : handlerCollection.getHandlers()) {
+			if (presentHandler instanceof ServletContextHandler) {
+				ServletContextHandler contextHandler = (ServletContextHandler) presentHandler;
+				if (contextHandler.getSessionHandler() != null
+						&& contextHandler.getSessionHandler().getSessionManager() != null) {
+					handler.setSessionHandler(
+							new SessionHandler(contextHandler.getSessionHandler().getSessionManager()));
+					break;
+				}
+
+			}
+		}
+		return handler;
+	}
+
+	private HandlerCollection getHandlerCollection(Server jetty) {
+		Handler handler = jetty.getHandler();
+		HandlerCollection handlerCollection = null;
+		if (handler instanceof RequestLogHandler) {
+			Handler nestedHandler = ((RequestLogHandler) handler).getHandler();
+			if (nestedHandler instanceof HandlerCollection) {
+				handlerCollection = (HandlerCollection) nestedHandler;
+			}
+		} else {
+			handlerCollection = (HandlerCollection) jetty.getHandler();
+		}
+
+		if (handlerCollection == null) {
+			String msg = "error handler is nether a HandlerCollection "
+					+ "nor a RequestLogHandler. Can not register required Handler!";
+			log.error(msg);
+			// it would be cleaner to define a checked exception at this stage...
+			throw new RuntimeException(msg);
+		}
+		return handlerCollection;
+	}
+
+	private String getContextPath(Config config) {
+		for (ThirdPartyJaxRsPackage rsPackage : config.get(ServerSettings.third_party_packages)) {
+			if (rsPackage.getPackageName().equals(getPackage())) {
+				String path = rsPackage.getMountPoint();
+				if (StringUtils.isNotBlank(path)) {
+					log.info("Mounting Graphium Framework at {}", path);
+					return path;
+				} else {
+					throw new IllegalArgumentException("Illegal Graphium mount point: " + path);
 				}
 			}
-			else {
-				handlerCollection = (HandlerCollection) jetty.getHandler();
-			}
-			
-	        if(handlerCollection == null) {
-	        	String msg = "error handler is nether a HandlerCollection "
-        			+ "nor a RequestLogHandler. Can not register required Handler!";
-	        	log.error(msg);
-	        	// TODO: own (checked) exception
-	        	throw new RuntimeException(msg);
-	        }
-			return handlerCollection;
-	    }
+		}
 
-		private String getContextPath(Config config) {
-	        for (ThirdPartyJaxRsPackage rsPackage : config.get(ServerSettings.third_party_packages)) {
-	            if (rsPackage.getPackageName().equals(getPackage())) {
-	                String path = rsPackage.getMountPoint();
-	                if (StringUtils.isNotBlank(path)) {
-	                    log.info("Mounting Graphium Framework at {}", path);
-	                    return path;
-	                } else {
-	                    throw new IllegalArgumentException("Illegal Graphium mount point: " + path);
-	                }
-	            }
-	        }
+		throw new IllegalStateException("No mount point for Graphium");
+	}
 
-	        throw new IllegalStateException("No mount point for Graphium");
-	    }
-	    
-	    protected String getPackage() {
-	        return GRAPHIUM_PACKAGE;
-	    }
-	    
-	
+	protected String getPackage() {
+		return GRAPHIUM_PACKAGE;
+	}
+
 }

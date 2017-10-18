@@ -33,28 +33,29 @@ import at.srfg.graphium.neo4j.persistence.configuration.IGraphDatabaseProvider;
  */
 public class GraphiumNeo4jDatabaseProvider implements IGraphDatabaseProvider {
 	private static Logger log = LoggerFactory.getLogger(GraphiumNeo4jDatabaseProvider.class);
-	
+
 	@Autowired
 	private GraphDatabaseService graphDb;
-	
-	public GraphiumNeo4jDatabaseProvider() {}
-	
+
+	public GraphiumNeo4jDatabaseProvider() {
+	}
+
 	public GraphiumNeo4jDatabaseProvider(GraphDatabaseService graphDb) {
 		this.graphDb = graphDb;
 	}
-	
+
 	@PostConstruct
 	public void setup() {
 		log.info("graph database provided setup and spatial database service created");
 	}
-	
+
 	@PreDestroy
 	public void shutdown() {
 	}
-	
-	@Override	
+
+	@Override
 	public GraphDatabaseService getGraphDatabase() {
 		return graphDb;
 	}
-	
+
 }

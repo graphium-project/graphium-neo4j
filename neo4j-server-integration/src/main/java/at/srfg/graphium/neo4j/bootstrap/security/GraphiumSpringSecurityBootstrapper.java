@@ -21,11 +21,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.web.context.AbstractSecurityWebApplicationInitializer;
 
-public class GraphiumSpringSecurityBootstrapper extends
-		AbstractSecurityWebApplicationInitializer {
+/**
+ * 
+ * @author anwagner
+ *
+ */
+public class GraphiumSpringSecurityBootstrapper extends AbstractSecurityWebApplicationInitializer {
 
-	private static final Logger log = LoggerFactory
-			.getLogger(GraphiumSpringSecurityBootstrapper.class);
+	private static final Logger log = LoggerFactory.getLogger(GraphiumSpringSecurityBootstrapper.class);
 
 	public GraphiumSpringSecurityBootstrapper(Class<?> securityConfigClass) {
 		super(securityConfigClass);
