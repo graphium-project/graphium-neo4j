@@ -4,8 +4,8 @@
 	<artifactId>graphium-api-neo4j-plugin</artifactId>
 	<name>graphium-api-neo4j-plugin</name>
 	<description>Neo4j Server Plugin providing graphium api (import, management, sync...) for graphs
-  		integrated in neo4j server 
-  	</description>
+		integrated in neo4j server 
+	</description>
 
 	<parent>
 		<groupId>at.srfg.graphium</groupId>

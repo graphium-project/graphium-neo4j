@@ -11,13 +11,12 @@
 		<version>1.0.0-SNAPSHOT</version>
 		<relativePath>../neo4j-server-integration/plugin/pom.xml</relativePath>
 	</parent>
-     
+
 	<dependencies>
 		<dependency>
 			<groupId>at.srfg.graphium</groupId>
 			<artifactId>graphium-routing-neo4j</artifactId>
 		</dependency>
-
 	</dependencies>
 	
 </project>

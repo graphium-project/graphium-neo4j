@@ -4,44 +4,44 @@
 	<artifactId>graphium-neo4j-parent</artifactId>
 	<packaging>pom</packaging>
 
-  	<name>graphium-builder</name>
+	<name>graphium-builder</name>
 	<description>Graphium Neo4j's Super POM</description>
 
-    <licenses>
-        <license>
-            <name>GNU General Public License, Version 3</name>
-            <url>http://www.gnu.org/licenses/gpl-3.0-standalone.html</url>
-        </license>
-    </licenses>
+	<licenses>
+		<license>
+			<name>GNU General Public License, Version 3</name>
+			<url>http://www.gnu.org/licenses/gpl-3.0-standalone.html</url>
+		</license>
+	</licenses>
   
-    <organization>
-    	<name>Salzburg Research Forschungsgesellschaft m.b.H.</name>
-    	<url>https://www.salzburgresearch.at/</url>
-    </organization>
-    
-    <developers>
-        <developer>
-            <id>micwimmer</id>
-            <name>Michael Wimmer</name>
-            <email>michael.wimmer@salzburgresearch.at</email>
-        </developer>
-        <developer>
-            <id>anwagner</id>
-            <name>Andreas Wagner</name>
-            <email>andreas.wagner@salzburgresearch.at</email>
-        </developer>
-        <developer>
-            <id>shennebe</id>
-            <name>Stefan Henneberger</name>
-            <email>stefan.henneberger@salzburgresearch.at</email>
-        </developer>
-    </developers>
+	<organization>
+		<name>Salzburg Research Forschungsgesellschaft m.b.H.</name>
+		<url>https://www.salzburgresearch.at/</url>
+	</organization>
+	
+	<developers>
+		<developer>
+			<id>micwimmer</id>
+			<name>Michael Wimmer</name>
+			<email>michael.wimmer@salzburgresearch.at</email>
+		</developer>
+		<developer>
+			<id>anwagner</id>
+			<name>Andreas Wagner</name>
+			<email>andreas.wagner@salzburgresearch.at</email>
+		</developer>
+		<developer>
+			<id>shennebe</id>
+			<name>Stefan Henneberger</name>
+			<email>stefan.henneberger@salzburgresearch.at</email>
+		</developer>
+	</developers>
  	
 	<properties>
-        <neo4j.version>3.2.5</neo4j.version>     
-        <graphium-neo4j.version>1.0.0-SNAPSHOT</graphium-neo4j.version>
-    </properties>
-    
+		<neo4j.version>3.2.5</neo4j.version>	 
+		<graphium-neo4j.version>1.0.0-SNAPSHOT</graphium-neo4j.version>
+	</properties>
+	
 	<parent>
 		<groupId>at.srfg.graphium</groupId>
 		<artifactId>graphium-parent</artifactId>
@@ -55,52 +55,52 @@
 			<!-- goal: license:format -->
 			
 			<plugin>
-			    <groupId>com.mycila</groupId>
-			    <artifactId>license-maven-plugin</artifactId>
-			    <version>3.0</version>
-			    <configuration>
+				<groupId>com.mycila</groupId>
+				<artifactId>license-maven-plugin</artifactId>
+				<version>3.0</version>
+				<configuration>
 					<!-- Those properties have to be defined. If not favored a custom template has to be created. -->
-			        <header>com/mycila/maven/plugin/license/templates/GPL-3.txt</header>
+					<header>com/mycila/maven/plugin/license/templates/GPL-3.txt</header>
 			   		<properties>
-			            <owner>Salzburg Research Forschungsgesellschaft</owner>
-			            <email>graphium@salzburgresearch.at</email>
-			            <project.inceptionYear>2017</project.inceptionYear>
-			            <project.name>Graphium Neo4j</project.name>
-        			</properties>
-        			
-			        <includes>
-			        	<include>**/*.java</include>
-			        </includes>
-			        <excludes>
-			            <exclude>**/README</exclude>
-			            <exclude>*/src/test/resources/**</exclude>
-			            <exclude>*/src/main/resources/**</exclude>
-			        </excludes>
-			    </configuration>
-			    <executions>
-			        <execution>
-			            <goals>
-			                <goal>format</goal>
-			            </goals>
-			        </execution>
-			    </executions>
+						<owner>Salzburg Research Forschungsgesellschaft</owner>
+						<email>graphium@salzburgresearch.at</email>
+						<project.inceptionYear>2017</project.inceptionYear>
+						<project.name>Graphium Neo4j</project.name>
+					</properties>
+					
+					<includes>
+						<include>**/*.java</include>
+					</includes>
+					<excludes>
+						<exclude>**/README</exclude>
+						<exclude>*/src/test/resources/**</exclude>
+						<exclude>*/src/main/resources/**</exclude>
+					</excludes>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>format</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			
 		</plugins>
 	</build>
 
-  	<modules>
-    	<module>api-neo4j-plugin</module>
-    	<module>mapmatching</module>
-    	<module>mapmatching-client</module>
-    	<module>mapmatching-neo4j</module>
-    	<module>mapmatching-neo4j-plugin</module>
-    	<module>neo4j-core</module>
-    	<module>neo4j-server-integration/base</module>
-    	<module>neo4j-server-integration</module>
-    	<module>neo4j-server-integration/plugin</module>
-    	<module>routing-neo4j</module>
+	<modules>
+		<module>api-neo4j-plugin</module>
+		<module>mapmatching</module>
+		<module>mapmatching-client</module>
+		<module>mapmatching-neo4j</module>
+		<module>mapmatching-neo4j-plugin</module>
+		<module>neo4j-core</module>
+		<module>neo4j-server-integration/base</module>
+		<module>neo4j-server-integration</module>
+		<module>neo4j-server-integration/plugin</module>
+		<module>routing-neo4j</module>
 	 	<module>routing-neo4j-plugin</module>
-  	</modules>
+	</modules>
   
 </project>

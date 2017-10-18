@@ -13,10 +13,10 @@
 		<version>1.0.0-SNAPSHOT</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
-    
-    <dependencyManagement>
+	
+	<dependencyManagement>
 
-        <dependencies>
+		<dependencies>
 			<dependency>
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-framework-bom</artifactId>
@@ -31,97 +31,97 @@
 				<artifactId>spring-core</artifactId>
 				<version>${org.springframework.version}</version>
 				<exclusions>
-            		<exclusion>
-                		<groupId>commons-logging</groupId>
-                		<artifactId>commons-logging</artifactId>
-            		</exclusion>
-        		</exclusions>
-			</dependency>				
-						
-			<dependency>
-			    <groupId>org.springframework.security</groupId>
-			    <artifactId>spring-security-bom</artifactId>
-			    <version>${spring-security.version}</version>
-			    <type>pom</type>
-			    <scope>import</scope>
+					<exclusion>
+						<groupId>commons-logging</groupId>
+						<artifactId>commons-logging</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			
-            <!-- Logging -->
-
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>${slf4j-log4j12.version}</version>
-            </dependency>
+			<dependency>
+				<groupId>org.springframework.security</groupId>
+				<artifactId>spring-security-bom</artifactId>
+				<version>${spring-security.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			
+			<!-- Logging -->
 
 			<dependency>
-	      		<groupId>org.slf4j</groupId>
-	      		<artifactId>slf4j-log4j12</artifactId>
-	      		<version>${slf4j-log4j12.version}</version>
-	    	</dependency>
-	    	
-            <!-- Commons -->
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>${slf4j-log4j12.version}</version>
+			</dependency>
+
 			<dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-lang3</artifactId>
-                <version>3.3.2</version>
-                <scope>provided</scope>
-            </dependency>
-            
-            <dependency>
-            	<groupId>org.codehaus.jackson</groupId>
-            	<artifactId>jackson-core-asl</artifactId>
-            	<version>1.9.13</version>
-            	<scope>provided</scope>
-            </dependency>
-            
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-log4j12</artifactId>
+				<version>${slf4j-log4j12.version}</version>
+			</dependency>
+			
+			<!-- Commons -->
+			<dependency>
+				<groupId>org.apache.commons</groupId>
+				<artifactId>commons-lang3</artifactId>
+				<version>3.3.2</version>
+				<scope>provided</scope>
+			</dependency>
+			
+			<dependency>
+				<groupId>org.codehaus.jackson</groupId>
+				<artifactId>jackson-core-asl</artifactId>
+				<version>1.9.13</version>
+				<scope>provided</scope>
+			</dependency>
+			
  			<dependency>
-            	<groupId>org.codehaus.jackson</groupId>
-            	<artifactId>jackson-mapper-asl</artifactId>
-            	<version>1.9.13</version>
-            	<scope>provided</scope>
-            </dependency>
-            
-  			<dependency>
-                <groupId>commons-io</groupId>
-                <artifactId>commons-io</artifactId>
-                <version>2.4</version>
-                <scope>provided</scope>
-            </dependency>
-            
-            <dependency>	
-            	<groupId>commons-logging</groupId>
-            	<artifactId>commons-logging</artifactId>
-            	<version>1.1.1</version>          
-            	<scope>provided</scope>
-            </dependency>
+				<groupId>org.codehaus.jackson</groupId>
+				<artifactId>jackson-mapper-asl</artifactId>
+				<version>1.9.13</version>
+				<scope>provided</scope>
+			</dependency>
+			
+			<dependency>
+				<groupId>commons-io</groupId>
+				<artifactId>commons-io</artifactId>
+				<version>2.4</version>
+				<scope>provided</scope>
+			</dependency>
+			
+			<dependency>	
+				<groupId>commons-logging</groupId>
+				<artifactId>commons-logging</artifactId>
+				<version>1.1.1</version>		  
+				<scope>provided</scope>
+			</dependency>
  
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-core</artifactId>
-                <version>${jackson.json.version}</version>
-            </dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-core</artifactId>
+				<version>${jackson.json.version}</version>
+			</dependency>
 
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-annotations</artifactId>
-                <version>${jackson.json.version}</version>
-            </dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-annotations</artifactId>
+				<version>${jackson.json.version}</version>
+			</dependency>
 
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jackson.json.version}</version>
-            </dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-databind</artifactId>
+				<version>${jackson.json.version}</version>
+			</dependency>
 
-            <!-- Guava -->
-            <dependency>
-                <groupId>com.google.guava</groupId>
-                <artifactId>guava</artifactId>
-                <version>18.0</version>
-            </dependency>
-            
-            <!-- http client -->
+			<!-- Guava -->
+			<dependency>
+				<groupId>com.google.guava</groupId>
+				<artifactId>guava</artifactId>
+				<version>18.0</version>
+			</dependency>
+			
+			<!-- http client -->
 			<!-- check if required and version! -->
 			<dependency>
 				<groupId>org.apache.httpcomponents</groupId>
@@ -130,84 +130,84 @@
 			</dependency>
 
 			<!-- Neo4j -->
-            <dependency>
-                <groupId>org.neo4j.app</groupId>
-                <artifactId>neo4j-server</artifactId>
-                <version>${neo4j.version}</version>
-                <scope>provided</scope>
-            </dependency>
+			<dependency>
+				<groupId>org.neo4j.app</groupId>
+				<artifactId>neo4j-server</artifactId>
+				<version>${neo4j.version}</version>
+				<scope>provided</scope>
+			</dependency>
 
 			<dependency>
-                <groupId>org.neo4j</groupId>
-                <artifactId>neo4j</artifactId>
-                <version>${neo4j.version}</version>
-                <scope>provided</scope>
-            </dependency>
+				<groupId>org.neo4j</groupId>
+				<artifactId>neo4j</artifactId>
+				<version>${neo4j.version}</version>
+				<scope>provided</scope>
+			</dependency>
 
 			<dependency>
-			   <groupId>org.neo4j.test</groupId>
-	   			<artifactId>neo4j-harness</artifactId>
-	   			<version>${neo4j.version}</version>
-	   			<scope>test</scope>
+				<groupId>org.neo4j.test</groupId>
+				<artifactId>neo4j-harness</artifactId>
+				<version>${neo4j.version}</version>
+				<scope>test</scope>
 			</dependency>
 			
-			<!-- Graphium -->			
-			<dependency>
-			   <groupId>at.srfg.graphium</groupId>
-	   			<artifactId>graphium-neo4j-core</artifactId>
-	   			<version>${graphium-neo4j.version}</version>
-			</dependency>
-			            
-			<dependency>
-			   <groupId>at.srfg.graphium</groupId>
-	   			<artifactId>graphium-model</artifactId>
-	   			<version>${graphium.version}</version>
-			</dependency>
-			            
-			<dependency>
-			   <groupId>at.srfg.graphium</groupId>
-	   			<artifactId>graphium-io</artifactId>
-	   			<version>${graphium.version}</version>
-			</dependency>
-			            
-			<dependency>
-			   <groupId>at.srfg.graphium</groupId>
-	   			<artifactId>graphium-core</artifactId>
-	   			<version>${graphium.version}</version>
-			</dependency>
-						            
-			<dependency>
-			   <groupId>at.srfg.graphium</groupId>
-	   			<artifactId>graphium-api</artifactId>
-	   			<version>${graphium.version}</version>
-			</dependency>
-			            
+			<!-- Graphium -->
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
-	   			<artifactId>graphium-routing-neo4j</artifactId>
-	   			<version>${graphium-neo4j.version}</version>
+				<artifactId>graphium-neo4j-core</artifactId>
+				<version>${graphium-neo4j.version}</version>
+			</dependency>
+						
+			<dependency>
+				<groupId>at.srfg.graphium</groupId>
+				<artifactId>graphium-model</artifactId>
+				<version>${graphium.version}</version>
+			</dependency>
+						
+			<dependency>
+				<groupId>at.srfg.graphium</groupId>
+				<artifactId>graphium-io</artifactId>
+				<version>${graphium.version}</version>
+			</dependency>
+						
+			<dependency>
+				<groupId>at.srfg.graphium</groupId>
+				<artifactId>graphium-core</artifactId>
+				<version>${graphium.version}</version>
+			</dependency>
+									
+			<dependency>
+				<groupId>at.srfg.graphium</groupId>
+				<artifactId>graphium-api</artifactId>
+				<version>${graphium.version}</version>
+			</dependency>
+						
+			<dependency>
+				<groupId>at.srfg.graphium</groupId>
+				<artifactId>graphium-routing-neo4j</artifactId>
+				<version>${graphium-neo4j.version}</version>
 			</dependency>
 			
 			<dependency>
-			   	<groupId>at.srfg.graphium</groupId>
-	   			<artifactId>graphium-mapmatching</artifactId>
-	   			<version>${graphium.version}</version>
+				<groupId>at.srfg.graphium</groupId>
+				<artifactId>graphium-mapmatching</artifactId>
+				<version>${graphium.version}</version>
 			</dependency>
 			
 			<dependency>
-			   	<groupId>at.srfg.graphium</groupId>
-	   			<artifactId>graphium-mapmatching-neo4j</artifactId>
-	   			<version>${graphium-neo4j.version}</version>
+				<groupId>at.srfg.graphium</groupId>
+				<artifactId>graphium-mapmatching-neo4j</artifactId>
+				<version>${graphium-neo4j.version}</version>
 			</dependency>
 			
-	    	<dependency>
-	    		<groupId>at.srfg.graphium</groupId>
-	    		<artifactId>graphium-utils</artifactId>
-	    		<version>${graphium.version}</version>
-	    	</dependency>  	
+			<dependency>
+				<groupId>at.srfg.graphium</groupId>
+				<artifactId>graphium-utils</artifactId>
+				<version>${graphium.version}</version>
+			</dependency>  	
 		
-        </dependencies>
+		</dependencies>
 
-    </dependencyManagement>
+	</dependencyManagement>
 
 </project>

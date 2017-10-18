@@ -17,20 +17,21 @@
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
 				<artifactId>graphium-routing-neo4j-plugin</artifactId>
-				<version>${graphium-neo4j.version}</version>		
+				<version>${graphium-neo4j.version}</version>
 				<scope>provided</scope>	
-			</dependency>		
+			</dependency>
+			
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
 				<artifactId>graphium-routing-neo4j</artifactId>
-				<version>${graphium-neo4j.version}</version>			
+				<version>${graphium-neo4j.version}</version>
 				<scope>provided</scope>
-			</dependency>	
+			</dependency>
 		
 		</dependencies>
 	</dependencyManagement>
-   	
-   	<dependencies>
+
+	<dependencies>
 		<dependency>
 			<groupId>at.srfg.graphium</groupId>
 			<artifactId>graphium-mapmatching-neo4j</artifactId>
@@ -43,13 +44,13 @@
 	</dependencies>
 	
 	<reporting>
-	    <plugins>
-	      	<plugin>
-		        <groupId>org.codehaus.mojo</groupId>
-		        <artifactId>license-maven-plugin</artifactId>
-		        <version>1.12</version>
-	      	</plugin>
-	    </plugins>
-  	</reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>license-maven-plugin</artifactId>
+				<version>1.12</version>
+			</plugin>
+		</plugins>
+	</reporting>
 	
 </project>

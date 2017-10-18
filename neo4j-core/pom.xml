@@ -1,27 +1,27 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+	<modelVersion>4.0.0</modelVersion>
 
-  	<artifactId>graphium-neo4j-core</artifactId>
-  	<packaging>jar</packaging>
+	<artifactId>graphium-neo4j-core</artifactId>
+	<packaging>jar</packaging>
 
-  	<name>graphium-neo4j-core</name>
+	<name>graphium-neo4j-core</name>
 	<description>Module of Graphserver for Neo4j extension</description>
 
-    <parent>
+	<parent>
 		<groupId>at.srfg.graphium</groupId>
 		<artifactId>graphium-neo4j-parent</artifactId>
 		<version>1.0.0-SNAPSHOT</version>
- 	</parent>
- 	  	
-  	<dependencies>
-  	
-  		<dependency>
-  			<groupId>at.srfg.graphium</groupId>
+	</parent>
+		
+	<dependencies>
+	
+		<dependency>
+			<groupId>at.srfg.graphium</groupId>
 			<artifactId>graphium-core</artifactId>
 			<version>${graphium.version}</version>
-  		</dependency>
-  		
+		</dependency>
+		
 	 	<dependency>
 			<groupId>org.neo4j</groupId>
 			<artifactId>neo4j</artifactId>
@@ -29,9 +29,9 @@
 		</dependency>
 	
 		<dependency>
-		    <groupId>com.google.guava</groupId>
-		    <artifactId>guava</artifactId>
-		    <version>21.0</version>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>21.0</version>
 		</dependency>
 	
 		<dependency>
@@ -40,29 +40,29 @@
 			<scope>test</scope>
 		</dependency>	
 		
-  	</dependencies>
+	</dependencies>
 
 	<repositories>
-        <repository>
-            <id>neo4j-contrib-releases</id>
-            <url>https://raw.github.com/neo4j-contrib/m2/master/releases</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>neo4j-contrib-snapshots</id>
-            <url>https://raw.github.com/neo4j-contrib/m2/master/snapshots</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-    
+		<repository>
+			<id>neo4j-contrib-releases</id>
+			<url>https://raw.github.com/neo4j-contrib/m2/master/releases</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>neo4j-contrib-snapshots</id>
+			<url>https://raw.github.com/neo4j-contrib/m2/master/snapshots</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+	
 </project>

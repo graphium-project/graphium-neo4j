@@ -6,8 +6,8 @@
 	<packaging>pom</packaging>
 	
 	<description>
-  		Base POM for a graphium plugin running in a Neo4j server using graphium components
-  	</description>
+		Base POM for a graphium plugin running in a Neo4j server using graphium components
+	</description>
 
 	<parent>
 		<groupId>at.srfg.graphium</groupId>
@@ -18,159 +18,159 @@
 	
 	
 	<build>
-	  <plugins>
-            <plugin>
-	            <groupId>org.apache.maven.plugins</groupId>
-	            <artifactId>maven-shade-plugin</artifactId>
-	            <executions>
-	                <execution>
-	                    <phase>package</phase>
-	                    <goals>
-	                        <goal>shade</goal>
-	                    </goals>	                  
-	                </execution>
-	            </executions>
-	        </plugin>
-        </plugins>
-     </build>
-     
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
-	            <groupId>org.springframework</groupId>
-	            <artifactId>spring-aop</artifactId>
-	            <version>${org.springframework.version}</version>
-	            <scope>provided</scope>
-	        </dependency>
-	        
-	  		<dependency>
-	            <groupId>org.springframework</groupId>
-	            <artifactId>spring-beans</artifactId>
-	            <version>${org.springframework.version}</version>
-	            <scope>provided</scope>
-	        </dependency>
-	        
-	        <dependency>
-	            <groupId>org.springframework</groupId>
-	            <artifactId>spring-core</artifactId>
-	            <version>${org.springframework.version}</version>
-	            <scope>provided</scope>
-	        </dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-aop</artifactId>
+				<version>${org.springframework.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-beans</artifactId>
+				<version>${org.springframework.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-core</artifactId>
+				<version>${org.springframework.version}</version>
+				<scope>provided</scope>
+			</dependency>
 	
-	        <dependency>
-	            <groupId>org.springframework</groupId>
-	            <artifactId>spring-context</artifactId>
-	            <version>${org.springframework.version}</version>
-	            <scope>provided</scope>
-	        </dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-context</artifactId>
+				<version>${org.springframework.version}</version>
+				<scope>provided</scope>
+			</dependency>
 	
-	        <dependency>
-	            <groupId>org.springframework</groupId>
-	            <artifactId>spring-web</artifactId>
-	            <version>${org.springframework.version}</version>
-	            <scope>provided</scope>
-	        </dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-web</artifactId>
+				<version>${org.springframework.version}</version>
+				<scope>provided</scope>
+			</dependency>
 	
-	        <dependency>
-	            <groupId>org.springframework</groupId>
-	            <artifactId>spring-webmvc</artifactId>
-	            <version>${org.springframework.version}</version>
-	            <scope>provided</scope>
-	        </dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-webmvc</artifactId>
+				<version>${org.springframework.version}</version>
+				<scope>provided</scope>
+			</dependency>
 	
-	        <dependency>
-	            <groupId>org.springframework</groupId>
-	            <artifactId>spring-expression</artifactId>
-	            <version>${org.springframework.version}</version>
-	            <scope>provided</scope>
-	        </dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-expression</artifactId>
+				<version>${org.springframework.version}</version>
+				<scope>provided</scope>
+			</dependency>
 	
-	   		<dependency>
-	            <groupId>org.springframework</groupId>
-	            <artifactId>spring-tx</artifactId>
-	            <version>${org.springframework.version}</version>
-	            <scope>provided</scope>
-	        </dependency>
-	        
-	        <dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-tx</artifactId>
+				<version>${org.springframework.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			
+			<dependency>
 				<groupId>org.springframework.security</groupId>
 				<artifactId>spring-security-web</artifactId>
 				<version>${spring-security.version}</version>
-				<scope>provided</scope>				
+				<scope>provided</scope>
 			</dependency>
 		
 			<dependency>
 				<groupId>org.springframework.security</groupId>
 				<artifactId>spring-security-config</artifactId>
-				<version>${spring-security.version}</version>	
-				<scope>provided</scope>		
+				<version>${spring-security.version}</version>
+				<scope>provided</scope>
 			</dependency>
 		
 			<dependency>
 				<groupId>org.springframework.security</groupId>
 				<artifactId>spring-security-core</artifactId>
-				<version>${spring-security.version}</version>	
-				<scope>provided</scope>		
+				<version>${spring-security.version}</version>
+				<scope>provided</scope>
 			</dependency>
 			
-	        <dependency>
-	        	<groupId>aopalliance</groupId>
-	        	<artifactId>aopalliance</artifactId>
-	        	<version>1.0</version>
-	        	<scope>provided</scope>			
-	        </dependency>
+			<dependency>
+				<groupId>aopalliance</groupId>
+				<artifactId>aopalliance</artifactId>
+				<version>1.0</version>
+				<scope>provided</scope>
+			</dependency>
 			<!-- graphium and dependencies. everything present from graphium-neo4j-server-integration can be expected to be provided
 				 because the base bundle already deploys it in its shaded jar -->
-	    	<dependency>
-	    		<groupId>at.srfg.graphium</groupId>
-	    		<artifactId>graphium-utils</artifactId>
-	    		<version>${graphium.version}</version>
-	    	</dependency>  	
+			<dependency>
+				<groupId>at.srfg.graphium</groupId>
+				<artifactId>graphium-utils</artifactId>
+				<version>${graphium.version}</version>
+			</dependency>  	
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
 				<artifactId>graphium-neo4j-core</artifactId>
 				<version>${graphium-neo4j.version}</version>
-				<scope>provided</scope>			
-			</dependency>	
+				<scope>provided</scope>
+			</dependency>
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
 				<artifactId>graphium-model</artifactId>
 				<version>${graphium.version}</version>
-				<scope>provided</scope>			
-			</dependency>	
+				<scope>provided</scope>
+			</dependency>
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
 				<artifactId>graphium-core</artifactId>
 				<version>${graphium.version}</version>
-				<scope>provided</scope>			
-			</dependency>	
+				<scope>provided</scope>
+			</dependency>
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
 				<artifactId>graphium-io</artifactId>
 				<version>${graphium.version}</version>
-				<scope>provided</scope>			
-			</dependency>	
+				<scope>provided</scope>
+			</dependency>
 			
 			<dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-core</artifactId>
-                <version>${jackson.json.version}</version>
-                <scope>provided</scope>
-            </dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-core</artifactId>
+				<version>${jackson.json.version}</version>
+				<scope>provided</scope>
+			</dependency>
 
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-annotations</artifactId>
-                <version>${jackson.json.version}</version>
-                <scope>provided</scope>
-            </dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-annotations</artifactId>
+				<version>${jackson.json.version}</version>
+				<scope>provided</scope>
+			</dependency>
 
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jackson.json.version}</version>
-                <scope>provided</scope>
-            </dependency>		
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-databind</artifactId>
+				<version>${jackson.json.version}</version>
+				<scope>provided</scope>
+			</dependency>
 			
 			<dependency>
 				<groupId>org.apache.httpcomponents</groupId>
@@ -184,7 +184,7 @@
 				<groupId>com.vividsolutions</groupId>
 				<artifactId>jts</artifactId>
 				<version>${jts.version}</version>
-				<scope>provided</scope>			
+				<scope>provided</scope>
 			</dependency>
 			
 			<!-- logging -->
@@ -209,27 +209,27 @@
 				<scope>provided</scope>
 			</dependency>
 			
-		   	<dependency>
-			    <groupId>log4j</groupId>
-			    <artifactId>apache-log4j-extras</artifactId>
-			    <version>1.2.17</version>
+			<dependency>
+				<groupId>log4j</groupId>
+				<artifactId>apache-log4j-extras</artifactId>
+				<version>1.2.17</version>
 			</dependency>
 		
 			<!-- plug-ins which are already deployed to neo server -->
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
-				<artifactId>graphium-neo4j-server-integration</artifactId>		
+				<artifactId>graphium-neo4j-server-integration</artifactId>
 				<version>${graphium-neo4j.version}</version>
 				<scope>provided</scope>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
 		
-    <dependencies>
+	<dependencies>
 		<dependency>
 			<groupId>at.srfg.graphium</groupId>
 			<artifactId>graphium-neo4j-server-integration</artifactId>	
 		</dependency>
-    </dependencies>
+	</dependencies>
 
 </project>
