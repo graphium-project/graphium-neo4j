@@ -200,12 +200,6 @@
 	   			<version>${graphium-neo4j.version}</version>
 			</dependency>
 			
-			<dependency>
-				<groupId>at.srfg.graphium</groupId>
-				<artifactId>graphium-flooding-neo4j</artifactId>
-				<version>${graphium-neo4j.version}</version>
-			</dependency>
-						
 	    	<dependency>
 	    		<groupId>at.srfg.graphium</groupId>
 	    		<artifactId>graphium-utils</artifactId>

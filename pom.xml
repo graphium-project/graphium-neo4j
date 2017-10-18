@@ -39,8 +39,7 @@
  	
 	<properties>
         <neo4j.version>3.2.5</neo4j.version>     
-        <graphium.version>1.0.0-SNAPSHOT</graphium.version>
-        <graphium-neo4j.version>${project.version}</graphium-neo4j.version>
+        <graphium-neo4j.version>1.0.0-SNAPSHOT</graphium-neo4j.version>
     </properties>
     
 	<parent>

@@ -28,8 +28,8 @@
 			</dependency>	
 		
 		</dependencies>
-			
 	</dependencyManagement>
+   	
    	<dependencies>
 		<dependency>
 			<groupId>at.srfg.graphium</groupId>
