@@ -63,6 +63,8 @@ import at.srfg.graphium.neo4j.bootstrap.security.GraphiumSpringSecurityBootstrap
 import at.srfg.graphium.neo4j.bootstrap.security.GraphiumSpringSecurityDefaultConfig;
 
 /**
+ * Bootstraps spring mvc in neo4j-server using hooks of jettys startup life-cycle 
+ * 
  * @author anwagner
  */
 @Path("/")
