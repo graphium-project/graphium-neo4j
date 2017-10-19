@@ -26,61 +26,60 @@ package at.srfg.graphium.neo4j.bootstrap;
 import javax.servlet.Filter;
 
 import org.neo4j.server.NeoServer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.support.GenericXmlApplicationContext;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 import org.springframework.web.servlet.support.AbstractDispatcherServletInitializer;
 
 /**
- * @author anwagner
  * Servlet 3.0+ web application initializer, no need for XML.
+ * 
+ * @author anwagner
+ *
  */
 public class GraphiumSpringWebAppInitializer extends AbstractDispatcherServletInitializer {
 
-	private static final Logger logger = LoggerFactory.getLogger(GraphiumSpringWebAppInitializer.class);
-	
 	private static final String rootAppCtx = "application-context-graphium-neo4j-integration.xml";
-	
-    private String servletName;
-    private NeoServer neoServer;
-    
-    public GraphiumSpringWebAppInitializer(String servletName, NeoServer neoServer) {
-    	this.servletName = servletName;
-    	this.neoServer = neoServer;
-    }
 
-    @Override
-    protected WebApplicationContext createServletApplicationContext() {
-    	GenericXmlApplicationContext rootContext = new GenericXmlApplicationContext();
-    	rootContext.registerShutdownHook();
-    	rootContext.getBeanFactory().registerSingleton("database", neoServer.getDatabase().getGraph());
-    	rootContext.refresh();
-        XmlWebApplicationContext context = new XmlWebApplicationContext();
-        context.setParent(rootContext);
-        context.setConfigLocation("classpath:/" + rootAppCtx);
-        
-        return context;    	    
-    }
+	private String servletName;
+	private NeoServer neoServer;
 
-    @Override
-    protected String getServletName() {
-        return servletName;
-    }
+	public GraphiumSpringWebAppInitializer(String servletName, NeoServer neoServer) {
+		this.servletName = servletName;
+		this.neoServer = neoServer;
+	}
 
-    @Override
-    protected String[] getServletMappings() {
-    	return new String[]{"/"};
-    }
+	@Override
+	protected WebApplicationContext createServletApplicationContext() {
+		GenericXmlApplicationContext rootContext = new GenericXmlApplicationContext();
+		rootContext.registerShutdownHook();
+		rootContext.getBeanFactory().registerSingleton("database", neoServer.getDatabase().getGraph());
+		rootContext.refresh();
+		XmlWebApplicationContext context = new XmlWebApplicationContext();
+		context.setParent(rootContext);
+		context.setConfigLocation("classpath:/" + rootAppCtx);
 
-    protected Filter[] getServletFilters() {
+		return context;
+	}
+
+	@Override
+	protected String getServletName() {
+		return servletName;
+	}
+
+	@Override
+	protected String[] getServletMappings() {
+		return new String[] { "/" };
+	}
+
+	protected Filter[] getServletFilters() {
 		return null;
 	}
-   
-    @Override
-    protected WebApplicationContext createRootApplicationContext() {
-    	 // TODO: die teilung in einen root und web context macht irgendwie Probleme und ist eigentlich auch nicht notwendig
-    	return null;
-    }
+
+	@Override
+	protected WebApplicationContext createRootApplicationContext() {
+		// currently bootstrapping does not split into root/web app context. Not
+		// required just web context gets booted.
+		return null;
+	}
 }

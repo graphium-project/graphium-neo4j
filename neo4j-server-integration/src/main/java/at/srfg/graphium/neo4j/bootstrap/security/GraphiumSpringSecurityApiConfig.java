@@ -23,20 +23,19 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 
 /**
- * java config to enable spring security. requires security config file security/application-context-graphium-api-security.xml
- * in classpath (e.g. present in graphium-api.jar). loads the configuration definined in the xml file
+ * java config to enable spring security. requires security config file
+ * security/application-context-graphium-api-security.xml in classpath (e.g.
+ * present in graphium-api.jar). loads the configuration definined in the xml
+ * file
  * 
  * @author anwagner
  *
  */
 @EnableWebSecurity
-@ImportResource({
-    "classpath:/security/application-context-graphium-api-security.xml"
-})
+@ImportResource({ "classpath:/security/application-context-graphium-api-security.xml" })
 public class GraphiumSpringSecurityApiConfig {
 
 	@Autowired
-	public void configureGlobal(AuthenticationManagerBuilder auth)
-			throws Exception {
+	public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
 	}
 }

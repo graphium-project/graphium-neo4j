@@ -27,6 +27,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.WebApplicationInitializer;
 
+/**
+ * 
+ * @author anwagner
+ *
+ */
 public class SingleWebApplicationInitalizerServletContainerInitializer implements ServletContainerInitializer { 
 
     private static final Logger log = LoggerFactory.getLogger(SingleWebApplicationInitalizerServletContainerInitializer.class);
