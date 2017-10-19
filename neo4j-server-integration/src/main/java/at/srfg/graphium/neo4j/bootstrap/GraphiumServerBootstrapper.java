@@ -181,70 +181,70 @@ public class GraphiumServerBootstrapper implements SPIPluginLifecycle {
 	// TODO: umbauen, 
 	 protected final ServletContextHandler createGraphiumServletHandler(String contextPath, Server jetty) {
 		 	
-	 	// create new handler
-        ServletContextHandler handler = new ServletContextHandler(ServletContextHandler.SESSIONS);
-        // with mountpoint of unmanged ext. as path
-        handler.setContextPath(contextPath);
-        // and register server 
-        handler.setServer(jetty);	        	       
+		 	// create new handler
+	        ServletContextHandler handler = new ServletContextHandler(ServletContextHandler.SESSIONS);
+	        // with mountpoint of unmanged ext. as path
+	        handler.setContextPath(contextPath);
+	        // and register server 
+	        handler.setServer(jetty);	        	       
 
-	 	// extract existing session handler from jaxRS Mountpoints
-        HandlerCollection handlerCollection = getHandlerCollection(jetty);
-	 	for (Handler h : handlerCollection.getHandlers()) {
-            if (h instanceof ServletContextHandler) {
-            	ServletContextHandler contextHandler = (ServletContextHandler) h;
-            	if(contextHandler.getSessionHandler() != null && contextHandler.getSessionHandler().getSessionManager() != null) {	            		
-            		handler.setSessionHandler(new SessionHandler( contextHandler.getSessionHandler().getSessionManager()));
-            		break;
-            	}
-               
-            }
-        }
-        return handler;
-    }	 	   
-    
-    private HandlerCollection getHandlerCollection(Server jetty) {
-    	Handler handler = jetty.getHandler();
-    	HandlerCollection handlerCollection = null;
-		if(handler instanceof RequestLogHandler) {
-			Handler nestedHandler = ((RequestLogHandler)handler).getHandler();
-			if(nestedHandler instanceof HandlerCollection) {
-				handlerCollection = (HandlerCollection)nestedHandler;
+		 	// extract existing session handler from jaxRS Mountpoints
+	        HandlerCollection handlerCollection = getHandlerCollection(jetty);
+		 	for (Handler h : handlerCollection.getHandlers()) {
+	            if (h instanceof ServletContextHandler) {
+	            	ServletContextHandler contextHandler = (ServletContextHandler) h;
+	            	if(contextHandler.getSessionHandler() != null && contextHandler.getSessionHandler().getSessionManager() != null) {	            		
+	            		handler.setSessionHandler(new SessionHandler( contextHandler.getSessionHandler().getSessionManager()));
+	            		break;
+	            	}
+	               
+	            }
+	        }
+	        return handler;
+	    }	 	   
+	    
+	    private HandlerCollection getHandlerCollection(Server jetty) {
+	    	Handler handler = jetty.getHandler();
+	    	HandlerCollection handlerCollection = null;
+			if(handler instanceof RequestLogHandler) {
+				Handler nestedHandler = ((RequestLogHandler)handler).getHandler();
+				if(nestedHandler instanceof HandlerCollection) {
+					handlerCollection = (HandlerCollection)nestedHandler;
+				}
 			}
-		}
-		else {
-			handlerCollection = (HandlerCollection) jetty.getHandler();
-		}
-		
-        if(handlerCollection == null) {
-        	String msg = "error handler is nether a HandlerCollection "
-    			+ "nor a RequestLogHandler. Can not register required Handler!";
-        	log.error(msg);
-        	// TODO: own (checked) exception
-        	throw new RuntimeException(msg);
-        }
-		return handlerCollection;
-    }
+			else {
+				handlerCollection = (HandlerCollection) jetty.getHandler();
+			}
+			
+	        if(handlerCollection == null) {
+	        	String msg = "error handler is nether a HandlerCollection "
+        			+ "nor a RequestLogHandler. Can not register required Handler!";
+	        	log.error(msg);
+	        	// TODO: own (checked) exception
+	        	throw new RuntimeException(msg);
+	        }
+			return handlerCollection;
+	    }
 
-	private String getContextPath(Config config) {
-        for (ThirdPartyJaxRsPackage rsPackage : config.get(ServerSettings.third_party_packages)) {
-            if (rsPackage.getPackageName().equals(getPackage())) {
-                String path = rsPackage.getMountPoint();
-                if (StringUtils.isNotBlank(path)) {
-                    log.info("Mounting Graphium Framework at {}", path);
-                    return path;
-                } else {
-                    throw new IllegalArgumentException("Illegal Graphium mount point: " + path);
-                }
-            }
-        }
+		private String getContextPath(Config config) {
+	        for (ThirdPartyJaxRsPackage rsPackage : config.get(ServerSettings.third_party_packages)) {
+	            if (rsPackage.getPackageName().equals(getPackage())) {
+	                String path = rsPackage.getMountPoint();
+	                if (StringUtils.isNotBlank(path)) {
+	                    log.info("Mounting Graphium Framework at {}", path);
+	                    return path;
+	                } else {
+	                    throw new IllegalArgumentException("Illegal Graphium mount point: " + path);
+	                }
+	            }
+	        }
 
-        throw new IllegalStateException("No mount point for Graphium");
-    }
-    
-    protected String getPackage() {
-        return GRAPHIUM_PACKAGE;
-    }
+	        throw new IllegalStateException("No mount point for Graphium");
+	    }
+	    
+	    protected String getPackage() {
+	        return GRAPHIUM_PACKAGE;
+	    }
 	    
 	
 }
