@@ -20,13 +20,10 @@ package at.srfg.graphium.mapmatching.weighting.distances.impl;
 import java.util.Collections;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.Point;
 
-import at.srfg.geomutils.GeometryUtils;
+import at.srfg.graphium.geomutils.GeometryUtils;
 import at.srfg.graphium.mapmatching.model.IMatchedWaySegment;
 import at.srfg.graphium.mapmatching.model.IMatchedWaySegment.IDistancesCache;
 import at.srfg.graphium.mapmatching.model.ITrack;

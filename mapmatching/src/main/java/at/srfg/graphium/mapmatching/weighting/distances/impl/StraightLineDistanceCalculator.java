@@ -19,7 +19,7 @@ package at.srfg.graphium.mapmatching.weighting.distances.impl;
 
 import java.util.List;
 
-import at.srfg.geomutils.GeometryUtils;
+import at.srfg.graphium.geomutils.GeometryUtils;
 import at.srfg.graphium.mapmatching.model.IMatchedWaySegment;
 import at.srfg.graphium.mapmatching.model.IMatchedWaySegment.IDistancesCache;
 import at.srfg.graphium.mapmatching.model.ITrack;

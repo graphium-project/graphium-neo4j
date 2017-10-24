@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import com.vividsolutions.jts.geom.Point;
 
-import at.srfg.geomutils.GeometryUtils;
+import at.srfg.graphium.geomutils.GeometryUtils;
 import at.srfg.graphium.mapmatching.matcher.impl.SegmentDistance;
 import at.srfg.graphium.mapmatching.model.Direction;
 import at.srfg.graphium.mapmatching.model.IMatchedBranch;

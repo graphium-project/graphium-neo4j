@@ -34,7 +34,7 @@ import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.index.strtree.STRtree;
 
-import at.srfg.geomutils.GeometryUtils;
+import at.srfg.graphium.geomutils.GeometryUtils;
 import at.srfg.graphium.neo4j.model.index.STRTreeEntity;
 import at.srfg.graphium.neo4j.persistence.index.STRTreeEntityComparator;
 

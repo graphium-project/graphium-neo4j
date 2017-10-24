@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
-import at.srfg.geomutils.GeometryUtils;
+import at.srfg.graphium.geomutils.GeometryUtils;
 import at.srfg.graphium.core.exception.GraphNotExistsException;
 import at.srfg.graphium.mapmatching.matcher.impl.SegmentDistance;
 import at.srfg.graphium.mapmatching.model.Direction;

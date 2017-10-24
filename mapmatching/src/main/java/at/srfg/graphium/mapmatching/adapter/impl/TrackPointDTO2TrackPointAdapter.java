@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import at.srfg.geomutils.GeometryUtils;
+import at.srfg.graphium.geomutils.GeometryUtils;
 import at.srfg.graphium.io.adapter.IAdapter;
 import at.srfg.graphium.mapmatching.dto.TrackPointDTO;
 import at.srfg.graphium.mapmatching.model.ITrackPoint;
