@@ -398,6 +398,47 @@ public class TestNeo4jRoutingServiceImpl {
 
 	@Test
 	@Ignore
+	public void testRouteWithCoordinatesForCurrentVersion() {
+		IRoutingOptions options = new RoutingOptionsImpl(graphName, null, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
+		options.setRoutingTimestamp(new Date());
+
+	    // stauroute münchner stadtauswärts bundesstraße		
+		double startY = 47.8110640; // lehener brücke
+		double startX = 13.03579700;
+		double endY = 	47.82316024; // knoten salzburg
+		double endX = 13.01423204;
+		
+//	    // ausweichroute siebenstädter bundesstraße TS 1
+//		
+//		double startY = 47.81109922; // siebenstädterstraße
+//		double startX = 13.0330958;
+//		double endY = 47.818473; //
+//		double endX = 13.02372006;
+		
+//	    // ausweichroute siebenstädter bundesstraße TS 2
+//		
+//		double startY = 47.8181344; // 
+//		double startX = 13.0243889;
+//		double endY = 47.81903316; // einmündung bessarabierstraße
+//		double endX = 13.0182091;
+		
+		
+		// by default segments will be cut!
+		IRoute<IWaySegment> route = routingService.route(options, startX, startY, endX, endY);
+		
+		Assert.assertNotNull(route);
+		
+		printRoute(route);
+		printRouteCSV(route);
+		printRouteGeom(route);
+		System.out.println("SRID=4326;POINT (" + startX + " " + startY + ")");
+		System.out.println("SRID=4326;POINT (" + endX + " " + endY + ")");
+		
+		
+	}
+
+	@Test
+	@Ignore
 	public void testRouteWithCoordinatesCompareRoutingCriterias() {
 //		String graphName = "gip_at_frc_0_8";
 //		String graphVersion = "16_04_161103_2";
