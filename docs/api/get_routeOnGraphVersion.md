@@ -2,7 +2,7 @@
 
 ## Resource URL
 
-`http://localhost/graphium/api/metadata/graphs/{graph}/versions/{version}/routing/getRoute.do?&startX={startX}&startY={startY}&endX={endX}&endY={endY}&cutsegments={cutsegments}&routingMode={routingMode}&routingCriteria={routingCriteria}`
+`http://localhost/graphium/metadata/graphs/{graph}/versions/{version}/routing/getRoute.do?&startX={startX}&startY={startY}&endX={endX}&endY={endY}&cutsegments={cutsegments}&routingMode={routingMode}&routingCriteria={routingCriteria}`
 
 ## Parameters
 
@@ -20,7 +20,7 @@
 
 ## Example URL
 
-`http://localhost:7474/graphium/api/graphs/osm_at_lower_levels/versions/20170203/routing/getRoute.do?startX=13.043516&startY=47.812558&endX=13.044208&endY=47.812287&routingMode=CAR&routingCriteria=length`
+`http://localhost:7474/graphium/graphs/osm_at_lower_levels/versions/20170203/routing/getRoute.do?startX=13.043516&startY=47.812558&endX=13.044208&endY=47.812287&routingMode=CAR&routingCriteria=length`
 
 ## Example Response
 ```json
