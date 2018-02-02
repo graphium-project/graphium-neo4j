@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.google.common.math.DoubleMath;
+import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.Point;
 
@@ -318,14 +319,14 @@ public class SegmentMatcher {
 		
 		// end index of track sub-line
 		int trackSubLineIndexTo = newEndIndex;
-		if (newEndIndex > track.getLineString().getNumPoints() - 1) {
+		if (newEndIndex > track.getTrackPoints().size() - 1) {
 			trackSubLineIndexTo--;
-		} else if (newEndIndex < track.getLineString().getNumPoints() - 2) {
+		} else if (newEndIndex < track.getTrackPoints().size() - 2) {
 			trackSubLineIndexTo++;
 		}
 		
 		if (trackSubLineIndexTo > trackSubLineIndexFrom) {
-			LineString trackSubLine = (LineString) GeometryUtils.subGeometry(track.getLineString(), trackSubLineIndexFrom, trackSubLineIndexTo);
+			LineString trackSubLine = createTrackSubGeometry(track, trackSubLineIndexFrom, trackSubLineIndexTo);
 			
 			double distance = GeometryUtils.distanceMeters(trackSubLine, segmentLine);
 			if (distance <= 2 * properties.getMaxMatchingRadiusMeter()) {
@@ -338,6 +339,26 @@ public class SegmentMatcher {
 		}
 		
 		return keepShortSegment;
+	}
+
+	/**
+	 * Creates a sub-linestring of the track with coordinates of the track points of index trackSubLineIndexFrom to index trackSubLineIndexTo.
+	 * @param track
+	 * @param trackSubLineIndexFrom
+	 * @param trackSubLineIndexTo
+	 * @return sub-linestring
+	 */
+	private LineString createTrackSubGeometry(ITrack track, int trackSubLineIndexFrom, int trackSubLineIndexTo) {
+		Coordinate[] coords = new Coordinate[trackSubLineIndexTo - trackSubLineIndexFrom + 1];
+		
+		int j = 0;
+		for (int i=trackSubLineIndexFrom; i<=trackSubLineIndexTo; i++) {
+			ITrackPoint tp = track.getTrackPoints().get(i);
+			coords[j] = tp.getPoint().getCoordinate();
+			j++;
+		}
+		
+		return GeometryUtils.createLineString(coords, track.getLineString().getSRID());
 	}
 
 	/**

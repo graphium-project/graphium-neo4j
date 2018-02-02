@@ -168,8 +168,16 @@ implements IGraphVersionStateModifiedObserver {
 				// requested graph version is not in cache => load, build and cache tree index 
 				IWayGraphVersionMetadata metadata = metadataService.getWayGraphVersionMetadata(graphName, version);
 				if (metadata != null && metadata.getState().equals(State.ACTIVE)) {
-					historicIndexCache.put(graphVersionName, buildTree(graphVersionName));
-					index = historicIndexCache.getIfPresent(graphVersionName);
+					// if requested version was null take version of metadata (should be current version)
+					graphVersionName = GraphVersionHelper.createGraphVersionName(graphName, metadata.getVersion());
+					// maybe now we can find the right version in index cache?
+					if (activeIndexCache != null && activeIndexCache.containsKey(graphName) &&
+						activeIndexCache.get(graphName).getMetadata().getVersion().equals(metadata.getVersion())) {
+						index = activeIndexCache.get(graphName).getTree();
+					} else {
+						historicIndexCache.put(graphVersionName, buildTree(graphVersionName));
+						index = historicIndexCache.getIfPresent(graphVersionName);
+					}
 				}
 			}
 		}
