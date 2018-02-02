@@ -53,11 +53,11 @@ For both routing and map matching a valid graph version (especially validity has
 
 Import:
 
-`http://localhost/graphium/api/segments/graphs/{graph}/versions/{version}?overrideIfExists={overrideIfExists}`
+`curl -X POST "http://localhost/graphium/api/segments/graphs/{graph}/versions/{version}?overrideIfExists={overrideIfExists}" -F "file=@{FILE}"`
 
 Activation:
 
-`http://localhost/graphium/api/metadata/graphs/{graph}/versions/{version}/state/ACTIVE`
+`curl -X PUT "http://localhost/graphium/api/metadata/graphs/{graph}/versions/{version}/state/ACTIVE"`
 
 ## Routing
 
