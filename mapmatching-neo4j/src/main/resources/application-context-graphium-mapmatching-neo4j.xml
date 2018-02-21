@@ -48,6 +48,7 @@
 		<property name="csvLoggerName" value="${mapmatcher.csvLoggerName}"/>
 		<property name="globalStatistics" ref="mapMatcherGlobalStatistics"/>
 		<property name="thresholdForLowSamplingsInSecs" value="${mapmatcher.thresholdForLowSamplingsInSecs}"/>
+		<property name="thresholdSamplingIntervalForTryingFurtherPathSearches" value="${mapmatcher.thresholdSamplingIntervalInSecsForTryingFurtherPathSearches}"/>
 	</bean>
 	
 	<bean id="mapMatcherTimerService" class="at.srfg.graphium.mapmatching.timer.MapMatcherTimerService" lazy-init="true" >

@@ -317,4 +317,15 @@ public class Neo4jMapMatcher implements IMapMatcher {
 		properties.setRouteCacheSize(routeCacheSize);
 	}
 
+	@Override
+	public int getThresholdSamplingIntervalForTryingFurtherPathSearches() {
+		return properties.getThresholdSamplingIntervalForTryingFurtherPathSearches();
+	}
+
+	@Override
+	public void setThresholdSamplingIntervalForTryingFurtherPathSearches(
+			int thresholdSamplingIntervalForTryingFurtherPathSearches) {
+		properties.setThresholdSamplingIntervalForTryingFurtherPathSearches(thresholdSamplingIntervalForTryingFurtherPathSearches);
+	}
+
 }

@@ -117,7 +117,7 @@ public class MatchedPointDistanceCalculator extends DistanceCalculator {
 				totalPenalty += penaltyForSwitchedFrc * Math.abs(prevFrc - frc);
 			} else {
 				// special treatment of slip roads (FRC=0, FormOfWay=10)
-				if (frc == 0 && ((fow != prevFow) || (lanes != prevLanes))) {
+				if (frc == 0 && ((fow == 10 || prevFow == 10 ) && (fow != prevFow || lanes != prevLanes))) {
 					totalPenalty += penaltyForSwitchedFrc * 3;
 				}
 			}

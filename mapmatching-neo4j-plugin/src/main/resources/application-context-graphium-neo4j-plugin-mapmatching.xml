@@ -38,6 +38,7 @@
 		<property name="routingService" ref="neo4jRoutingService"/>
 		<property name="csvLoggerName" value="${mapmatcher.csvLoggerName}"/>
 		<property name="thresholdForLowSamplingsInSecs" value="${mapmatcher.thresholdForLowSamplingsInSecs}"/>
+		<property name="thresholdSamplingIntervalForTryingFurtherPathSearches" value="${mapmatcher.thresholdSamplingIntervalInSecsForTryingFurtherPathSearches}"/>
 	</bean>
 	
 	<bean id="mapMatcherTimerService" class="at.srfg.graphium.mapmatching.timer.MapMatcherTimerService" lazy-init="true" >

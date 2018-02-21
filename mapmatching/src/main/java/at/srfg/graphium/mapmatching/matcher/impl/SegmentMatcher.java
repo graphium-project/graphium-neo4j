@@ -264,7 +264,7 @@ public class SegmentMatcher {
 		
 		// get the distances between the previous points
 		ITrackPoint pointTo = track.getTrackPoints().get(startIndex);
-		for (int i = startIndex - 1; i >= startIndex - 5; i--) {
+		for (int i = startIndex - 1; i >= startIndex - 10; i--) {
 			if (i < 0) break;
 			
 			ITrackPoint pointFrom = track.getTrackPoints().get(i);

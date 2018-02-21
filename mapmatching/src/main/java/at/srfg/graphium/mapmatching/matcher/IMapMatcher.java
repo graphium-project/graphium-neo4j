@@ -77,4 +77,7 @@ public interface IMapMatcher {
 	int getThresholdForLowSamplingsInSecs();
 	void setThresholdForLowSamplingsInSecs(int thresholdForLowSamplingsInSecs);
 
+	int getThresholdSamplingIntervalForTryingFurtherPathSearches();
+	void setThresholdSamplingIntervalForTryingFurtherPathSearches(int thresholdSamplingIntervalForTryingFurtherPathSearches);
+
 }

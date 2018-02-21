@@ -185,12 +185,12 @@ public class RoutingMatcher {
 			int radius, ITrack track,
 			List<AlternativePath> potentialShortestPaths, List<AlternativePath> skippedPaths,
 			List<AlternativePath> fallbackRoutes) {
-		int pointIndexRoutingTo;
 		
 		boolean foundTargetSegment = false;
 		int skippedPoints = pointIndex - lastSegment.getEndPointIndex();
 		
 		int initialPointIndexRoutingFrom = lastSegment.getEndPointIndex() - 1;
+		int trieRouteToNextPoint = 0;
 		do {
 			matchingTask.checkCancelStatus();
 			
@@ -198,64 +198,8 @@ public class RoutingMatcher {
 				log.debug("Search possible paths for track " + track.getId() + " to point index " + pointIndex);
 			}
 			
-			pointIndexRoutingTo = pointIndex;
-			
-			// get segments near the next point
-			List<SegmentDistance<IWaySegment>> targetSegments = matchingTask.getInitialMatcher()
-																.findStartSegments(track, pointIndex, radius, maxNrOfTargetSegments);
-			
-			// find path for the first five end segments, beginning with the nearest segment
-			Iterator<SegmentDistance<IWaySegment>> it = targetSegments.iterator();
-			while (it.hasNext()) {
-				List<IMatchedWaySegment> shortestPath = null;
-				SegmentDistance<IWaySegment> targetSegment = it.next();
-
-				/* There is at least one segment near the target point. No matter if we find a valid 
-				 * route or not, stop after the current point.
-				 */
-				foundTargetSegment = true;
-				
-				long skippedTimeSec = (track.getTrackPoints().get(pointIndex).getTimestamp().getTime() - 
-								   	track.getTrackPoints().get(lastSegment.getEndPointIndex()).getTimestamp().getTime()) / 1000;
-				
-				if (skippedTimeSec <= 60 && // 1min
-						
-					targetSegment.getSegment().getId() != lastSegment.getId()) {
-					/* only try to find a shortest path between the last and the target segment, if
-					 * they are not the same segment and if not too much points have been skipped
-					 */
-					shortestPath = getShortestPath(
-							lastSegment, 
-							targetSegment.getSegment(),
-							properties.getTempMaxSegmentsForShortestPath(),
-							matchingTask.getGraphDao(), 
-							matchingTask.getGraphName(),
-							matchingTask.getGraphVersion());
-					
-					if (shortestPath != null && !shortestPath.isEmpty()) {
-						if (checkImpossibleRoute(shortestPath, track, initialPointIndexRoutingFrom, pointIndexRoutingTo)) {
-							potentialShortestPaths.add(AlternativePath.fromRouting(shortestPath));
-						}
-					}
-				}
-
-				if (skippedPoints > skippedPointsThresholdToCreateNewPath || 
-						(potentialShortestPaths.isEmpty() && (shortestPath == null || shortestPath.isEmpty()))) {
-					/* No route found or points skipped, split the track at this position
-					 * and find new segments after the skipped points
-					 */
-					addSegmentsAfterSkippedPoints(targetSegment, pointIndexRoutingTo, 
-							skippedPaths, track);
-					
-				} else {
-					/* Even if a route was found or no points were skipped, remember the found segment.
-					 * In case it is not possible to create a valid branch from the found routes,
-					 * the segment can still be used as fallback.
-					 */
-					addSegmentsAfterSkippedPoints(targetSegment, pointIndexRoutingTo, 
-							fallbackRoutes, track);
-				}
-			}
+			foundTargetSegment = getShortestPath(lastSegment, track, pointIndex, skippedPoints, radius, initialPointIndexRoutingFrom, 
+					potentialShortestPaths, skippedPaths, fallbackRoutes);
 			
 			// if no route could be found for the next point, try one of the next points (the third)
 			if (!foundTargetSegment && potentialShortestPaths.isEmpty()) {
@@ -271,14 +215,92 @@ public class RoutingMatcher {
 
 				pointIndex += pointsToSkip;
 				skippedPoints += pointsToSkip;
-				pointIndexRoutingTo = pointIndex;
+
+			} else if (foundTargetSegment && potentialShortestPaths.isEmpty()) {
+				
+ 				while (properties.getMeanSamplingInterval() < properties.getThresholdSamplingIntervalForTryingFurtherPathSearches() && // statistically this methodology results in worse paths for higher sampling intervals
+					   trieRouteToNextPoint <= properties.getNrOfPointsToSkip() && 
+					   potentialShortestPaths.isEmpty()) {
+					pointIndex++;
+					skippedPoints++;
+					trieRouteToNextPoint++;
+					List<AlternativePath> dummySkippedPaths = new ArrayList<>();
+					List<AlternativePath> dummyFallbackRoutes = new ArrayList<>();
+					foundTargetSegment = getShortestPath(lastSegment, track, pointIndex, skippedPoints, radius, initialPointIndexRoutingFrom, 
+							potentialShortestPaths, dummySkippedPaths, dummyFallbackRoutes);
+					
+				}
+				
 			}
 
 		} while (!foundTargetSegment && potentialShortestPaths.isEmpty() && pointIndex < track.getTrackPoints().size());
 		
-		return pointIndexRoutingTo;
+		return pointIndex;
 	}
 	
+	private boolean getShortestPath(IMatchedWaySegment lastSegment, ITrack track, int pointIndex, int skippedPoints, int radius, 
+			int initialPointIndexRoutingFrom, List<AlternativePath> potentialShortestPaths, List<AlternativePath> skippedPaths, List<AlternativePath> fallbackRoutes) {
+		boolean foundTargetSegment = false;
+		// get segments near the next point
+					List<SegmentDistance<IWaySegment>> targetSegments = matchingTask.getInitialMatcher()
+																		.findStartSegments(track, pointIndex, radius, maxNrOfTargetSegments);
+					
+					// find path for the first five end segments, beginning with the nearest segment
+					Iterator<SegmentDistance<IWaySegment>> it = targetSegments.iterator();
+					while (it.hasNext()) {
+						List<IMatchedWaySegment> shortestPath = null;
+						SegmentDistance<IWaySegment> targetSegment = it.next();
+
+						/* There is at least one segment near the target point. No matter if we find a valid 
+						 * route or not, stop after the current point.
+						 */
+						foundTargetSegment = true;
+						
+						long skippedTimeSec = (track.getTrackPoints().get(pointIndex).getTimestamp().getTime() - 
+										   	track.getTrackPoints().get(lastSegment.getEndPointIndex()).getTimestamp().getTime()) / 1000;
+						
+						if (skippedTimeSec <= 60 && // 1min
+								
+							targetSegment.getSegment().getId() != lastSegment.getId()) {
+							/* only try to find a shortest path between the last and the target segment, if
+							 * they are not the same segment and if not too much points have been skipped
+							 */
+							shortestPath = getShortestPath(
+									lastSegment, 
+									targetSegment.getSegment(),
+									properties.getTempMaxSegmentsForShortestPath(),
+									matchingTask.getGraphDao(), 
+									matchingTask.getGraphName(),
+									matchingTask.getGraphVersion());
+							
+							if (shortestPath != null && !shortestPath.isEmpty()) {
+								if (checkImpossibleRoute(shortestPath, track, initialPointIndexRoutingFrom, pointIndex)) {
+									potentialShortestPaths.add(AlternativePath.fromRouting(shortestPath));
+								}
+							}
+						}
+
+						if (skippedPoints > skippedPointsThresholdToCreateNewPath || 
+								(potentialShortestPaths.isEmpty() && (shortestPath == null || shortestPath.isEmpty()))) {
+							/* No route found or points skipped, split the track at this position
+							 * and find new segments after the skipped points
+							 */
+//							skippedPaths.clear();
+							addSegmentsAfterSkippedPoints(targetSegment, pointIndex, 
+									skippedPaths, track);
+							
+						} else {
+							/* Even if a route was found or no points were skipped, remember the found segment.
+							 * In case it is not possible to create a valid branch from the found routes,
+							 * the segment can still be used as fallback.
+							 */
+							addSegmentsAfterSkippedPoints(targetSegment, pointIndex, 
+									fallbackRoutes, track);
+						}
+					}
+		return foundTargetSegment;
+
+	}
 	/**
      * @return false if route is possible so the average time the route takes to drive through could match the track
      */

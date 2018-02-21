@@ -52,6 +52,9 @@ public interface IMapMatchingProperties {
 	int getThresholdForLowSamplingsInSecs();
 	void setThresholdForLowSamplingsInSecs(int thresholdForLowSamplingsInSecs);
 
+	int getMeanSamplingInterval();
+	void setMeanSamplingInterval(int meanSamplingInterval);
+	
 	boolean isLowSamplingInterval();
 	void setLowSamplingInterval(boolean lowSamplingInterval);
 
@@ -87,5 +90,8 @@ public interface IMapMatchingProperties {
 	
 	int getRouteCacheSize();
 	void setRouteCacheSize(int routeCacheSize);
+	
+	public int getThresholdSamplingIntervalForTryingFurtherPathSearches();
+	public void setThresholdSamplingIntervalForTryingFurtherPathSearches(int thresholdSamplingIntervalForTryingFurtherPathSearches);
 	
 }

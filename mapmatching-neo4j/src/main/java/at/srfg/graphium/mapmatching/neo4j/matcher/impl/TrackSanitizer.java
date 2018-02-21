@@ -41,6 +41,7 @@ public class TrackSanitizer {
 	 */
 	public void analyseTrack(ITrack origTrack, IMapMatchingProperties properties) {
 		int meanSamplingRateSec = TrackUtils.getMeanSamplingRate(origTrack);
+		properties.setMeanSamplingInterval(meanSamplingRateSec);
 		
 		log.info("track has a mean sampling rate of " + meanSamplingRateSec + "sec");			
 	

@@ -35,7 +35,7 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 	// maximum number of segments valid for a shortest path search (e.g. in case of loss of gps track points)
 	private int maxSegmentsForShortestPath = 15;
 
-	// minimum number of best resulting paths with which will be processed preferable
+	// maximum number of best resulting paths with which will be processed preferable
 	private int maxNrOfBestPaths = 5;
 		
 	// number of points to skip during path initialization or alternative path search, when no path can be found for a point
@@ -63,6 +63,14 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 	private int nrOfHops = 3;
 	
 	private int routeCacheSize = 100;
+	
+	// track's mean sampling interval in seconds 
+	private int meanSamplingInterval = 0;
+	
+	// for shortest path searches a track point will be identified creating a routed path to; in some cases this track point has a big GPS error so routing
+	// will not be successful; then the algorithm will try the next n points as routing targets;
+	// statistically this methodology results in worse paths for higher sampling intervals
+	private int thresholdSamplingIntervalForTryingFurtherPathSearches = 90;
 	
 	/**
 	 * Minimum number of matching segments per section. If a section has less than
@@ -95,7 +103,8 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 		return "MapMatchingProperties [initialRadiusMeter="
 				+ initialRadiusMeter + ", maxMatchingRadiusMeter="
 				+ maxMatchingRadiusMeter + ", lowSamplingInterval="
-				+ lowSamplingInterval + ", maxSegmentsForShortestPath="
+				+ lowSamplingInterval + ", meanSamplingInterval="
+				+ meanSamplingInterval + ", maxSegmentsForShortestPath="
 				+ maxSegmentsForShortestPath + ", maxNrOfBestPaths="
 				+ maxNrOfBestPaths + ", nrOfPointsToSkip=" + nrOfPointsToSkip
 				+ ", onlyBestResult=" + onlyBestResult + ", srid=" + srid
@@ -104,6 +113,7 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 				+ tempMaxSegmentsForShortestPath + ", minSegmentsPerSection="
 				+ minSegmentsPerSection + ", minNrOfPoints=" + minNrOfPoints
 				+ ", minLength=" + minLength + ", envelopeSideLength=" + envelopeSideLength 
+				+ ", thresholdSamplingIntervalForTryingFurtherPathSearches=" + thresholdSamplingIntervalForTryingFurtherPathSearches
 				+ ", online=" + online + "]";
 	}
 	
@@ -314,6 +324,27 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 	@Override
 	public void setRouteCacheSize(int routeCacheSize) {
 		this.routeCacheSize = routeCacheSize;
+	}
+
+	@Override
+	public int getMeanSamplingInterval() {
+		return meanSamplingInterval;
+	}
+
+	@Override
+	public void setMeanSamplingInterval(int meanSamplingInterval) {
+		this.meanSamplingInterval = meanSamplingInterval;
+	}
+
+	@Override
+	public int getThresholdSamplingIntervalForTryingFurtherPathSearches() {
+		return thresholdSamplingIntervalForTryingFurtherPathSearches;
+	}
+
+	@Override
+	public void setThresholdSamplingIntervalForTryingFurtherPathSearches(
+			int thresholdSamplingIntervalForTryingFurtherPathSearches) {
+		this.thresholdSamplingIntervalForTryingFurtherPathSearches = thresholdSamplingIntervalForTryingFurtherPathSearches;
 	}
 	
 }
