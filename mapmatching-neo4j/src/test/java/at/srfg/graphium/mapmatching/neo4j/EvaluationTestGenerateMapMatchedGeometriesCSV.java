@@ -29,6 +29,7 @@ import java.util.logging.Logger;
 
 import javax.annotation.Resource;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
@@ -51,9 +52,9 @@ import at.srfg.graphium.model.IWaySegment;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/application-context-graphium-neo4j_test.xml",
 		"classpath:/application-context-graphium-core.xml"})
-public class TestGenerateMapMatchedGeometriesCSV {
+public class EvaluationTestGenerateMapMatchedGeometriesCSV {
 
-	private static Logger log = Logger.getLogger("TestGenerateMapMatchedGeometriesCSV");	
+	private static Logger log = Logger.getLogger("EvaluationTestGenerateMapMatchedGeometriesCSV");	
 	
 	@Resource(name="neo4jWayGraphReadDao")
 	private IWayGraphReadDao<IWaySegment> neo4jGraphReadDao;
@@ -81,6 +82,7 @@ public class TestGenerateMapMatchedGeometriesCSV {
 		};
 
 	@Test
+	@Ignore
 	public void generateExpectedRouteGeometryFromSegmentIds() {
 //		long[] trackIds = new long[] {14079459};
 		
