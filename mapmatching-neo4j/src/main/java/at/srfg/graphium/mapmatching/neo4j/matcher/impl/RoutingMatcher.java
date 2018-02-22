@@ -67,7 +67,7 @@ public class RoutingMatcher {
 	private int maxNrOfTargetSegments = 5;
 	private int MAXSPEED_FRC_0 = 150; // km/h
 	private int MAXSPEED_FRC_1_X = 120; // km/h
-	private int skippedPointsThresholdToCreateNewPath = 1;
+	private int skippedPointsThresholdToCreateNewPath = 3;
 	
 	public RoutingMatcher(MapMatchingTask mapMatchingTask,
 			IRoutingService<IWaySegment> routingClient, IMapMatchingProperties properties, TrackSanitizer trackSanitizer) {
