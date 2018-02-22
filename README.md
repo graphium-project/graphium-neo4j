@@ -1,5 +1,5 @@
 <p align="right">
-<img src="docs/img/Graphium_225x130px.svg">
+<img src="docs/img/Graphium_225x130px.png">
 </p>
 
 # Graphium Neo4j
@@ -14,7 +14,7 @@ Graphium Neo4j consists of modules which must be deployed as Neo4j Server plugin
 
 ### Deployment
 
-Following plugins have to be built and deployed in the Neo4j's *plugins* directory:
+Graphium Neo4j is an extension of Graphium. Therefore [Graphium](https://github.com/graphium-project/graphium) has to be checked out and built before. Then following plugins have to be built and deployed in the Neo4j's *plugins* directory:
 
 - `graphium-neo4j-server-integration-plugin-XXX.jar` (Graphium's core functionality and integration into Neo4j)
 - `graphium-api-neo4j-plugin-XXX.jar` (API)
@@ -48,6 +48,16 @@ Graphium Neo4j plugins has to be registered in Neo4j Server. Therefore, *neo4j.c
 - `dbms.unmanaged_extension_classes=at.srfg.graphium.neo4j.bootstrap=/graphium`
 - `dbms.jvm.additional=-Dgraphium.conf.path=file:conf/`
 - `graphium.secured=true/false`
+
+For both routing and map matching a valid graph version (especially validity has to be defined correctly) has to be imported and activated (state is ACTIVE). If a graph version has been imported its state is INITIAL, which normally means someone has to verify the data first or this graph version is only some kind of test version and should not be taken into account for the production system. Only after verification and activation of a graph version it can be used for processing.
+
+Import:
+
+`curl -X POST "http://localhost/graphium/api/segments/graphs/{graph}/versions/{version}?overrideIfExists={overrideIfExists}" -F "file=@{FILE}"`
+
+Activation:
+
+`curl -X PUT "http://localhost/graphium/api/metadata/graphs/{graph}/versions/{version}/state/ACTIVE"`
 
 ## Routing
 
