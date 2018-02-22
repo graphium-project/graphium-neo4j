@@ -19,13 +19,12 @@
 		<dependency>
 			<groupId>at.srfg.graphium</groupId>
 			<artifactId>graphium-core</artifactId>
-			<version>${graphium.version}</version>
 		</dependency>
 		
 		<dependency>
 			<groupId>at.srfg.graphium</groupId>
 			<artifactId>graphium-mapmatching-client</artifactId>
-			<version>${graphium.version}</version>
+			<version>${graphium-neo4j.version}</version>
 		</dependency>
 		
 		<dependency>

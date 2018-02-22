@@ -161,25 +161,21 @@
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
 				<artifactId>graphium-model</artifactId>
-				<version>${graphium.version}</version>
 			</dependency>
 						
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
 				<artifactId>graphium-io</artifactId>
-				<version>${graphium.version}</version>
 			</dependency>
 						
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
 				<artifactId>graphium-core</artifactId>
-				<version>${graphium.version}</version>
 			</dependency>
 									
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
 				<artifactId>graphium-api</artifactId>
-				<version>${graphium.version}</version>
 			</dependency>
 						
 			<dependency>
@@ -191,7 +187,7 @@
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
 				<artifactId>graphium-mapmatching</artifactId>
-				<version>${graphium.version}</version>
+				<version>${graphium-neo4j.version}</version>
 			</dependency>
 			
 			<dependency>
@@ -203,7 +199,6 @@
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
 				<artifactId>graphium-utils</artifactId>
-				<version>${graphium.version}</version>
 			</dependency>  	
 		
 		</dependencies>

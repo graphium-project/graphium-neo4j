@@ -17,7 +17,8 @@
 	<dependencies>
 		<dependency>
 			<groupId>at.srfg.graphium</groupId>
-			<artifactId>graphium-api</artifactId>	
+			<artifactId>graphium-api</artifactId>
+			<version>${graphium.version}</version>	
 		</dependency>
 
 		<!-- test -->

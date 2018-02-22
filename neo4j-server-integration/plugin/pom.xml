@@ -16,7 +16,6 @@
 		<relativePath>../base/pom.xml</relativePath>
 	</parent>
 	
-	
 	<build>
 		<plugins>
 			<plugin>
@@ -124,7 +123,6 @@
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
 				<artifactId>graphium-utils</artifactId>
-				<version>${graphium.version}</version>
 			</dependency>  	
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
@@ -135,19 +133,16 @@
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
 				<artifactId>graphium-model</artifactId>
-				<version>${graphium.version}</version>
 				<scope>provided</scope>
 			</dependency>
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
 				<artifactId>graphium-core</artifactId>
-				<version>${graphium.version}</version>
 				<scope>provided</scope>
 			</dependency>
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
 				<artifactId>graphium-io</artifactId>
-				<version>${graphium.version}</version>
 				<scope>provided</scope>
 			</dependency>
 			

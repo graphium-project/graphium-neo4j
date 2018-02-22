@@ -31,7 +31,7 @@
 		<dependency>
 			<groupId>at.srfg.graphium</groupId>
 			<artifactId>graphium-mapmatching</artifactId>
-			<version>${graphium.version}</version>
+			<version>${graphium-neo4j.version}</version>
 		</dependency>
 
 		<dependency>
