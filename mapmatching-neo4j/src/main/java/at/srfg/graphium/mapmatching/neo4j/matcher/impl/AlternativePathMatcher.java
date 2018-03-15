@@ -347,16 +347,14 @@ public class AlternativePathMatcher {
 					}
 				} else if (segment.getDirection().isEnteringThroughStartNode() &&
 							(segment.getStartNodeId() == firstNewSegment.getStartNodeId() || 
-							 segment.getStartNodeId() == firstNewSegment.getEndNodeId()) &&
-						   segment.getStartNodeIndex() > 0) {
+							 segment.getStartNodeId() == firstNewSegment.getEndNodeId())) {
 					// u-turn: segments are connected through the start node of the last segment
 					segment.setUTurnSegment(true);
 					segment.setDirection(Direction.START_TO_START);
 					foundUTurnSegment = true;
 				} else if (segment.getDirection().isEnteringThroughEndNode() &&
 			 				(segment.getEndNodeId() == firstNewSegment.getStartNodeId() || 
-			 				 segment.getEndNodeId() == firstNewSegment.getEndNodeId()) &&
-						   segment.getStartNodeIndex() > 0) {
+			 				 segment.getEndNodeId() == firstNewSegment.getEndNodeId())) {
 					// u-turn: segments are connected through the end node of the last segment
 					segment.setUTurnSegment(true);
 					segment.setDirection(Direction.END_TO_END);
@@ -500,8 +498,8 @@ public class AlternativePathMatcher {
 							removeDiffDistances(previousSegment, newStartIndex);
 						}
 						previousSegment.calculateDistances(track);
-					} else {
-						newStartIndex = 0;
+//					} else {
+//						newStartIndex = 0;
 					}
 					
 				} else {
