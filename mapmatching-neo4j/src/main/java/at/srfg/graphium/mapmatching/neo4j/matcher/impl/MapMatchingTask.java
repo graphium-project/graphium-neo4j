@@ -393,6 +393,9 @@ public class MapMatchingTask implements IMapMatcherTask {
 					fillNewCertainSegments = false;
 					path.removeMatchedWaySegments(segmentIndicesToRemove);
 					path.setCertainPathEndSegment(lastCertainSegment);
+					// replace first segment with lastCertainSegment to guarantee that all paths start from the same base (segment + indices)
+					path.getMatchedWaySegments().remove(0);
+					path.getMatchedWaySegments().add(0, lastCertainSegment);
 				}
 				
 				certainPath.addAll(newCertainSegments);
