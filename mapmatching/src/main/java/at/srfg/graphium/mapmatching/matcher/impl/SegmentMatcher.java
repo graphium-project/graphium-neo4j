@@ -129,7 +129,8 @@ public class SegmentMatcher {
 	 */
 	public List<Double> getValidPointDistances(IWaySegment segment, int startIndex, ITrack track, double matchingRadius) {
 		List<Double> distances = new ArrayList<Double>();
-
+		List<Double> tempDistances = new ArrayList<Double>();
+		
 		LineString line = segment.getGeometry();
 		boolean valid = true;
 		int currentPointIndex = startIndex;
@@ -141,29 +142,61 @@ public class SegmentMatcher {
 				// the point is within the search radius
 				valid = true;
 				currentPointIndex++;
-				distances.add(distance);
-			} else {
-				// the point is not within the search radius, but let's check the next point (do it fuzzy ...)
-				if (!properties.isLowSamplingInterval() &&
-					currentPointIndex < track.getTrackPoints().size() - 1) {
-				    double distanceForNextPoint = GeometryUtils.distanceMeters(line, track.getTrackPoints().get(currentPointIndex + 1).getPoint());
-				    
-					if (distanceForNextPoint <= matchingRadius) {
-						// next point is valid again, continue
-						distances.add(distance);
-						distances.add(distanceForNextPoint);
-						currentPointIndex += 2;
-						valid = true;
-						
-						continue;
-					}
+				
+				if (!tempDistances.isEmpty()) {
+					distances.addAll(tempDistances);
+					tempDistances.clear();
 				}
 				
-				valid = false;
+				distances.add(distance);
+			} else {
+				// The point is not within the search radius, but there could be a GPS error in this and some following points. Maybe some points afterwards
+				// could be matched again.
+				
+				// project point onto linestring
+				Point projectedPoint = GeometryUtils.projectPointOnLineString(track.getTrackPoints().get(currentPointIndex).getPoint(), line);
+				
+				// check if projected point is start or end point of linestring
+				if (projectedPoint.equals(line.getStartPoint()) || projectedPoint.equals(line.getEndPoint()) ||
+					!pointsValid(tempDistances, properties)) {
+					valid = false;
+				} else {
+					valid = true;
+					currentPointIndex++;
+					tempDistances.add(distance);
+				}
+				
 			}
 		}
 		
 		return distances;
+	}
+
+	/**
+	 * if the last 5 distances are greater than threshold (10 * matching radius) => following points are out of range
+	 * @param tempDistances
+	 * @param properties
+	 * @return
+	 */
+	private boolean pointsValid(List<Double> tempDistances, IMapMatchingProperties properties) {
+		int nrOfPossibleWrongPoints = 5;
+		if (tempDistances != null && tempDistances.size() >= nrOfPossibleWrongPoints) {
+			int nrOfOutOfRange = 0;
+			for (int i=tempDistances.size()-1; i>tempDistances.size()-1-nrOfPossibleWrongPoints; i--) {
+				if (tempDistances.get(i) > (10 * properties.getMaxMatchingRadiusMeter())) {
+					nrOfOutOfRange++;
+				}
+			}
+
+			if (nrOfOutOfRange == nrOfPossibleWrongPoints) {
+				return false;
+			} else {
+				return true;
+			}
+
+		} else {
+			return true;
+		}
 	}
 
 	protected int getPossibleLowerStartIndex(IMatchedWaySegment previousSegment, IMatchedWaySegment currentSegment, ITrack track,
