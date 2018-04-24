@@ -49,6 +49,7 @@
 		<property name="globalStatistics" ref="mapMatcherGlobalStatistics"/>
 		<property name="thresholdForLowSamplingsInSecs" value="${mapmatcher.thresholdForLowSamplingsInSecs}"/>
 		<property name="thresholdSamplingIntervalForTryingFurtherPathSearches" value="${mapmatcher.thresholdSamplingIntervalInSecsForTryingFurtherPathSearches}"/>
+		<property name="pointsDiffThresholdForSkipRouting" value="${mapmatcher.pointsDiffThresholdForSkipRouting}"/>
 	</bean>
 	
 	<bean id="mapMatcherTimerService" class="at.srfg.graphium.mapmatching.timer.MapMatcherTimerService" lazy-init="true" >

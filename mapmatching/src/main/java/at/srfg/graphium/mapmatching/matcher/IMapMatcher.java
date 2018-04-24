@@ -80,4 +80,8 @@ public interface IMapMatcher {
 	int getThresholdSamplingIntervalForTryingFurtherPathSearches();
 	void setThresholdSamplingIntervalForTryingFurtherPathSearches(int thresholdSamplingIntervalForTryingFurtherPathSearches);
 
+	int getPointsDiffThresholdForSkipRouting();
+
+	void setPointsDiffThresholdForSkipRouting(int pointsDiffThresholdForSkipRouting);
+
 }

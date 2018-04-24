@@ -328,4 +328,13 @@ public class Neo4jMapMatcher implements IMapMatcher {
 		properties.setThresholdSamplingIntervalForTryingFurtherPathSearches(thresholdSamplingIntervalForTryingFurtherPathSearches);
 	}
 
+	@Override
+	public int getPointsDiffThresholdForSkipRouting() {
+		return properties.getPointsDiffThresholdForSkipRouting();
+	}
+
+	@Override
+	public void setPointsDiffThresholdForSkipRouting(int pointsDiffThresholdForSkipRouting) {
+		properties.setPointsDiffThresholdForSkipRouting(pointsDiffThresholdForSkipRouting);
+	}
 }

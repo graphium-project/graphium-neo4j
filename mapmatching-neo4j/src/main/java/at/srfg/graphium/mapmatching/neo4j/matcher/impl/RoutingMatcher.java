@@ -256,11 +256,15 @@ public class RoutingMatcher {
 						 */
 						foundTargetSegment = true;
 						
-						long skippedTimeSec = (track.getTrackPoints().get(pointIndex).getTimestamp().getTime() - 
-										   	track.getTrackPoints().get(lastSegment.getEndPointIndex()).getTimestamp().getTime()) / 1000;
+						int pointDiff = track.getTrackPoints().get(pointIndex).getNumber() - track.getTrackPoints().get(lastSegment.getEndPointIndex()).getNumber();
 						
-						if (skippedTimeSec <= 60 && // 1min
-								
+						int pointDiffThreshold = properties.getPointsDiffThresholdForSkipRouting();
+						if (properties.isLowSamplingInterval()) {
+							pointDiffThreshold = pointDiffThreshold / 2;
+						}
+						pointDiffThreshold = Math.max(2, pointDiffThreshold);
+						
+						if (pointDiff < pointDiffThreshold &&
 							targetSegment.getSegment().getId() != lastSegment.getId()) {
 							/* only try to find a shortest path between the last and the target segment, if
 							 * they are not the same segment and if not too much points have been skipped

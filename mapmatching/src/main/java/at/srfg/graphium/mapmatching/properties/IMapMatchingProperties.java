@@ -94,4 +94,7 @@ public interface IMapMatchingProperties {
 	public int getThresholdSamplingIntervalForTryingFurtherPathSearches();
 	public void setThresholdSamplingIntervalForTryingFurtherPathSearches(int thresholdSamplingIntervalForTryingFurtherPathSearches);
 	
+	int getPointsDiffThresholdForSkipRouting();
+	void setPointsDiffThresholdForSkipRouting(int pointsDiffThresholdForSkipRouting);
+	
 }
