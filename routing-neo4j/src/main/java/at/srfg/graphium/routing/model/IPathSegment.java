@@ -1,6 +1,6 @@
 /**
  * Graphium Neo4j - Module of Graphium for routing services via Neo4j
- * Copyright © 2017 Salzburg Research Forschungsgesellschaft (graphium@salzburgresearch.at)
+ * Copyright © 2018 Salzburg Research Forschungsgesellschaft (graphium@salzburgresearch.at)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,30 +17,9 @@
  */
 package at.srfg.graphium.routing.model;
 
-import java.util.List;
-
-import at.srfg.graphium.model.IWaySegment;
-
-public interface IRoute<T extends IWaySegment> {
-
-	float getLength();
-	void setLength(float length);
-	
-	public int getDuration();
-	public void setDuration(int duration);
-	
-	public List<IPathSegment> getPath();
-	public void setPath(List<IPathSegment> path);
-	
-	public List<T> getSegments();
-	public void setSegments(List<T> segments);
-
-	public int getRuntimeInMs();
-	public void setRuntimeInMs(int runtimeInMs);
-	
-	public String getGraphName();
-	public void setGraphName(String graphName);
-	
-	public String getGraphVersion();
-	public void setGraphVersion(String graphVersion);
+public interface IPathSegment {
+	long getSegmentId();
+	void setSegmentId(long segment);
+	boolean isDirection();
+	void setDirection(boolean direction);
 }

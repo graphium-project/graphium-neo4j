@@ -20,18 +20,19 @@ package at.srfg.graphium.routing.model.dto.impl;
 import java.util.List;
 
 import at.srfg.graphium.model.IWaySegment;
+import at.srfg.graphium.routing.model.IPathSegment;
 
 public class RouteDtoImpl<T extends IWaySegment>  {
 
 	private float length;
 	private int duration;
-	private List<Long> paths;
+	private List<IPathSegment> paths;
 	private int runtimeInMs;
 	private String graphName;
 	private String graphVersion;
 	private String geometry;
 
-	public RouteDtoImpl(float length, int duration, List<Long> paths, int runtimeInMs, String graphName,
+	public RouteDtoImpl(float length, int duration, List<IPathSegment> paths, int runtimeInMs, String graphName,
 			String graphVersion, String geometry) {
 		super();
 		this.length = length;
@@ -43,11 +44,11 @@ public class RouteDtoImpl<T extends IWaySegment>  {
 		this.geometry = geometry;
 	}
 
-	public List<Long> getPaths() {
+	public List<IPathSegment> getPaths() {
 		return paths;
 	}
 
-	public void setPaths(List<Long> paths) {
+	public void setPaths(List<IPathSegment> paths) {
 		this.paths = paths;
 	}
 
