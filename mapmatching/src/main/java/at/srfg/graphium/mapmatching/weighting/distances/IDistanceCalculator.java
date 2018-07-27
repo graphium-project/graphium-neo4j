@@ -34,4 +34,8 @@ public interface IDistanceCalculator<T> {
 
 	T getPenaltyForSwitchedFrc(IMatchedWaySegment segment, IMatchedWaySegment previousSegment);
 
+	T getPenaltyForBikesAgainstOneWay(IMatchedWaySegment segment, IMatchedWaySegment previousSegment);
+
+	T getPenaltyForBikesOnWalkways(IMatchedWaySegment segment);
+
 }

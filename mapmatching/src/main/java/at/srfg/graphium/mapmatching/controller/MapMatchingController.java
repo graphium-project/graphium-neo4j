@@ -67,6 +67,7 @@ public class MapMatchingController {
     		@RequestParam(name = "startSegmentId", required = false) Long startSegmentId,
     		@RequestParam(name = "timeoutMs", required = false, defaultValue = "10000") int timeout, // timeout in milliseconds
     		@RequestParam(name = "outputVerbose", required = false, defaultValue = "false") boolean outputVerbose, // if true return additionally waysegments 
+    		@RequestParam(name = "routingMode", required = false, defaultValue = "car") String routingMode, // optional routingMode
     		@RequestBody TrackDTO trackDto) throws GraphNotExistsException, CancellationException {
 
 		ITrack track = trackAdapter.adapt(trackDto);
@@ -85,7 +86,7 @@ public class MapMatchingController {
 			graphVersion = metadataList.get(0).getVersion();
 		}
 		
-		return match(graphName, graphVersion, track, startSegmentId, timeout, outputVerbose);
+		return match(graphName, graphVersion, track, startSegmentId, timeout, outputVerbose, routingMode);
 	}
 
 	@RequestMapping(value="/graphs/{graph}/versions/current/matchtrack", method=RequestMethod.POST)
@@ -94,16 +95,18 @@ public class MapMatchingController {
     		@RequestParam(name = "startSegmentId", required = false) Long startSegmentId,
     		@RequestParam(name = "timeoutMs", required = false, defaultValue = "10000") int timeout, // timeout in milliseconds
     		@RequestParam(name = "outputVerbose", required = false, defaultValue = "false") boolean outputVerbose, // if true return additionally waysegments 
+    		@RequestParam(name = "routingMode", required = false, defaultValue = "car") String routingMode, // optional routingMode
     		@RequestBody TrackDTO trackDto) throws GraphNotExistsException, CancellationException {
 
 		ITrack track = trackAdapter.adapt(trackDto);
-		return match(graphName, null, track, startSegmentId, timeout, outputVerbose);
+		return match(graphName, null, track, startSegmentId, timeout, outputVerbose, routingMode);
 		
 	}
 
-	private MatchedBranchDTO match(String graphName, String graphVersion, ITrack track, Long startSegmentId, int timeout, boolean outputVerbose) throws GraphNotExistsException {
+	private MatchedBranchDTO match(String graphName, String graphVersion, ITrack track, Long startSegmentId, int timeout, boolean outputVerbose, String routingMode) 
+		throws GraphNotExistsException {
 		
-		List<IMatchedBranch> branches = mapMatchingService.matchTrack(graphName, graphVersion, track, startSegmentId, null, timeout, true);
+		List<IMatchedBranch> branches = mapMatchingService.matchTrack(graphName, graphVersion, track, startSegmentId, null, timeout, true, routingMode);
 		
 		if (branches != null && !branches.isEmpty()) {
 			// return only first/best branch

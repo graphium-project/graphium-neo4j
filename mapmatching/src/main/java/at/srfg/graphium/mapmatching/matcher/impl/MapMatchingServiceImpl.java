@@ -45,9 +45,9 @@ public class MapMatchingServiceImpl implements IMapMatchingService {
 
 	@Override
 	public List<IMatchedBranch> matchTrack(String graphName, String graphVersion, ITrack track, Long startSegmentId, List<IMatchedBranch> previousBranches, 
-			int timeoutInMs, boolean onlyBestResult) throws GraphNotExistsException, CancellationException {
+			int timeoutInMs, boolean onlyBestResult, String routingMode) throws GraphNotExistsException, CancellationException {
 		
-		TimedMapMatcherTask task = mapMatcherTaskFactory.getTask(graphName, graphVersion, track, startSegmentId, previousBranches, timeoutInMs, mapMatcherTimerService);
+		TimedMapMatcherTask task = mapMatcherTaskFactory.getTask(graphName, graphVersion, track, startSegmentId, previousBranches, timeoutInMs, mapMatcherTimerService, routingMode);
 		
 		List<IMatchedBranch> branches = task.matchTrack();
 		

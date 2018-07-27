@@ -97,4 +97,10 @@ public interface IMapMatchingProperties {
 	int getPointsDiffThresholdForSkipRouting();
 	void setPointsDiffThresholdForSkipRouting(int pointsDiffThresholdForSkipRouting);
 	
+	String getRoutingMode();
+	void setRoutingMode(String routingMode);
+	
+	String getRoutingCriteria();
+	void setRoutingCriteria(String routingCriteria);
+	
 }

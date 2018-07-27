@@ -314,11 +314,10 @@ public class AlternativePathMatcher {
 		}
 		
 		List<IMatchedWaySegment> segments = clonedBranch.getMatchedWaySegments();
+		IMatchedWaySegment lastSegment = segments.get(segments.size() - 1);
 		
 		if (uTurnOnLastSegment) {
 			// an u-turn was already detected on the last segment
-			IMatchedWaySegment lastSegment = segments.get(segments.size() - 1);
-			
 			lastSegment.setUTurnSegment(true);
 			if (lastSegment.getDirection().isEnteringThroughStartNode()) {
 				lastSegment.setDirection(Direction.START_TO_START);
@@ -334,6 +333,10 @@ public class AlternativePathMatcher {
 			
 			if (segment.getMatchedPoints() <= 0) {
 				emptySegmentsAtEnd++;
+				
+				if (uTurnOnLastSegment) {
+					foundUTurnSegment = true;
+				}
 			} else {
 				// found the last matching segment, now check for an u-turn
 				if (segment.getId() == firstNewSegment.getId()) {
@@ -362,8 +365,12 @@ public class AlternativePathMatcher {
 					segment.setUTurnSegment(true);
 					segment.setDirection(Direction.END_TO_END);
 					foundUTurnSegment = true;
+//				} else if (emptySegmentsAtEnd == 1 &&
+//						 ((lastSegment.getDirection().isEnteringThroughStartNode() && firstNewSegment.getDirection().isLeavingThroughStartNode()) ||
+// 						  (lastSegment.getDirection().isEnteringThroughEndNode() && firstNewSegment.getDirection().isLeavingThroughEndNode()))) {
+//					foundUTurnSegment = true;
 				} else {
-					foundUTurnSegment = false;
+					foundUTurnSegment = foundUTurnSegment || false;
 				}
 				
 				break;
@@ -535,6 +542,10 @@ public class AlternativePathMatcher {
 				currSegment.setEndPointIndex(nextStartPointIndex);
 				
 			}
+		}
+		IMatchedWaySegment lastSegment = segments.get(segments.size()-1);
+		if (lastSegment.getEndPointIndex() < lastSegment.getStartPointIndex()) {
+			lastSegment.setEndPointIndex(routeEndPointIndex);
 		}
 		
 		// set start point indexes

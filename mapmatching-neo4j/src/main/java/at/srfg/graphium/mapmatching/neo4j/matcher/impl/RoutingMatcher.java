@@ -65,8 +65,10 @@ public class RoutingMatcher {
 	private TrackSanitizer trackSanitizer;
 	
 	private int maxNrOfTargetSegments = 5;
-	private int MAXSPEED_FRC_0 = 150; // km/h
-	private int MAXSPEED_FRC_1_X = 120; // km/h
+	private int MAXSPEED_CAR_FRC_0 = 150; // km/h
+	private int MAXSPEED_CAR_FRC_1_X = 120; // km/h
+	private int MAXSPEED_BIKE = 50; // km/h
+	private int MAXSPEED_PEDESTRIAN = 20; // km/h
 	private int skippedPointsThresholdToCreateNewPath = 3;
 	
 	public RoutingMatcher(MapMatchingTask mapMatchingTask,
@@ -76,18 +78,20 @@ public class RoutingMatcher {
 		this.properties = properties;
 		this.trackSanitizer = trackSanitizer;
 		
-//		routingOptions = new RoutingOptionsImpl(matchingTask.getGraphName(), mapMatchingTask.getGraphVersion(),
-//				RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
-//		routingOptions = new RoutingOptionsImpl(matchingTask.getGraphName(), mapMatchingTask.getGraphVersion(),
-//				RoutingCriteria.MIN_DURATION, null);
-
-		routingOptions = new RoutingOptionsImpl(matchingTask.getGraphName(), mapMatchingTask.getGraphVersion(),
-				 RoutingAlgorithms.ASTAR, RoutingCriteria.LENGTH, RoutingMode.CAR);
-//		routingOptions = new RoutingOptionsImpl(matchingTask.getGraphName(), mapMatchingTask.getGraphVersion(),
-//				 RoutingAlgorithms.ASTAR, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
+		RoutingMode routingMode = null;
+		if (properties.getRoutingMode() != null && properties.getRoutingMode().length() > 0) {
+			routingMode = RoutingMode.fromValue(properties.getRoutingMode());
+		} else {
+			routingMode = RoutingMode.CAR;
+		}
+		RoutingCriteria routingCriteria = RoutingCriteria.fromValue(properties.getRoutingCriteria());
 		
-//		routingOptions = new RoutingOptionsImpl(matchingTask.getGraphName(), mapMatchingTask.getGraphVersion(),
-//				RoutingCriteria.LENGTH, null);
+		routingOptions = new RoutingOptionsImpl(matchingTask.getGraphName(), mapMatchingTask.getGraphVersion(),
+				 RoutingAlgorithms.ASTAR, routingCriteria, routingMode);
+		
+		if (log.isDebugEnabled()) {
+			log.debug("created " + this.getClass().getSimpleName() + " with following routing options: " + routingOptions.toString());
+		}
 	}
 	/**
 	 * Finds shortest paths from the last matched segment to segments near the given next point. If no path
@@ -255,8 +259,9 @@ public class RoutingMatcher {
 						 * route or not, stop after the current point.
 						 */
 						foundTargetSegment = true;
-						
-						int pointDiff = track.getTrackPoints().get(pointIndex).getNumber() - track.getTrackPoints().get(lastSegment.getEndPointIndex()).getNumber();
+
+						int pointDiff = (int) (track.getTrackPoints().get(pointIndex).getTimestamp().getTime() - 
+											   track.getTrackPoints().get(lastSegment.getEndPointIndex()).getTimestamp().getTime()) / 60000;
 						
 						int pointDiffThreshold = properties.getPointsDiffThresholdForSkipRouting();
 						if (properties.isLowSamplingInterval()) {
@@ -305,70 +310,92 @@ public class RoutingMatcher {
 		return foundTargetSegment;
 
 	}
+
 	/**
      * @return false if route is possible so the average time the route takes to drive through could match the track
      */
     private boolean checkImpossibleRoute(List<IMatchedWaySegment> routedSegments, ITrack track, int startIndex, int endIndex) {
-        if (routedSegments.size() > 1) {
+    	boolean valid = true;
+    	if (routedSegments.size() > 1) {
             if (startIndex == endIndex || endIndex <= 0) {
-                return true;
-            }
-
-            long timeDiffS = (track.getTrackPoints().get(endIndex).getTimestamp().getTime() -
-                             track.getTrackPoints().get(startIndex).getTimestamp().getTime()) / 1000;
-
-            float durationS = 0;
-            int i = 0;
-            for (IMatchedWaySegment seg : routedSegments) {
-                float maxSpeed = 0;
-                
-                // MAXSPEEDs: GIP's maxSpeed is often too low
-                if (seg.getFrc().getValue() == 0 &&
-                	seg.getFormOfWay().getValue() != 10) {
-                	maxSpeed = MAXSPEED_FRC_0;
-                } else {
-                	maxSpeed = MAXSPEED_FRC_1_X;
-                }
-                
-                float length = 0;
-                if (i == 0) {
-                	// first segment is already partially travelled
-                	Point p = track.getTrackPoints().get(startIndex).getPoint();
-                	seg.getGeometry().setSRID(p.getSRID());
-                	length = (float) GeometryUtils.distanceOnLineStringInMeter(p, seg.getGeometry());
-                	if (seg.getDirection().isEnteringThroughStartNode()) {
-                		// gegen Digitalisierungsrichtung
-                		length = seg.getLength() - length;
-                	}
-                } else if (i == routedSegments.size() - 1) {
-                	// last segment is possibly only partially travelled
-                	Point p = track.getTrackPoints().get(endIndex).getPoint();
-                	seg.getGeometry().setSRID(p.getSRID());
-                	length = (float) GeometryUtils.distanceOnLineStringInMeter(p, seg.getGeometry());
-                	if (seg.getDirection().isEnteringThroughEndNode()) {
-                		// gegen Digitalisierungsrichtung
-                		length = seg.getLength() - length;
-                	}
-                } else {
-                	length = seg.getLength();
-                }
-                durationS += length / (maxSpeed / 3.6);
-                i++;
-            }
-
-            if (timeDiffS >= (int)durationS) { // (int) => round
-                return true;
+            	valid = true;
             } else {
-            	if (log.isDebugEnabled()) {
-            		log.debug("Route from segment " + routedSegments.get(0).getId() + " to segment " + routedSegments.get(routedSegments.size()-1).getId() +
-            				" is not possible: calculated min duration = " + durationS + "sec > trackPoint's time diff = " + timeDiffS + "sec");
-            	}
-                return false;
+	
+	            long timeDiffS = (track.getTrackPoints().get(endIndex).getTimestamp().getTime() -
+	                             track.getTrackPoints().get(startIndex).getTimestamp().getTime()) / 1000;
+	
+	            float durationS = 0;
+	            int i = 0;
+	            for (IMatchedWaySegment seg : routedSegments) {
+	                float maxSpeed = 0;
+	                
+	                // MAXSPEEDs: GIP's maxSpeed is often too low
+	                if (routingOptions.getMode().equals(RoutingMode.CAR)) {
+		                if (seg.getFrc().getValue() == 0 &&
+		                	seg.getFormOfWay().getValue() != 10) {
+		                	maxSpeed = MAXSPEED_CAR_FRC_0;
+		                } else {
+		                	maxSpeed = MAXSPEED_CAR_FRC_1_X;
+		                }
+	                } else if (routingOptions.getMode().equals(RoutingMode.BIKE)) {
+	                	maxSpeed = MAXSPEED_BIKE;
+	                } else {
+	                	maxSpeed = MAXSPEED_PEDESTRIAN;
+	                }
+	                
+	                float length = 0;
+	                if (i == 0) {
+	                	// first segment is already partially travelled
+	                	Point p = track.getTrackPoints().get(startIndex).getPoint();
+	                	seg.getGeometry().setSRID(p.getSRID());
+	                	length = (float) GeometryUtils.distanceOnLineStringInMeter(p, seg.getGeometry());
+	                	if (seg.getDirection().isEnteringThroughStartNode()) {
+	                		// gegen Digitalisierungsrichtung
+	                		length = seg.getLength() - length;
+	                	}
+	                } else if (i == routedSegments.size() - 1) {
+	                	// last segment is possibly only partially travelled
+	                	Point p = track.getTrackPoints().get(endIndex).getPoint();
+	                	seg.getGeometry().setSRID(p.getSRID());
+	                	length = (float) GeometryUtils.distanceOnLineStringInMeter(p, seg.getGeometry());
+	                	if (seg.getDirection().isEnteringThroughEndNode()) {
+	                		// gegen Digitalisierungsrichtung
+	                		length = seg.getLength() - length;
+	                	}
+	                } else {
+	                	length = seg.getLength();
+	                }
+	                durationS += length / (maxSpeed / 3.6);
+	                i++;
+	            }
+	
+	            if (timeDiffS >= (int)durationS) { // (int) => round
+	            	valid = true;
+	            } else {
+	            	if (log.isDebugEnabled()) {
+	            		log.debug("Route from segment " + routedSegments.get(0).getId() + " to segment " + routedSegments.get(routedSegments.size()-1).getId() +
+	            				" is not possible: calculated min duration = " + durationS + "sec > trackPoint's time diff = " + timeDiffS + "sec");
+	            	}
+	            	valid = false;
+	            }
             }
 
+            // check if route contains U-turn
+            // hopefully we don't need this...
+//            if (valid) {
+//            	for (IMatchedWaySegment routedSegment : routedSegments) {
+//            		if (routedSegment.getDirection().equals(Direction.START_TO_START) ||
+//            			routedSegment.getDirection().equals(Direction.END_TO_START)) {
+//            			valid = false;
+//            		}
+//            	}
+//            }
+            
         } else {
-        	return false;
+        	valid = false;
         }
+    	
+    	return valid;
     } 
 
 	/**
@@ -504,9 +531,30 @@ public class RoutingMatcher {
 					if (currentSegment.getStartNodeId() == previousSegment.getEndNodeId() ||
 						currentSegment.getStartNodeId() == previousSegment.getStartNodeId()) {
 						// the current segment was entered through the start node
-						direction = Direction.START_TO_END;
+						if (i < routeSegments.size() - 1) {
+							IWaySegment nextSegment = routeSegments.get(i + 1);
+							if (currentSegment.getStartNodeId() == nextSegment.getStartNodeId() ||
+								currentSegment.getStartNodeId() == nextSegment.getEndNodeId()) {
+								direction = Direction.START_TO_START;
+							} else {
+								direction = Direction.START_TO_END;
+							}
+						} else {						
+							direction = Direction.START_TO_END;
+						}
 					} else {
-						direction = Direction.END_TO_START;
+						// the current segment was entered through the start node
+						if (i < routeSegments.size() - 1) {
+							IWaySegment nextSegment = routeSegments.get(i + 1);
+							if (currentSegment.getEndNodeId() == nextSegment.getStartNodeId() ||
+								currentSegment.getEndNodeId() == nextSegment.getEndNodeId()) {
+								direction = Direction.END_TO_START;
+							} else {
+								direction = Direction.END_TO_END;
+							}
+						} else {						
+							direction = Direction.END_TO_START;
+						}
 					}
 					
 					addSegment(segments, currentSegment, direction);

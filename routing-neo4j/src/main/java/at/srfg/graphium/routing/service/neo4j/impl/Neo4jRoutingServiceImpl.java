@@ -298,10 +298,11 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 			Access access = null;
 			if (options.getMode().equals(RoutingMode.CAR)) {
 				access = Access.PRIVATE_CAR;
-			} else if (options.getMode().equals(RoutingMode.BIKE)) {
-				access = Access.BIKE;
-			} else if (options.getMode().equals(RoutingMode.PEDESTRIAN)) {
-				access = Access.PEDESTRIAN;
+			// bike and pedestrian could ignore one ways and other restrictions
+//			} else if (options.getMode().equals(RoutingMode.BIKE)) {
+//				access = Access.BIKE;
+//			} else if (options.getMode().equals(RoutingMode.PEDESTRIAN)) {
+//				access = Access.PEDESTRIAN;
 			}
 			if (access != null) {
 				final Access accessToFilter = access;

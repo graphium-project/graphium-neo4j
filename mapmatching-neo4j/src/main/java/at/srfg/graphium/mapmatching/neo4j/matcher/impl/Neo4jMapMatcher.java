@@ -57,37 +57,42 @@ public class Neo4jMapMatcher implements IMapMatcher {
 	private String csvLoggerName = null;
 
 	@Override
-	public IMapMatcherTask getTask(ITrack origTrack) throws GraphNotExistsException {
+	public IMapMatcherTask getTask(ITrack origTrack, String routingMode) throws GraphNotExistsException {
 		graphMetadata = metadataService.getCurrentWayGraphVersionMetadata(defaultGraphName);
 		if (graphMetadata == null) {
 			throw new GraphNotExistsException("Default Graph not found", defaultGraphName);
 		}
 
-		return createTask(defaultGraphName, graphMetadata.getVersion(), origTrack);
+		return createTask(defaultGraphName, graphMetadata.getVersion(), origTrack, routingMode);
 	}
 	
 	@Override
-	public IMapMatcherTask getTask(String graphName, ITrack origTrack) throws GraphNotExistsException {
+	public IMapMatcherTask getTask(String graphName, ITrack origTrack, String routingMode) throws GraphNotExistsException {
 		graphMetadata = metadataService.getCurrentWayGraphVersionMetadata(graphName);
 		if (graphMetadata == null) {
 			throw new GraphNotExistsException("Graph " + graphName + " not found", graphName);
 		}
 
-		return createTask(graphName, graphMetadata.getVersion(), origTrack);
+		return createTask(graphName, graphMetadata.getVersion(), origTrack, routingMode);
 	}
 	
 	@Override
-	public IMapMatcherTask getTask(String graphName, String graphVersion, ITrack origTrack) throws GraphNotExistsException {
+	public IMapMatcherTask getTask(String graphName, String graphVersion, ITrack origTrack, String routingMode) throws GraphNotExistsException {
 		graphMetadata = metadataService.getWayGraphVersionMetadata(graphName, graphVersion);
 		if (graphMetadata == null) {
 			throw new GraphNotExistsException("Graph not found", graphName);
 		}
 		
-		return createTask(graphName, graphVersion, origTrack);
+		return createTask(graphName, graphVersion, origTrack, routingMode);
 	}
 	
-	protected IMapMatcherTask createTask(String graphName, String graphVersion, ITrack origTrack) {
-		MapMatchingTask matchingTask = new MapMatchingTask(this, properties, graphName, graphVersion, neo4jUtil, origTrack, 
+	protected IMapMatcherTask createTask(String graphName, String graphVersion, ITrack origTrack, String routingMode) {
+		MapMatchingProperties taskProperties = properties.clone();
+		if (routingMode != null) {
+			taskProperties.setRoutingMode(routingMode);
+		}
+		
+		MapMatchingTask matchingTask = new MapMatchingTask(this, taskProperties, graphName, graphVersion, neo4jUtil, origTrack, 
 				csvLoggerName, globalStatistics);
 		return matchingTask;
 	}
@@ -337,4 +342,21 @@ public class Neo4jMapMatcher implements IMapMatcher {
 	public void setPointsDiffThresholdForSkipRouting(int pointsDiffThresholdForSkipRouting) {
 		properties.setPointsDiffThresholdForSkipRouting(pointsDiffThresholdForSkipRouting);
 	}
+
+	public String getRoutingMode() {
+		return properties.getRoutingMode();
+	}
+
+	public void setRoutingMode(String routingMode) {
+		properties.setRoutingMode(routingMode);
+	}
+
+	public String getRoutingCriteria() {
+		return properties.getRoutingCriteria();
+	}
+
+	public void setRoutingCriteria(String routingCriteria) {
+		properties.setRoutingCriteria(routingCriteria);;
+	}
+
 }

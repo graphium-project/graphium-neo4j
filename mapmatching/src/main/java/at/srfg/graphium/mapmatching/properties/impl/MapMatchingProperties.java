@@ -107,6 +107,12 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 	 * Switches between online and offline map matching. Online means iterative map matching.
 	 */
 	private boolean online = false;
+
+	/**
+	 * routing options
+	 */
+	private String routingMode;
+	private String routingCriteria;
 	
 	@Override
 	public String toString() {
@@ -125,7 +131,10 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 				+ ", minLength=" + minLength + ", envelopeSideLength=" + envelopeSideLength 
 				+ ", thresholdSamplingIntervalForTryingFurtherPathSearches=" + thresholdSamplingIntervalForTryingFurtherPathSearches
 				+ ", pointsDiffThresholdForSkipRouting=" + pointsDiffThresholdForSkipRouting
-				+ ", online=" + online + "]";
+				+ ", online=" + online 
+				+ ", routingMode=" + routingMode
+				+ ", routingCriteria=" + routingCriteria
+				+ "]";
 	}
 	
 	@Override
@@ -366,6 +375,26 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 	@Override
 	public void setPointsDiffThresholdForSkipRouting(int pointsDiffThresholdForSkipRouting) {
 		this.pointsDiffThresholdForSkipRouting = pointsDiffThresholdForSkipRouting;
+	}
+
+	@Override
+	public String getRoutingMode() {
+		return routingMode;
+	}
+
+	@Override
+	public void setRoutingMode(String routingMode) {
+		this.routingMode = routingMode;
+	}
+
+	@Override
+	public String getRoutingCriteria() {
+		return routingCriteria;
+	}
+
+	@Override
+	public void setRoutingCriteria(String routingCriteria) {
+		this.routingCriteria = routingCriteria;
 	}
 	
 }

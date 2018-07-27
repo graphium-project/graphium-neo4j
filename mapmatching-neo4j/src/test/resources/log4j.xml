@@ -53,9 +53,9 @@
     	</filter>
     </appender>
 
-	<category name="at.srfg.graphium.mapmatching.neo4j.matcher.impl">
+	<!-- <category name="at.srfg.graphium.mapmatching.neo4j.matcher.impl">
 		<priority value="DEBUG" />
-	</category>
+	</category> -->
 	
 	<!-- <category name="at.srfg.graphium.mapmatching.weighting.impl">
 		<priority value="DEBUG" />

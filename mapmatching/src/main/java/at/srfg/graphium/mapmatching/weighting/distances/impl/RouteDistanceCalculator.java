@@ -145,4 +145,14 @@ public class RouteDistanceCalculator extends DistanceCalculator {
 	public IDistancesCache getDistancesCache(IMatchedWaySegment segment) {
 		return segment.getRouteDistancesCache();
 	}
+
+	@Override
+	public Double getPenaltyForBikesAgainstOneWay(IMatchedWaySegment segment, IMatchedWaySegment previousSegment) {
+		return 0.0;
+	}
+
+	@Override
+	public Double getPenaltyForBikesOnWalkways(IMatchedWaySegment segment) {
+		return 0.0;
+	}
 }

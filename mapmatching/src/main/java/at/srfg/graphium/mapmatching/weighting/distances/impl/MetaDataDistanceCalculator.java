@@ -76,4 +76,14 @@ public class MetaDataDistanceCalculator implements IDistanceCalculator<MetaData>
 		return null;
 	}
 
+	@Override
+	public MetaData getPenaltyForBikesAgainstOneWay(IMatchedWaySegment segment, IMatchedWaySegment previousSegment) {
+		return null;
+	}
+
+	@Override
+	public MetaData getPenaltyForBikesOnWalkways(IMatchedWaySegment segment) {
+		return null;
+	}
+
 }

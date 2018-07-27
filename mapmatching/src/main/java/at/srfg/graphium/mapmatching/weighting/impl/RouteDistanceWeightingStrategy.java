@@ -29,6 +29,7 @@ import com.google.common.annotations.VisibleForTesting;
 import at.srfg.graphium.mapmatching.model.IMatchedBranch;
 import at.srfg.graphium.mapmatching.model.IMatchedWaySegment;
 import at.srfg.graphium.mapmatching.model.ITrack;
+import at.srfg.graphium.mapmatching.properties.IMapMatchingProperties;
 import at.srfg.graphium.mapmatching.weighting.distances.IDistanceCalculator;
 import at.srfg.graphium.mapmatching.weighting.distances.impl.DistanceCalculator;
 import at.srfg.graphium.mapmatching.weighting.distances.impl.MatchedPointDistanceCalculator;
@@ -50,7 +51,10 @@ public class RouteDistanceWeightingStrategy
 	
 	private static Logger log = LoggerFactory.getLogger(RouteDistanceWeightingStrategy.class);
 	
-	private final boolean isLowSamplingInterval;
+	private final String ROUTING_MODE_CAR = "car";
+	private final String ROUTING_MODE_BIKE = "bike";
+	
+	private final IMapMatchingProperties properties;
 	
 	private final DistanceCalculator routeDistanceCalculator;
 	private final DistanceCalculator straightLineDistanceCalculator;
@@ -59,8 +63,10 @@ public class RouteDistanceWeightingStrategy
 	private ITrack track = null;
 	
 	// empirisch ermittelt
+	// TODO: sollte da nicht anders skaliert werden???
 	private static final double MaxMatchedPointDistanceMeter = 14.75601603;
 	private static final double MaxMatchedPointDistanceMeterLowSampling = 62.09845481;
+	private double maxMatchedPointDistanceMeter;
 		
 	private static final double MaxRouteDistance = 0.439670898;
 
@@ -68,16 +74,18 @@ public class RouteDistanceWeightingStrategy
 	private static final double WeightRouteDistance = 0.4;
 
 	private static final double MaxValidMatchedFactor = 10.0;
+	
 	private static final double MaxValidRouteDistanceFactor = 10.0;
 	
 	private static final double SmallDistancesThresholdMeter = 75.0;
 
 	private static final double PenaltyForPseudoSkippedParts = 5 * MaxMatchedPointDistanceMeterLowSampling;
 	
-	public RouteDistanceWeightingStrategy(ITrack track, boolean isLowSamplingInterval) {
+	public RouteDistanceWeightingStrategy(ITrack track, IMapMatchingProperties properties) {
 		super(Double.NaN);
 		this.track = track;
-		this.isLowSamplingInterval = isLowSamplingInterval;
+		this.properties = properties;
+		maxMatchedPointDistanceMeter = properties.getMaxMatchingRadiusMeter();
 		
 		this.routeDistanceCalculator = new RouteDistanceCalculator();
 		this.straightLineDistanceCalculator = new StraightLineDistanceCalculator(track);
@@ -166,21 +174,21 @@ public class RouteDistanceWeightingStrategy
 		List<Double> straightLineDistances = calculateStraightLineDistances(branch, segmentDistanceIndexes);
 		List<Double> matchedPointDistances = calculateMatchedPointDistances(branch, segmentDistanceIndexes);
 		
-		printDistances(branch.getMatchedWaySegments(), routeDistances, straightLineDistances, matchedPointDistances);
-		
 		List<Double> weightsForParts = getWeightsForParts(
 				routeDistances, straightLineDistances, matchedPointDistances, routeDistanceFactors);
+		
+		printDistances(branch.getMatchedWaySegments(), routeDistances, straightLineDistances, matchedPointDistances, weightsForParts);
 		
 		return weightsForParts;
 	}
 
 	private void printDistances(List<IMatchedWaySegment> segments, List<Double> routeDistances, List<Double> straightLineDistances,
-			List<Double> matchedPointDistances) {
+			List<Double> matchedPointDistances, List<Double> weightsForParts) {
 		if (log.isDebugEnabled()) {
 			log.debug("routeDistances.size()=" + routeDistances.size() + ", straightLineDistances.size()=" + straightLineDistances.size() + 
 					", matchedPointDistances.size()=" + matchedPointDistances.size());
 			for (int i=0; i<routeDistances.size(); i++) {
-				log.debug(routeDistances.get(i) + ", " + straightLineDistances.get(i) +	", " + matchedPointDistances.get(i));
+				log.debug(routeDistances.get(i) + ", " + straightLineDistances.get(i) +	", " + matchedPointDistances.get(i) + ", " + weightsForParts.get(i));
 			}
 		}
 	}
@@ -213,12 +221,8 @@ public class RouteDistanceWeightingStrategy
 
 	public double getMatchedPointDistanceFactor(double matchedPointDistance) {
 		double matchedPointDistanceFactorScaled;
-		
-		if (isLowSamplingInterval) {
-			matchedPointDistanceFactorScaled = scale(matchedPointDistance, MaxMatchedPointDistanceMeterLowSampling);
-		} else {
-			matchedPointDistanceFactorScaled = scale(matchedPointDistance, MaxMatchedPointDistanceMeter);
-		}
+				
+		matchedPointDistanceFactorScaled = scale(matchedPointDistance, maxMatchedPointDistanceMeter);
 		
 		return matchedPointDistanceFactorScaled;
 	}
@@ -278,7 +282,12 @@ public class RouteDistanceWeightingStrategy
 			
 			if (i < segments.size()) {
 				// no penalty on last segment
-				addPossiblePenaltyForSwitchedFrc(segment, previousSegments, distances, distanceCalculator);
+				if (properties.getRoutingMode().equals(ROUTING_MODE_CAR)) {
+					addPossiblePenaltyForSwitchedFrc(segment, previousSegments, distances, distanceCalculator);
+				} else if (properties.getRoutingMode().equals(ROUTING_MODE_BIKE)) {
+					addPossiblePenaltyForBikesAgainstOneWays(segment, previousSegments, distances, distanceCalculator);
+					addPossiblePenaltyForBikesOnWayways(segment, distances, distanceCalculator);
+				}
 			}
 			
 			if (segment.getMatchedPoints() <= 0) {
@@ -319,6 +328,7 @@ public class RouteDistanceWeightingStrategy
 	 * @param segment
 	 * @param previousSegments
 	 * @param distances
+	 * @param distanceCalculator
 	 */
 	private <D> void addPossiblePenaltyForSwitchedFrc(IMatchedWaySegment segment, List<IMatchedWaySegment> previousSegments,
 			List<D> distances, IDistanceCalculator<D> distanceCalculator) {
@@ -326,6 +336,33 @@ public class RouteDistanceWeightingStrategy
 			IMatchedWaySegment previousSegment = previousSegments.get(previousSegments.size() - 1);
 			distances.add(distanceCalculator.getPenaltyForSwitchedFrc(segment, previousSegment));
 		}
+	}
+	
+	/**
+	 * Calculates penalty for bikes driving against one ways.
+
+	 * @param segment
+	 * @param previousSegments
+	 * @param distances
+	 * @param distanceCalculator
+	 */
+	private <D> void addPossiblePenaltyForBikesAgainstOneWays(IMatchedWaySegment segment, List<IMatchedWaySegment> previousSegments,
+			List<D> distances, IDistanceCalculator<D> distanceCalculator) {
+		if (!previousSegments.isEmpty()) {
+			IMatchedWaySegment previousSegment = previousSegments.get(previousSegments.size() - 1);
+			distances.add(distanceCalculator.getPenaltyForBikesAgainstOneWay(segment, previousSegment));
+		}
+	}
+
+	/**
+	 * Calculates penalty for bikes driving on walkways.
+
+	 * @param segment
+	 * @param distances
+	 * @param distanceCalculator
+	 */
+	private <D> void addPossiblePenaltyForBikesOnWayways(IMatchedWaySegment segment, List<D> distances, IDistanceCalculator<D> distanceCalculator) {
+		distances.add(distanceCalculator.getPenaltyForBikesOnWalkways(segment));
 	}
 
 	/**

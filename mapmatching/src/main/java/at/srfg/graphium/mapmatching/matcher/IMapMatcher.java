@@ -22,11 +22,11 @@ import at.srfg.graphium.mapmatching.model.ITrack;
 
 public interface IMapMatcher {
 
-	public IMapMatcherTask getTask(ITrack origTrack) throws GraphNotExistsException;
+	public IMapMatcherTask getTask(ITrack origTrack, String routingMode) throws GraphNotExistsException;
 	
-	public IMapMatcherTask getTask(String graphName, ITrack origTrack) throws GraphNotExistsException;
+	public IMapMatcherTask getTask(String graphName, ITrack origTrack, String routingMode) throws GraphNotExistsException;
 	
-	public IMapMatcherTask getTask(String graphName, String graphVersion, ITrack origTrack) throws GraphNotExistsException;
+	public IMapMatcherTask getTask(String graphName, String graphVersion, ITrack origTrack, String routingMode) throws GraphNotExistsException;
 	
 	public String getDefaultGraphName();
 	public void setDefaultGraphName(String defaultGraphName);

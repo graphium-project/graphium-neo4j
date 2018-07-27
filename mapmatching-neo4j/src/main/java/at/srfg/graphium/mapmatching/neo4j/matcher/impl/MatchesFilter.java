@@ -242,7 +242,17 @@ public class MatchesFilter {
 		// special treatment of best path if it turns to lower lever roads and returns back to higher level roads
 		// look for routing path to avoid lower lever roads
 		addHigherLevelSegmentsAtBypass(paths.get(0), newBranches, track);
-		
+
+		for (IMatchedBranch path : paths) {
+			int prevIdx = 0;
+			for (IMatchedWaySegment seg : path.getMatchedWaySegments()) {
+				if (seg.getStartPointIndex() < prevIdx) {
+					log.warn("////////// (2) Index error at segment " + seg.getId() + ": " + seg.getStartPointIndex() + " < " + prevIdx);
+				}
+				prevIdx = seg.getEndPointIndex();
+			}	
+		}
+
 		newBranches = filterPaths(newBranches);
 		
 		return filterBestPaths(
@@ -503,6 +513,18 @@ public class MatchesFilter {
 		for (IMatchedBranch path : paths) {
 			IMatchedWaySegment lastSegmentOfPath = path.getMatchedWaySegments().get(path.getMatchedWaySegments().size() - 1);
 			
+
+			
+				int prevIdx = 0;
+				for (IMatchedWaySegment seg : path.getMatchedWaySegments()) {
+					if (seg.getStartPointIndex() < prevIdx) {
+						log.warn("////////// (3) Index error at segment " + seg.getId() + ": " + seg.getStartPointIndex() + " < " + prevIdx);
+					}
+					prevIdx = seg.getEndPointIndex();
+				}	
+
+			
+			
 			if (!pathsPerEndSegment.containsKey(lastSegmentOfPath)) {
 				pathsPerEndSegment.put(lastSegmentOfPath, path);
 			} else {
@@ -551,6 +573,14 @@ public class MatchesFilter {
 			segmentCounters.put(segment, 1);
 		}
 		
+		// use a map for each segment indicating different endPointIndices between paths
+		Map<IMatchedWaySegment, List<Integer>> segmentsEndPointIndices = new LinkedHashMap<>();
+		for (IMatchedWaySegment segment : bestBranch.getMatchedWaySegments()) {
+			List<Integer> indices = new ArrayList<>();
+			indices.add(segment.getEndPointIndex());
+			segmentsEndPointIndices.put(segment, indices);
+		}
+		
 		// increment segment counters for segments matched in other paths
 		for (int iPath = 1; iPath < nonEmptyPaths.size(); iPath++) {
 			IMatchedBranch path = nonEmptyPaths.get(iPath);
@@ -562,6 +592,15 @@ public class MatchesFilter {
 				} else {
 					segmentCounts.put(segment.getId(), ++count);
 				}
+				
+				if (segmentsEndPointIndices.containsKey(segment)) {
+					segmentsEndPointIndices.get(segment).add(segment.getEndPointIndex());
+				} else {
+					List<Integer> indices = new ArrayList<>();
+					indices.add(segment.getEndPointIndex());
+					segmentsEndPointIndices.put(segment, indices);
+				}
+				 
 			}
 			for (IMatchedWaySegment segment : path.getMatchedWaySegments()) {
 				if (segmentCounts.get(segment.getId()) == 1 && segmentCounters.containsKey(segment)) {
