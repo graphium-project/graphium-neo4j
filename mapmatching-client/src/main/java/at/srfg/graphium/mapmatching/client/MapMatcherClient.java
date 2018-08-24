@@ -50,6 +50,9 @@ import at.srfg.graphium.mapmatching.inputformat.MatchedBranchInputFormat;
  */
 public class MapMatcherClient {
 	
+	public final static String TRACK_TYPE_CAR = "car";
+	public final static String TRACK_TYPE_BIKE = "bike";
+	
 	private final static Logger log = LoggerFactory.getLogger(MapMatcherClient.class); 
 	private final String mapMatchingApiPath = "graphs/{graphName}/matchtrack";
 	private final String mapMatchingCurrentVersionApiPath = "graphs/{graphName}/versions/current/matchtrack";
@@ -103,6 +106,7 @@ public class MapMatcherClient {
 	 * 									false means matching on graph's version valid at track's start timestamp
 	 * @param verboseOutput If true all available attributes of DTOs will be set
 	 * @param timeoutInMs Optional setting of timeout in milliseconds
+	 * @param trackType Optional definition of track's type (car/bike)
 	 * @return MatchedBranchDTO
 	 * @throws JsonGenerationException
 	 * @throws JsonMappingException
@@ -110,7 +114,7 @@ public class MapMatcherClient {
 	 * @throws ParseException
 	 */
 	public MatchedBranchDTO matchTrack(TrackDTO track, String graphName, boolean matchOnNewestGraphVersion, 
-			boolean verboseOutput, int timeoutInMs) 
+			boolean verboseOutput, int timeoutInMs, String trackType) 
 			throws JsonGenerationException, JsonMappingException, IOException, ParseException {
 		String uri = serverRoorUrl;
 		if (matchOnNewestGraphVersion) {
@@ -133,6 +137,15 @@ public class MapMatcherClient {
     		uri += "timeoutMs=" + timeoutInMs;
     		paramsSet = true;
     	}
+    	if (trackType != null) {
+    		if (paramsSet) {
+    			uri += "&";
+    		} else {
+    			uri += "?";
+    		}
+    		uri += "routingMode=" + trackType;
+    		paramsSet = true;
+    	}
 
     	return callMapMatcher(uri, track);
 
@@ -147,6 +160,7 @@ public class MapMatcherClient {
 	 * @param startSegmentId ID of segment where map matching should start (for incremental map matching)
 	 * @param verboseOutput If true all available attributes of DTOs will be set
 	 * @param timeoutInMs Optional setting of timeout in milliseconds
+	 * @param trackType Optional definition of track's type (car/bike)
 	 * @return MatchedBranchDTO
 	 * @throws JsonGenerationException
 	 * @throws JsonMappingException
@@ -154,7 +168,7 @@ public class MapMatcherClient {
 	 * @throws ParseException
 	 */
 	public MatchedBranchDTO matchTrack(TrackDTO track, String graphName, boolean matchOnNewestGraphVersion, 
-			long startSegmentId, boolean verboseOutput, int timeoutInMs) 
+			long startSegmentId, boolean verboseOutput, int timeoutInMs, String trackType) 
 			throws JsonGenerationException, JsonMappingException, IOException, ParseException {
 		String uri = serverRoorUrl;
 		if (matchOnNewestGraphVersion) {
@@ -169,7 +183,10 @@ public class MapMatcherClient {
     	if (timeoutInMs > 0) {
     		uri += "&timeoutMs=" + timeoutInMs;
     	}
-  	
+    	if (trackType != null) {
+    		uri += "&routingMode=" + trackType;
+    	}
+ 	
     	return callMapMatcher(uri, track);
 
 	}
