@@ -106,6 +106,26 @@ public class MapMatcherClient {
 	 * 									false means matching on graph's version valid at track's start timestamp
 	 * @param verboseOutput If true all available attributes of DTOs will be set
 	 * @param timeoutInMs Optional setting of timeout in milliseconds
+	 * @return MatchedBranchDTO
+	 * @throws JsonGenerationException
+	 * @throws JsonMappingException
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	public MatchedBranchDTO matchTrack(TrackDTO track, String graphName, boolean matchOnNewestGraphVersion, 
+			boolean verboseOutput, int timeoutInMs) 
+			throws JsonGenerationException, JsonMappingException, IOException, ParseException {
+		return matchTrack(track, graphName, matchOnNewestGraphVersion, verboseOutput, timeoutInMs, TRACK_TYPE_CAR);
+	}
+	
+	/**
+	 * 
+	 * @param track Track to map match
+	 * @param graphName Name of graph for map matching
+	 * @param matchOnNewestGraphVersion true means matching on newest (current) graph's version, 
+	 * 									false means matching on graph's version valid at track's start timestamp
+	 * @param verboseOutput If true all available attributes of DTOs will be set
+	 * @param timeoutInMs Optional setting of timeout in milliseconds
 	 * @param trackType Optional definition of track's type (car/bike)
 	 * @return MatchedBranchDTO
 	 * @throws JsonGenerationException
@@ -151,6 +171,27 @@ public class MapMatcherClient {
 
 	}
 
+	/**
+	 * 
+	 * @param track Track to map match
+	 * @param graphName Name of graph for map matching
+	 * @param matchOnNewestGraphVersion true means matching on newest (current) graph's version, 
+	 * 									false means matching on graph's version valid at track's start timestamp
+	 * @param startSegmentId ID of segment where map matching should start (for incremental map matching)
+	 * @param verboseOutput If true all available attributes of DTOs will be set
+	 * @param timeoutInMs Optional setting of timeout in milliseconds
+	 * @return MatchedBranchDTO
+	 * @throws JsonGenerationException
+	 * @throws JsonMappingException
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	public MatchedBranchDTO matchTrack(TrackDTO track, String graphName, boolean matchOnNewestGraphVersion, 
+			long startSegmentId, boolean verboseOutput, int timeoutInMs) 
+			throws JsonGenerationException, JsonMappingException, IOException, ParseException {
+		return matchTrack(track, graphName, matchOnNewestGraphVersion, startSegmentId, verboseOutput, timeoutInMs, TRACK_TYPE_CAR);
+	}	
+		
 	/**
 	 * 
 	 * @param track Track to map match
