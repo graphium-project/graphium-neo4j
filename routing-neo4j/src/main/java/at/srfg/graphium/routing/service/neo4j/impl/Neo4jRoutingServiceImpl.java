@@ -231,6 +231,8 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 			T segment;
 			
 			T prevSegment = null;
+			IPathSegment prevPathSegment = null;
+			int i = 0;
 			for (Node node : weightedPath.nodes()) {
 				segment = nodeMapper.map(node);
 				IPathSegment pathSegment = new PathSegmentImpl();
@@ -244,18 +246,27 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 										   prevSegment.getStartNodeId() == segment.getStartNodeId();
 					time = time + segment.getDuration(directionTow);
 					pathSegment.setDirection(directionTow);
+					
+					if (i == 1) { //Calculate attributes of first segment
+						directionTow = prevSegment.getEndNodeId() == segment.getEndNodeId()
+								|| prevSegment.getEndNodeId() == segment.getStartNodeId();
+						time = time + prevSegment.getDuration(directionTow);
+						prevPathSegment.setDirection(directionTow);
+					}
 				}
 				prevSegment = segment;
+				prevPathSegment = pathSegment;
+				i++;
 			}
-			// calculate duration for first segment
-			if (!segments.isEmpty()) {
-				boolean directionTow = true;
-				if (segments.size() > 1) {
-					directionTow = segments.get(1).getEndNodeId()   == segments.get(0).getEndNodeId() || 
-								   segments.get(1).getStartNodeId() == segments.get(0).getEndNodeId();
-				}
-				time = time + segments.get(0).getDuration(directionTow);
-			}
+//			// calculate duration for first segment
+//			if (!segments.isEmpty()) {
+//				boolean directionTow = true;
+//				if (segments.size() > 1) {
+//					directionTow = segments.get(1).getEndNodeId()   == segments.get(0).getEndNodeId() || 
+//								   segments.get(1).getStartNodeId() == segments.get(0).getEndNodeId();
+//				}
+//				time = time + segments.get(0).getDuration(directionTow);
+//			}
 			
 			route = modelFactory.newRoute();
 			route.setPath(path);
