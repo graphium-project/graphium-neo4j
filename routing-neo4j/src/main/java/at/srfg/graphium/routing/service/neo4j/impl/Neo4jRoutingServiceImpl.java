@@ -54,9 +54,11 @@ import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
 import at.srfg.graphium.neo4j.persistence.configuration.IGraphDatabaseProvider;
 import at.srfg.graphium.neo4j.persistence.impl.Neo4jWaySegmentHelperImpl;
 import at.srfg.graphium.neo4j.persistence.nodemapper.INeo4jNodeMapper;
+import at.srfg.graphium.routing.model.IPathSegment;
 import at.srfg.graphium.routing.model.IRoute;
 import at.srfg.graphium.routing.model.IRouteModelFactory;
 import at.srfg.graphium.routing.model.IRoutingOptions;
+import at.srfg.graphium.routing.model.impl.PathSegmentImpl;
 import at.srfg.graphium.routing.model.impl.RoutingAlgorithms;
 import at.srfg.graphium.routing.model.impl.RoutingMode;
 import at.srfg.graphium.routing.neo4j.evaluators.INeo4jCostEvaluatorFactory;
@@ -224,14 +226,18 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 		if (weightedPath != null) {
 			float length = 0;
 			int time = 0;
-			List<Long> path = new ArrayList<Long>();
+			List<IPathSegment> path = new ArrayList<IPathSegment>();
 			List<T> segments = new ArrayList<T>();
 			T segment;
 			
 			T prevSegment = null;
+			IPathSegment prevPathSegment = null;
+			int i = 0;
 			for (Node node : weightedPath.nodes()) {
 				segment = nodeMapper.map(node);
-				path.add(segment.getId());
+				IPathSegment pathSegment = new PathSegmentImpl();
+				pathSegment.setSegmentId(segment.getId());
+				path.add(pathSegment);
 				segments.add(segment);
 				length = length + segment.getLength();
 				// calculate duration
@@ -239,18 +245,28 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 					boolean directionTow = prevSegment.getEndNodeId()   == segment.getStartNodeId() || 
 										   prevSegment.getStartNodeId() == segment.getStartNodeId();
 					time = time + segment.getDuration(directionTow);
+					pathSegment.setDirection(directionTow);
+					
+					if (i == 1) { //Calculate attributes of first segment
+						directionTow = prevSegment.getEndNodeId() == segment.getEndNodeId()
+								|| prevSegment.getEndNodeId() == segment.getStartNodeId();
+						time = time + prevSegment.getDuration(directionTow);
+						prevPathSegment.setDirection(directionTow);
+					}
 				}
 				prevSegment = segment;
+				prevPathSegment = pathSegment;
+				i++;
 			}
-			// calculate duration for first segment
-			if (!segments.isEmpty()) {
-				boolean directionTow = true;
-				if (segments.size() > 1) {
-					directionTow = segments.get(1).getEndNodeId()   == segments.get(0).getEndNodeId() || 
-								   segments.get(1).getStartNodeId() == segments.get(0).getEndNodeId();
-				}
-				time = time + segments.get(0).getDuration(directionTow);
-			}
+//			// calculate duration for first segment
+//			if (!segments.isEmpty()) {
+//				boolean directionTow = true;
+//				if (segments.size() > 1) {
+//					directionTow = segments.get(1).getEndNodeId()   == segments.get(0).getEndNodeId() || 
+//								   segments.get(1).getStartNodeId() == segments.get(0).getEndNodeId();
+//				}
+//				time = time + segments.get(0).getDuration(directionTow);
+//			}
 			
 			route = modelFactory.newRoute();
 			route.setPath(path);

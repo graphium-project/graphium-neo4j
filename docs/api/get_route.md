@@ -27,7 +27,7 @@
 {"route":{
   "length":139.55322,
   "duration":10,
-  "paths":[374121070,259075831,37517506],
+  "paths":[{"segmentId":374121070,"direction":true},{"segmentId":259075831,"direction":true},{"segmentId":37517506,"direction":true}],
   "runtimeInMs":11,
   "graphName":"osm_at_lower_levels",
   "graphVersion":null,

@@ -24,6 +24,7 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import at.srfg.graphium.model.IWaySegment;
+import at.srfg.graphium.routing.model.IPathSegment;
 import at.srfg.graphium.routing.model.IRoute;
 
 public class RouteImpl<T extends IWaySegment> implements IRoute<T>, Serializable{
@@ -34,7 +35,7 @@ public class RouteImpl<T extends IWaySegment> implements IRoute<T>, Serializable
 	private static final long serialVersionUID = 1L;
 	
 	@JsonProperty(value="Path")
-	private List<Long> path;
+	private List<IPathSegment> path;
 	@JsonProperty(value="Length")
 	private float length;
 	@JsonProperty(value="Duration")
@@ -51,7 +52,7 @@ public class RouteImpl<T extends IWaySegment> implements IRoute<T>, Serializable
 	private String graphVersion;
 
 	public RouteImpl() {}
-	public RouteImpl(List<Long> path, float length, int duration, String error) {
+	public RouteImpl(List<IPathSegment> path, float length, int duration, String error) {
 		this.path = path;
 		this.length = length;
 		this.duration = duration;
@@ -59,7 +60,7 @@ public class RouteImpl<T extends IWaySegment> implements IRoute<T>, Serializable
 	}
 	
 	@Override
-	public List<Long> getPath() {
+	public List<IPathSegment> getPath() {
 		return path;
 	}
 
@@ -74,7 +75,7 @@ public class RouteImpl<T extends IWaySegment> implements IRoute<T>, Serializable
 	}
 
 	@Override
-	public void setPath(List<Long> path) {
+	public void setPath(List<IPathSegment> path) {
 		this.path = path;
 	}
 
