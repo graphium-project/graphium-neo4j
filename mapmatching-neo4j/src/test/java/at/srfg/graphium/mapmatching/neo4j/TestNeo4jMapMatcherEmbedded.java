@@ -80,17 +80,20 @@ public class TestNeo4jMapMatcherEmbedded {
 	@Autowired
 	private Neo4jUtil neo4jUtil;
 	
+//	private String routingMode = "bike";
+	private String routingMode = "car";
+	
 	@Test
 	public void testMatchTrack() {
-		String graphName = "osm_at";
+//		String graphName = "osm_at";
 //		String graphName = "osm_at_with_lower_level_streets";
-//		String graphName = "gip_at_frc_0_4";
+		String graphName = "gip_at_frc_0_4";
 //		String graphName = "gip_at_frc_0_8";
 //		long trackId = 18394396;
 //		long trackId = 19991780;
 //		long trackId = 18241517;
 		
-		long trackId = 19233778L;
+		String trackId = "487115";
 		
 //		long trackId = 4893166;
 		
@@ -138,7 +141,7 @@ public class TestNeo4jMapMatcherEmbedded {
 	@Test
 	public void testMatchTracks() {
 		String graphName = "gip_at_frc_0_8";
-		Long[] trackIds = new Long[] {
+		String[] trackIds = new String[] {
 //				10230393L,
 //				6379588L,
 //				5541664L,
@@ -186,20 +189,20 @@ public class TestNeo4jMapMatcherEmbedded {
 //				22948755L,
 //				22948759L
 
-				5001494L,
-				5006169L,
-				4927281L,
+				"5001494",
+				"5006169",
+				"4927281"
 
 		
 		};
 				
-		for (Long trackId : trackIds) {
+		for (String trackId : trackIds) {
 			matchTrack(trackId, graphName);
 		}
 		
 	}
 
-	private List<IMatchedBranch> matchTrack(long trackId, String graphName) {
+	private List<IMatchedBranch> matchTrack(String trackId, String graphName) {
 		String fileName = "D:/development/project_data/graphserver/tests/tracks/json/" + trackId + ".json";
 
 		ObjectMapper mapper = new ObjectMapper();
@@ -208,6 +211,8 @@ public class TestNeo4jMapMatcherEmbedded {
 		try {
 			trackDto = mapper.readValue(new File(fileName), TrackDTO.class);
 			ITrack track = adapter.adapt(trackDto);
+			
+			log.info("Matching Track " + trackId);
 			
 			branches = matchTrack(track, graphName);
 			
@@ -285,7 +290,7 @@ public class TestNeo4jMapMatcherEmbedded {
 	 */
 	private List<IMatchedBranch> matchTrack(ITrack track, String graphName) throws GraphNotExistsException {
 		long startTime = System.nanoTime();
-		IMapMatcherTask task = mapMatcher.getTask(graphName, track);
+		IMapMatcherTask task = mapMatcher.getTask(graphName, track, routingMode);
 		List<IMatchedBranch> branches = task.matchTrack();
 		log.info("Map matching took " +  + (System.nanoTime() - startTime) + "ns = " + ((System.nanoTime() - startTime) / 1000000) + "ms");
 		return branches;
@@ -319,7 +324,7 @@ public class TestNeo4jMapMatcherEmbedded {
 			trackDto = mapper.readValue(new File(fileName), TrackDTO.class);
 			ITrack track = adapter.adapt(trackDto);
 
-			MapMatchingTask task = (MapMatchingTask) mapMatcher.getTask(graphName, track);
+			MapMatchingTask task = (MapMatchingTask) mapMatcher.getTask(graphName, track, routingMode);
 			
 			Transaction tx = task.getGraphDao().getGraphDatabaseProvider().getGraphDatabase().beginTx();
 			try {
