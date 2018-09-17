@@ -140,6 +140,11 @@ public class Neo4jWayGraphWriteDaoImpl
 
 	@Override
 	public void saveSegments(List<IWaySegment> segments, String graphName, String version) {
+		saveSegments(segments, graphName, version, null);
+	}
+	
+	@Override
+	public void saveSegments(List<IWaySegment> segments, String graphName, String version, List<String> excludedXInfosList) {
 		String graphVersionName = GraphVersionHelper.createGraphVersionName(graphName, version); 
 		try (Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx()) {
 			if (segments != null && !segments.isEmpty()) {
@@ -155,7 +160,7 @@ public class Neo4jWayGraphWriteDaoImpl
 					indexSegmentId.add(segmentNode, WayGraphConstants.SEGMENT_ID, segment.getId());
 					
 					// if XInfo exists for segment
-					saveSegmentXInfo(getGraphDatabase(), segment, segmentNode);
+					saveSegmentXInfo(getGraphDatabase(), segment, segmentNode, excludedXInfosList);
 					
 				}
 				
@@ -188,7 +193,7 @@ public class Neo4jWayGraphWriteDaoImpl
 						segmentHelper.updateNodeProperties(getGraphDatabase(), segment, node);
 						
 						// if XInfo exists for segment
-						saveSegmentXInfo(getGraphDatabase(), segment, node);
+						saveSegmentXInfo(getGraphDatabase(), segment, node, null);
 
 						updatedCount++;
 					}
@@ -220,7 +225,7 @@ public class Neo4jWayGraphWriteDaoImpl
 					for (IWaySegmentConnection conn : connsWithXInfo) {
 						Relationship rel = getRelationShip(segmentNode, conn);
 						if (rel != null) {
-							saveConnectionXInfo(conn, rel);
+							saveConnectionXInfo(conn, rel, null);
 						}
 					}
 				}
@@ -301,7 +306,7 @@ public class Neo4jWayGraphWriteDaoImpl
 						rel.setProperty(WayGraphConstants.CONNECTION_NODE_ID, connection.getNodeId());
 						
 						// if XInfo exists for connection
-						saveConnectionXInfo(connection, rel);
+						saveConnectionXInfo(connection, rel, null);
 					}
 				}
 			}
@@ -328,40 +333,48 @@ public class Neo4jWayGraphWriteDaoImpl
 		//TODO Implement ME
 	}
 
-	private void saveSegmentXInfo(GraphDatabaseService graphDb, IWaySegment segment, Node segmentNode) {
+	private void saveSegmentXInfo(GraphDatabaseService graphDb, IWaySegment segment, Node segmentNode, List<String> excludedXInfosList) {
 		if (segment.getXInfo() != null && !segment.getXInfo().isEmpty()) {
 			ISegmentXInfoPropertyHandler<ISegmentXInfo> propertySetter;
 			List<ISegmentXInfo> xInfos = segment.getXInfo();
 			for (ISegmentXInfo xInfo : xInfos) {
-				propertySetter = segmentPropertyHandlerRegistry.get(xInfo.getXInfoType());
-				if (propertySetter != null) {
-					Node xInfoNode = propertySetter.getXInfoNode(xInfo, segmentNode);
-					if (xInfoNode == null) {
-						xInfoNode = propertySetter.setXInfoProperties(graphDb, xInfo, segmentNode);
-					} else {
-						throw new DuplicateKeyException("XInfo node of type '" + propertySetter.getResponsibleType() + "' already exists");
+				if (excludedXInfosList == null || !excludedXInfosList.contains(xInfo.getXInfoType())) {
+					propertySetter = segmentPropertyHandlerRegistry.get(xInfo.getXInfoType());
+					if (propertySetter != null) {
+						Node xInfoNode = propertySetter.getXInfoNode(xInfo, segmentNode);
+						if (xInfoNode == null) {
+							xInfoNode = propertySetter.setXInfoProperties(graphDb, xInfo, segmentNode);
+						} else {
+							throw new DuplicateKeyException("XInfo node of type '" + propertySetter.getResponsibleType() + "' already exists");
+						}
 					}
 				}
 			}
 		}
 	}
 
-	private void saveConnectionXInfo(IWaySegmentConnection connection, Relationship connectionRelationship) {
+	private void saveConnectionXInfo(IWaySegmentConnection connection, Relationship connectionRelationship, List<String> excludedXInfos) {
 		if (connection.getXInfo() != null && !connection.getXInfo().isEmpty()) {
 			IConnectionXInfoPropertyHandler propertyHandler;
 			List<? extends IConnectionXInfo> xInfos = connection.getXInfo();
 			for (IConnectionXInfo xInfo : xInfos) {
-				propertyHandler = connectionPropertyHandlerRegistry.get(xInfo.getXInfoType());
-				if (propertyHandler != null) {
-					propertyHandler.setXInfoProperties(xInfo, xInfo.getGroupKey(),connectionRelationship);
+				if (excludedXInfos == null || !excludedXInfos.contains(xInfo.getXInfoType())) {
+					propertyHandler = connectionPropertyHandlerRegistry.get(xInfo.getXInfoType());
+					if (propertyHandler != null) {
+						propertyHandler.setXInfoProperties(xInfo, xInfo.getGroupKey(),connectionRelationship);
+					}
 				}
 			}
 		}
 	}
 
-
 	@Override
 	public void saveConnectionXInfos(List<? extends IBaseSegment> segments, String graphName, String version) throws GraphStorageException {
+		saveConnectionXInfos(segments, graphName, version, null);
+	}
+	
+	@Override
+	public void saveConnectionXInfos(List<? extends IBaseSegment> segments, String graphName, String version, List<String> excludedXInfos) throws GraphStorageException {
 		String graphVersionName = GraphVersionHelper.createGraphVersionName(graphName, version);
 		try (Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx()) {
 			if (segments != null && !segments.isEmpty()) {
@@ -371,7 +384,7 @@ public class Neo4jWayGraphWriteDaoImpl
 						Map<IWaySegmentConnection,Relationship> connMapping = this.mapRelationShips(node,segment.getCons());
 						connMapping.forEach((iWaySegmentConnection, relationship) -> {
                             if (relationship != null) {
-                                saveConnectionXInfo(iWaySegmentConnection,relationship);
+                                saveConnectionXInfo(iWaySegmentConnection, relationship, excludedXInfos);
                             } else {
                                 log.warn("Relationship not found for " +iWaySegmentConnection.getFromSegmentId() + "-(" + iWaySegmentConnection.getNodeId() + ")-" +  iWaySegmentConnection.getToSegmentId());
                             }
@@ -413,6 +426,11 @@ public class Neo4jWayGraphWriteDaoImpl
 
 	@Override
 	public void saveSegmentXInfos(List<? extends IBaseSegment> segments, String graphName, String version) throws GraphStorageException {
+		saveSegmentXInfos(segments, graphName, version, null);
+	}
+
+	@Override
+	public void saveSegmentXInfos(List<? extends IBaseSegment> segments, String graphName, String version, List<String> excludedXInfosList) throws GraphStorageException {
 		String graphVersionName = GraphVersionHelper.createGraphVersionName(graphName, version);
 		try (Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx()) {
 			if (segments != null && !segments.isEmpty()) {

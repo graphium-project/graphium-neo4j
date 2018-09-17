@@ -372,6 +372,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 			if (lastCertainSegment != null) {
 				List<IMatchedWaySegment> newCertainSegments = new ArrayList<>();
 				boolean fillNewCertainSegments = true;
+				List<IMatchedBranch> pathsToRemove = new ArrayList<>();
 	
 				for (IMatchedBranch path : paths) {
 					
@@ -393,9 +394,47 @@ public class MapMatchingTask implements IMapMatcherTask {
 					fillNewCertainSegments = false;
 					path.removeMatchedWaySegments(segmentIndicesToRemove);
 					path.setCertainPathEndSegment(lastCertainSegment);
+
+					
+					// replace first segment with lastCertainSegment to guarantee that all paths start from the same base (segment)
+					if (!path.getMatchedWaySegments().isEmpty()) {
+						path.getMatchedWaySegments().remove(0);
+					}
+					
+					IMatchedWaySegment lastCertainSegmentClone = null;
+					try {
+						lastCertainSegmentClone = (IMatchedWaySegment) lastCertainSegment.clone();
+						path.getMatchedWaySegments().add(0, lastCertainSegmentClone);
+					} catch (CloneNotSupportedException e) {
+						log.error("Could not clone segment");
+						return;
+					}
+
+					
+					
+					// update indices
+					if (path.getMatchedWaySegments().size() > 1) {
+						IMatchedWaySegment firstUncertainSegment = path.getMatchedWaySegments().get(1);
+						if (firstUncertainSegment.getEndPointIndex() < lastCertainSegmentClone.getEndPointIndex()) {
+							if (lastCertainSegmentClone.getStartPointIndex() < firstUncertainSegment.getStartPointIndex()) {
+								// should not occur
+								log.error("UI");
+								pathsToRemove.add(path);
+							} else {
+								lastCertainSegmentClone.setEndPointIndex(firstUncertainSegment.getStartPointIndex());
+								lastCertainSegmentClone.calculateDistances(track);
+							}
+						} else {
+							firstUncertainSegment.setStartPointIndex(lastCertainSegment.getEndPointIndex());
+							firstUncertainSegment.calculateDistances(track);
+						}						
+					}
+					
 				}
 				
 				certainPath.addAll(newCertainSegments);
+				
+				paths.removeAll(pathsToRemove);
 				
 				if (log.isDebugEnabled()) {
 					List<Long> segmentIds = new ArrayList<>(certainPath.size());
@@ -456,6 +495,15 @@ public class MapMatchingTask implements IMapMatcherTask {
 					", matched track points = " + path.getMatchedPoints() +
 					", total track points = " + (path.getNrOfTotalTrackPoints()) +
 					", Segments = " + StringUtils.join(segmentIds, ", "));
+			
+			int prevIdx = 0;
+			for (IMatchedWaySegment seg : path.getMatchedWaySegments()) {
+				if (seg.getStartPointIndex() < prevIdx) {
+					log.warn("////////// (1) Index error at segment " + seg.getId() + ": " + seg.getStartPointIndex() + " < " + prevIdx);
+				}
+				prevIdx = seg.getEndPointIndex();
+			}	
+			
 		}
 	}
 

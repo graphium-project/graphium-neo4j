@@ -30,7 +30,7 @@ public class RouteDistanceWeightingStrategyFactory
 	public IWeightingStrategy getStrategy(ITrack track, IMapMatchingProperties properties) {
 		return new RouteDistanceWeightingStrategy(
 				track,
-				properties.isLowSamplingInterval());
+				properties);
 	}
 	
 }

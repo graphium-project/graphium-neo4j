@@ -46,10 +46,11 @@ public interface IMapMatchingService {
 	 * 					  will be called (the map matching will not return immediately in case of I/O operations (e.g. routing))
 	 * @param onlyBestResult If set to true only the best matching branch will be returned; otherwise the best n matching branches 
 	 * 						 (see IMapMatchingProperties#maxNrOfBestPaths)
+	 * @param routingMode optional; possible values are "car" / "bike" / "pedestrian"
 	 * @return List<IMatchedBranch> representing the best matching branch(es)
 	 * @throws GraphNotExistsException
 	 */
 	List<IMatchedBranch> matchTrack(String graphName, String graphVersion, ITrack track, Long startSegmentId, List<IMatchedBranch> previousBranches, 
-			int timeoutInSecs, boolean onlyBestResult) throws GraphNotExistsException;
+			int timeoutInSecs, boolean onlyBestResult, String routingMode) throws GraphNotExistsException;
 	
 }

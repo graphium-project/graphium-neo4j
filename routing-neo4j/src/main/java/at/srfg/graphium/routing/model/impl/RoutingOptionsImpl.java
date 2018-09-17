@@ -191,5 +191,13 @@ public class RoutingOptionsImpl implements IRoutingOptions, Serializable {
 		builder.append(endUri);
 		return builder.hashCode();
 	}
+
+	@Override
+	public String toString() {
+		return "RoutingOptionsImpl [graphName=" + graphName + ", graphVersion=" + graphVersion + ", routingTimestamp="
+				+ routingTimestamp + ", algorithm=" + algorithm + ", criteria=" + criteria + ", mode=" + mode
+				+ ", targetSrid=" + targetSrid + ", tagValueFilters=" + tagValueFilters + ", searchDistance="
+				+ searchDistance + "]";
+	}
 	
 }

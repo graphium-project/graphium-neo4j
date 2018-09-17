@@ -73,6 +73,16 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 	private int thresholdSamplingIntervalForTryingFurtherPathSearches = 90;
 	
 	/**
+	 * In case of routing we won't route for parts of track which possible left the underlying graph. Usually such parts of track consist of a number of valid
+	 * GPS points. In that case we want to skip routing and start a new path, which means we create a gap within the routing paths. On the other hand routing 
+	 * makes sense in case of GPS errors. For such parts of a track we have to consider only a few GPS points, possible partly invalid because GPS error.
+	 * To differ those cases we need a threshold: the maximum number of points we want consider for routing (difference between last matched point and first
+	 * point which determines a target segment for routing). If the number of points considered for routing exceed this threshold a new path will be created.
+	 * In case of low sampled tracks this value will be automatically divided in half.
+	 */
+	private int pointsDiffThresholdForSkipRouting = 10;
+	
+	/**
 	 * Minimum number of matching segments per section. If a section has less than
 	 * {@code minSegmentsPerSection} matching segments, this section is remove from
 	 * the path.
@@ -97,6 +107,12 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 	 * Switches between online and offline map matching. Online means iterative map matching.
 	 */
 	private boolean online = false;
+
+	/**
+	 * routing options
+	 */
+	private String routingMode;
+	private String routingCriteria;
 	
 	@Override
 	public String toString() {
@@ -114,7 +130,11 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 				+ minSegmentsPerSection + ", minNrOfPoints=" + minNrOfPoints
 				+ ", minLength=" + minLength + ", envelopeSideLength=" + envelopeSideLength 
 				+ ", thresholdSamplingIntervalForTryingFurtherPathSearches=" + thresholdSamplingIntervalForTryingFurtherPathSearches
-				+ ", online=" + online + "]";
+				+ ", pointsDiffThresholdForSkipRouting=" + pointsDiffThresholdForSkipRouting
+				+ ", online=" + online 
+				+ ", routingMode=" + routingMode
+				+ ", routingCriteria=" + routingCriteria
+				+ "]";
 	}
 	
 	@Override
@@ -345,6 +365,36 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 	public void setThresholdSamplingIntervalForTryingFurtherPathSearches(
 			int thresholdSamplingIntervalForTryingFurtherPathSearches) {
 		this.thresholdSamplingIntervalForTryingFurtherPathSearches = thresholdSamplingIntervalForTryingFurtherPathSearches;
+	}
+
+	@Override
+	public int getPointsDiffThresholdForSkipRouting() {
+		return pointsDiffThresholdForSkipRouting;
+	}
+
+	@Override
+	public void setPointsDiffThresholdForSkipRouting(int pointsDiffThresholdForSkipRouting) {
+		this.pointsDiffThresholdForSkipRouting = pointsDiffThresholdForSkipRouting;
+	}
+
+	@Override
+	public String getRoutingMode() {
+		return routingMode;
+	}
+
+	@Override
+	public void setRoutingMode(String routingMode) {
+		this.routingMode = routingMode;
+	}
+
+	@Override
+	public String getRoutingCriteria() {
+		return routingCriteria;
+	}
+
+	@Override
+	public void setRoutingCriteria(String routingCriteria) {
+		this.routingCriteria = routingCriteria;
 	}
 	
 }

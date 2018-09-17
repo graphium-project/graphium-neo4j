@@ -22,6 +22,7 @@ import java.util.List;
 import at.srfg.graphium.mapmatching.model.IMatchedWaySegment;
 import at.srfg.graphium.mapmatching.model.IMatchedWaySegment.IDistancesCache;
 import at.srfg.graphium.mapmatching.model.ITrack;
+import at.srfg.graphium.model.Access;
 import at.srfg.graphium.model.FormOfWay;
 
 /**
@@ -32,15 +33,22 @@ public class MatchedPointDistanceCalculator extends DistanceCalculator {
 
 	private final double penaltyForPseudoSkippedParts;
 	private final double penaltyForSwitchedFrc;
+	private final double penaltyForBikesAgainstOneWays;
+	private final double penaltyForBikesOnWalkways;
 
 	public MatchedPointDistanceCalculator(double penaltyForPseudoSkippedParts) {
 		this.penaltyForPseudoSkippedParts = penaltyForPseudoSkippedParts;
 		penaltyForSwitchedFrc = 50.0;
+		penaltyForBikesAgainstOneWays = 50.0;
+		penaltyForBikesOnWalkways = 50.0;
 	}
 	
-	public MatchedPointDistanceCalculator(double penaltyForPseudoSkippedParts, double penaltyForSwitchedFrc) {
+	public MatchedPointDistanceCalculator(double penaltyForPseudoSkippedParts, double penaltyForSwitchedFrc,
+			double penaltyForBikesAgainstOneWays, double penaltyForBikesOnWalkways) {
 		this.penaltyForPseudoSkippedParts = penaltyForPseudoSkippedParts;
 		this.penaltyForSwitchedFrc = penaltyForSwitchedFrc;
+		this.penaltyForBikesAgainstOneWays = penaltyForBikesAgainstOneWays;
+		this.penaltyForBikesOnWalkways = penaltyForBikesOnWalkways;
 	}
 	
 	@Override
@@ -132,6 +140,38 @@ public class MatchedPointDistanceCalculator extends DistanceCalculator {
 		return totalPenalty;
 	}
 
+	@Override
+	public Double getPenaltyForBikesAgainstOneWay(final IMatchedWaySegment segment, IMatchedWaySegment previousSegment) {
+		double penalty = 0;
+	
+		if (segment.getDirection().isEnteringThroughStartNode() && 
+			!segment.getAccessTow().contains(Access.BIKE)) {
+			penalty = penaltyForBikesOnWalkways;
+		} else if (segment.getDirection().isEnteringThroughEndNode() && 
+				   !segment.getAccessBkw().contains(Access.BIKE)) {
+			penalty = penaltyForBikesAgainstOneWays;
+		}
+		
+		return penalty;
+	}
+	
+	@Override
+	public Double getPenaltyForBikesOnWalkways(IMatchedWaySegment segment) {
+		double penalty = 0;
+	
+		if (segment.getDirection().isEnteringThroughStartNode() && 
+			segment.getAccessTow().contains(Access.PEDESTRIAN) &&
+			!segment.getAccessTow().contains(Access.BIKE)) {
+			penalty = penaltyForBikesOnWalkways;
+		} else if (segment.getDirection().isEnteringThroughEndNode() && 
+				   segment.getAccessBkw().contains(Access.PEDESTRIAN) &&
+				   !segment.getAccessBkw().contains(Access.BIKE)) {
+			penalty = penaltyForBikesOnWalkways;
+		}
+		
+		return penalty;
+	}
+	
 	@Override
 	public IDistancesCache getDistancesCache(IMatchedWaySegment segment) {
 		return segment.getMatchedPointDistancesCache();

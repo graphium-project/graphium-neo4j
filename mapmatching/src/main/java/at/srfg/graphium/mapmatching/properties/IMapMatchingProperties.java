@@ -94,4 +94,13 @@ public interface IMapMatchingProperties {
 	public int getThresholdSamplingIntervalForTryingFurtherPathSearches();
 	public void setThresholdSamplingIntervalForTryingFurtherPathSearches(int thresholdSamplingIntervalForTryingFurtherPathSearches);
 	
+	int getPointsDiffThresholdForSkipRouting();
+	void setPointsDiffThresholdForSkipRouting(int pointsDiffThresholdForSkipRouting);
+	
+	String getRoutingMode();
+	void setRoutingMode(String routingMode);
+	
+	String getRoutingCriteria();
+	void setRoutingCriteria(String routingCriteria);
+	
 }

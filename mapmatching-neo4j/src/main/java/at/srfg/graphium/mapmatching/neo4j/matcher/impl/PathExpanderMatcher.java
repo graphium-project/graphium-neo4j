@@ -187,11 +187,11 @@ public class PathExpanderMatcher {
 					// next segment could not be matched, but it is the only segment connected to current (previous segment)
 					// => try to match all further connected segments while the connection sizes are 1 (no crossing)
 					int emptySegmentsCounter = 0;
-					IMatchedWaySegment previousSegment = segment;
+					IMatchedWaySegment previousSegment = clonedBranch.getMatchedWaySegments().get(clonedBranch.getMatchedWaySegments().size()-1);
 					do {
 						emptySegmentsCounter++;
 						if (matchedSegment == null) {
-							matchedSegment = matchingTask.getSegmentMatcher().createEmptySegment(connectedSegment, segment.getEndPointIndex(), track);
+							matchedSegment = matchingTask.getSegmentMatcher().createEmptySegment(connectedSegment, previousSegment.getEndPointIndex(), track);
 						}
 						setSegmentDirection(previousSegment, matchedSegment);
 						
@@ -230,7 +230,7 @@ public class PathExpanderMatcher {
 									matchedSegment = matchingTask.getSegmentMatcher().matchSegment(
 											connectedSegment, 
 											track, 
-											segment.getEndPointIndex(), 
+											previousSegment.getEndPointIndex(), 
 											properties.getMaxMatchingRadiusMeter(), 
 											clonedBranch);
 								}

@@ -10,14 +10,15 @@
 	<parent>
 		<groupId>at.srfg.graphium</groupId>
 		<artifactId>graphium-neo4j-server-plugin-base</artifactId>
-		<version>1.0.0-SNAPSHOT</version>
+		<version>1.0.1</version>
 		<relativePath>../neo4j-server-integration/plugin/pom.xml</relativePath>
 	</parent>
 
 	<dependencies>
 		<dependency>
 			<groupId>at.srfg.graphium</groupId>
-			<artifactId>graphium-api</artifactId>	
+			<artifactId>graphium-api</artifactId>
+			<version>${graphium.version}</version>	
 		</dependency>
 
 		<!-- test -->

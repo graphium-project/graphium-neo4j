@@ -44,20 +44,21 @@ public class TimedMapMatcherTaskFactory {
 	 * @param timeoutInMs Timeout of map matching task in milliseconds; if map matching is not finished after timeout the map matcher's method cancel() 
 	 * 					  will be called (the map matching will not return immediately in case of I/O operations (e.g. routing))
 	 * @param service MapMatcherTimerService which manages a map with map matching tasks and their expire timestamps
+	 * @param routingMode optional; possible values are "car" / "bike" / "pedestrian"
 	 * @return TimedMapMatcherTask
 	 * @throws GraphNotExistsException
 	 */
 	public TimedMapMatcherTask getTask(String graphName, String graphVersion, ITrack track, Long startSegmentId, List<IMatchedBranch> previousBranches, 
-			int timeoutInMs, MapMatcherTimerService service) throws GraphNotExistsException {
+			int timeoutInMs, MapMatcherTimerService service, String routingMode) throws GraphNotExistsException {
 		IMapMatcherTask mapMatcherTask;
 		if (graphName != null) {
 			if (graphVersion != null) {
-				mapMatcherTask= mapMatcher.getTask(graphName, graphVersion, track);
+				mapMatcherTask= mapMatcher.getTask(graphName, graphVersion, track, routingMode);
 			} else {
-				mapMatcherTask= mapMatcher.getTask(graphName, track);
+				mapMatcherTask= mapMatcher.getTask(graphName, track, routingMode);
 			}
 		} else {
-			mapMatcherTask= mapMatcher.getTask(track);
+			mapMatcherTask= mapMatcher.getTask(track, routingMode);
 		}
 		return new TimedMapMatcherTask(mapMatcherTask, startSegmentId, previousBranches, timeoutInMs, service);
 	}

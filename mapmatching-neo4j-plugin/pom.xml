@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>at.srfg.graphium</groupId>
 		<artifactId>graphium-neo4j-server-plugin-base</artifactId>
-		<version>1.0.0-SNAPSHOT</version>
+		<version>1.0.1</version>
 		<relativePath>../neo4j-server-integration/plugin/pom.xml</relativePath>
 	</parent>
 
@@ -35,6 +35,7 @@
 		<dependency>
 			<groupId>at.srfg.graphium</groupId>
 			<artifactId>graphium-mapmatching-neo4j</artifactId>
+			<version>${graphium-neo4j.version}</version>
 		</dependency>
 
 		<dependency>
