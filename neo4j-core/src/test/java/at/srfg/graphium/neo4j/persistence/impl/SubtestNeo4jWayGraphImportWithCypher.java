@@ -47,6 +47,7 @@ import com.vividsolutions.jts.io.WKTReader;
 
 import at.srfg.graphium.core.persistence.IWayGraphWriteDao;
 import at.srfg.graphium.model.IWaySegment;
+import at.srfg.graphium.neo4j.ITestGraphiumNeo4j;
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
 import at.srfg.graphium.neo4j.persistence.configuration.GraphDatabaseProvider;
 
@@ -56,9 +57,9 @@ import at.srfg.graphium.neo4j.persistence.configuration.GraphDatabaseProvider;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/application-context-graphium-neo4j_test.xml",
 		"classpath:/application-context-graphium-core.xml"})
-public class TestNeo4jWayGraphImportWithCypher {
+public class SubtestNeo4jWayGraphImportWithCypher implements ITestGraphiumNeo4j {
 
-	private static Logger log = LoggerFactory.getLogger(TestNeo4jWayGraphImportWithCypher.class);
+	private static Logger log = LoggerFactory.getLogger(SubtestNeo4jWayGraphImportWithCypher.class);
 	
 	@Autowired
 	private GraphDatabaseProvider graphDatabaseProvider;
@@ -70,6 +71,7 @@ public class TestNeo4jWayGraphImportWithCypher {
 	private String versionName = "test";
 	private int batchSizeForSpatialInsertion = 5000;
 	
+	@Ignore
 	@Test
 	public void testCreateGraph() {
 		String createNodes = "USING PERIODIC COMMIT 10000 " +
@@ -194,6 +196,10 @@ public class TestNeo4jWayGraphImportWithCypher {
 			e.printStackTrace();
 		}
 
+	}
+
+	@Override
+	public void run() {
 	}
 	
 }

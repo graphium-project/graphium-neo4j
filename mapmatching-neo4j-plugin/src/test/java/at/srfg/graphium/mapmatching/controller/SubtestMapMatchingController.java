@@ -41,9 +41,9 @@ import at.srfg.graphium.mapmatching.dto.TrackDTO;
  * @author mwimmer
  *
  */
-public class TestMapMatchingController {
+public class SubtestMapMatchingController {
 
-	private static Logger log = LoggerFactory.getLogger(TestMapMatchingController.class);
+	private static Logger log = LoggerFactory.getLogger(SubtestMapMatchingController.class);
 	
 	private MapMatcherClient mapMatchingClient;
 	

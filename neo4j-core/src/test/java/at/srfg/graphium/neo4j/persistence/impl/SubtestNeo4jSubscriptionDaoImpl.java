@@ -28,6 +28,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.neo4j.graphdb.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -48,6 +49,7 @@ import at.srfg.graphium.model.management.impl.Subscription;
 import at.srfg.graphium.model.management.impl.SubscriptionGroup;
 import at.srfg.graphium.model.view.IWayGraphView;
 import at.srfg.graphium.model.view.impl.WayGraphView;
+import at.srfg.graphium.neo4j.ITestGraphiumNeo4j;
 import at.srfg.graphium.neo4j.persistence.configuration.GraphDatabaseProvider;
 
 /**
@@ -58,7 +60,7 @@ import at.srfg.graphium.neo4j.persistence.configuration.GraphDatabaseProvider;
 @ContextConfiguration(locations = { "classpath:/application-context-graphium-neo4j_test.xml",
 		"classpath:/application-context-graphium-core.xml",
 		"classpath:/application-context-graphium-model.xml"})
-public class TestNeo4jSubscriptionDaoImpl {
+public class SubtestNeo4jSubscriptionDaoImpl implements ITestGraphiumNeo4j {
 
 	@Resource(name="neo4jSubscriptionDao")
 	private ISubscriptionDao dao;
@@ -72,14 +74,22 @@ public class TestNeo4jSubscriptionDaoImpl {
 	@Autowired
 	private GraphDatabaseProvider graphDatabaseProvider;
 	
-	private String serverName = "MOWI89";
-	private String graphName = "gip_at_frc_0_4";
-	private String viewName1 = "view1_gip_at_frc_0_4";
-	private String viewName2 = "view2_gip_at_frc_0_4";
-	private String groupName1 = "group1";
-	private String groupName2 = "group2";
-	private String url = "http://mowi89.at";
-	private String versionName = "test";
+	@Value("${db.graphName}")
+	String graphName;
+	@Value("${db.version}")
+	String version;
+	@Value("${db.serverName}")
+	String serverName;
+	@Value("${db.viewName1}")
+	String viewName1;
+	@Value("${db.viewName2}")
+	String viewName2;
+	@Value("${db.groupName1}")
+	String groupName1;
+	@Value("${db.groupName2}")
+	String groupName2;
+	@Value("${db.serverUrl}")
+	String url;
 	private Date now;
 	private Date validFrom;
 	private Polygon coveredArea;
@@ -97,7 +107,10 @@ public class TestNeo4jSubscriptionDaoImpl {
 	public void testSubscribe() {
 		Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx();
 		try {
-			saveGraphVersion();
+			IWayGraphVersionMetadata metadata = metadataDao.getWayGraphVersionMetadata(graphName, version);
+			if (metadata == null) {
+				saveGraphVersion();
+			}
 			
 			viewDao.saveDefaultView(new WayGraph(0, graphName));
 			viewDao.saveView(new WayGraphView(viewName1, new WayGraph(0, graphName), viewName1, true, null, 0, 0, null));
@@ -122,10 +135,7 @@ public class TestNeo4jSubscriptionDaoImpl {
 //			System.out.println("\nSubscription (1. Versuch für View) war '" + (subscribed ? "erfolgreich" : "nicht erfolgreich"));
 			Assert.assertEquals(subscribed, true);
 			
-			boolean unsubscribed = dao.unsubscribe(serverName, viewName2);
-			Assert.assertEquals(subscribed, true);
-			
-			tx.failure();
+			tx.success();
 		} catch (Exception e) {
 			e.printStackTrace();
 			tx.failure(); // rollback
@@ -133,9 +143,25 @@ public class TestNeo4jSubscriptionDaoImpl {
 			tx.close();
 		}
 	}
-	
+
+	@Test
+	public void testUnsubscribe() {
+		Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx();
+		try {
+			boolean unsubscribed = dao.unsubscribe(serverName, viewName2);
+			Assert.assertEquals(unsubscribed, true);
+			
+			tx.success();
+		} catch (Exception e) {
+			e.printStackTrace();
+			tx.failure(); // rollback
+		} finally {
+			tx.close();
+		}
+	}
+
 	private void saveGraphVersion() {
-		IWayGraphVersionMetadata metadata = new WayGraphVersionMetadata(0, graphId, graphName, versionName, graphName, versionName, State.INITIAL, 
+		IWayGraphVersionMetadata metadata = new WayGraphVersionMetadata(0, graphId, graphName, version, graphName, version, State.INITIAL, 
 				validFrom, null, coveredArea, segmentsCount, connectionsCount, accessTypes, null, source, type, description, 
 				now, now, creator, originUrl);
 		metadataDao.saveGraphVersion(metadata);
@@ -286,7 +312,7 @@ public class TestNeo4jSubscriptionDaoImpl {
 	}
 	
 	@Test
-	public void getSubscriptionGroup() {
+	public void testGetSubscriptionGroup() {
 		Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx();
 		try {
 			testSubscribe();
@@ -302,6 +328,19 @@ public class TestNeo4jSubscriptionDaoImpl {
 		} finally {
 			tx.close();
 		}
+	}
+
+	@Override
+	public void run() {
+		testSubscribe();
+		testGetSubscriptionsForGraphAndServer();
+		testGetSubscriptionsForView();
+		testGetSubscriptionsForGraph();
+		testGetSubscriptionsForGraphAndServer();
+		testGetSubscriptionsForGraphAndGroupName();
+		testGetAllSubscriptions();
+		testGetSubscriptionGroup();
+		testUnsubscribe();
 	}
 
 }

@@ -56,6 +56,7 @@ import at.srfg.graphium.model.State;
 import at.srfg.graphium.model.impl.WayGraph;
 import at.srfg.graphium.model.impl.WayGraphVersionMetadata;
 import at.srfg.graphium.model.management.impl.Source;
+import at.srfg.graphium.neo4j.ITestGraphiumNeo4j;
 import at.srfg.graphium.neo4j.persistence.configuration.GraphDatabaseProvider;
 
 /**
@@ -65,9 +66,9 @@ import at.srfg.graphium.neo4j.persistence.configuration.GraphDatabaseProvider;
 @ContextConfiguration(locations = { "classpath:/application-context-graphium-neo4j_test.xml",
 		"classpath:/application-context-graphium-core.xml",
 		"classpath:/application-context-graphium-model.xml"})
-public class TestNeo4jWayGraphVersionMetadataDaoImpl {
+public class SubtestNeo4jWayGraphVersionMetadataDaoImpl implements ITestGraphiumNeo4j {
 
-	private static Logger log = LoggerFactory.getLogger(TestNeo4jWayGraphVersionMetadataDaoImpl.class);
+	private static Logger log = LoggerFactory.getLogger(SubtestNeo4jWayGraphVersionMetadataDaoImpl.class);
 	
 	@Resource(name="neo4jWayGraphVersionMetadataDao")
 	private IWayGraphVersionMetadataDao metadataDao;
@@ -411,8 +412,11 @@ public class TestNeo4jWayGraphVersionMetadataDaoImpl {
 			
 			List<String> graphs = metadataDao.getGraphs();
 			Assert.assertNotNull(graphs);
-			Assert.assertEquals(graphs.size(), 1);
-			Assert.assertEquals(graphs.get(0), graphName);
+
+			log.info("saved graphs:");
+			for (String graph : graphs) {
+				log.info(graph);
+			}
 			
 			tx.failure(); // rollback
 
@@ -446,7 +450,7 @@ public class TestNeo4jWayGraphVersionMetadataDaoImpl {
 			
 			updateVersion = metadataDao.checkNewerVersionAvailable(graphName, versionName + "2");
 			
-			Assert.assertNotNull(updateVersion);
+			Assert.assertNull(updateVersion);
 
 			tx.failure(); // rollback
 		}
@@ -563,6 +567,25 @@ public class TestNeo4jWayGraphVersionMetadataDaoImpl {
 			//log.error("error parsing geometry of reference point");
 		}
 		return bounds;
+	}
+
+	@Override
+	public void run() {
+		testSaveGraphVersion();
+		testGetWayGraphVersionMetadata();
+		testGetWayGraphVersionMetadataList();
+		testGetWayGraphVersionMetadataListForOriginGraphname();
+		testGetWayGraphVersionMetadataListWithParams();
+		testUpdateGraphVersion();
+		testSetGraphVersionState();
+		testSetValidToTimestampOfPredecessorGraphVersion();
+		testGetGraph();
+		testGetGraphs();
+		testCheckNewerVersionAvailable();
+		testGetCurrentWayGraphVersionMetadata();
+		testGetCurrentWayGraphVersionMetadataForView();
+		testGetWayGraphVersionMetadataForView();
+		testGetCurrentWayGraphVersionMetadataWithStates();
 	}
 
 }

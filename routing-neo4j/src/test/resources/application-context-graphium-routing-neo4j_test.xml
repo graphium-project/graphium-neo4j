@@ -39,7 +39,7 @@
 	<import resource="classpath:/application-context-graphium-neo4j-service.xml"/>
 
 	<!-- graph database provider -->	
-	<bean id="graphDatabaseProvider" class="at.srfg.graphium.neo4j.persistence.configuration.GraphDatabaseProvider">
+	<bean id="graphDatabaseProvider" class="at.srfg.graphium.neo4j.persistence.configuration.TempGraphDatabaseProvider">
 		<property name="neo4jPropertiesFile" value="${graphium.neo4j.propertiesFile}"/>
 		<property name="neo4jGraphDBDirectory" value="${graphium.neo4j.dbDirectory}"/>
 	</bean>

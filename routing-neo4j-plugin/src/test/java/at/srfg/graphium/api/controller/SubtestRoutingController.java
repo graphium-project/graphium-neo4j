@@ -39,7 +39,7 @@ import org.junit.Test;
  * @author mwimmer
  *
  */
-public class TestRoutingController {
+public class SubtestRoutingController {
 
 	@Test
 	public void testRoute() throws URISyntaxException {

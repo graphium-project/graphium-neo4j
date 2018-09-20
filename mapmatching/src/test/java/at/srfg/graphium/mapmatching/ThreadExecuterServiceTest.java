@@ -36,7 +36,7 @@ import org.junit.Test;
 /**
  * @author mwimmer
  */
-public class TestThreadExecuterService {
+public class ThreadExecuterServiceTest {
 	
 	@Test
 	public void testThreadExecuterService() {

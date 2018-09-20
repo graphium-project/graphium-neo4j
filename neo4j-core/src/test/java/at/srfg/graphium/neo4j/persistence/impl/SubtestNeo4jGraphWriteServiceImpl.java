@@ -28,12 +28,14 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import at.srfg.graphium.core.exception.GraphNotExistsException;
 import at.srfg.graphium.core.service.IGraphWriteService;
 import at.srfg.graphium.model.IWaySegment;
+import at.srfg.graphium.neo4j.ITestGraphiumNeo4j;
 
 /**
  * @author mwimmer
@@ -41,24 +43,32 @@ import at.srfg.graphium.model.IWaySegment;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/application-context-graphium-neo4j_test.xml",
 		"classpath:/application-context-graphium-core.xml"})
-public class TestNeo4jGraphWriteServiceImpl {
+public class SubtestNeo4jGraphWriteServiceImpl implements ITestGraphiumNeo4j {
 
-	private static Logger log = LoggerFactory.getLogger(TestNeo4jGraphWriteServiceImpl.class);
+	private static Logger log = LoggerFactory.getLogger(SubtestNeo4jGraphWriteServiceImpl.class);
 	
 	@Autowired
 	private IGraphWriteService<IWaySegment> graphWriteService;
 	
+	@Value("${db.graphName}")
+	String graphName;
+	@Value("${db.version}")
+	String version;
+
 	@Test
 	public void deleteSegments() {
-		String graphName = "gip_at_frc_0_8";
-		String versionName = "16_04_161103_2";
 		try {
-			graphWriteService.deleteGraphVersion(graphName, versionName, true);
+			graphWriteService.deleteGraphVersion(graphName, version, true);
 		} catch (GraphNotExistsException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		log.info("Fertig");
+	}
+
+	@Override
+	public void run() {
+		deleteSegments();
 	}
 
 }

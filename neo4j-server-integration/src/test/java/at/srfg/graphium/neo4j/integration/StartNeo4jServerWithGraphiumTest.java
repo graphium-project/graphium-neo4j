@@ -46,6 +46,7 @@ public class StartNeo4jServerWithGraphiumTest {
 	private String workingDirectory = "C:/development/Graphserver/tmp/neo4j/unittest-databases/unittest-work";
 	
 	
+	@Ignore
 	@Test
 	public void testStartAndDoNothing() throws Exception {
 		log.info("server started... and shutting down..");
@@ -66,6 +67,7 @@ public class StartNeo4jServerWithGraphiumTest {
 	    }
 	}
 	
+	@Ignore
 	@Test
 	public void testStartAndDoNothingWithHttpLogging() throws Exception {
 		log.info("server started... and shutting down..");

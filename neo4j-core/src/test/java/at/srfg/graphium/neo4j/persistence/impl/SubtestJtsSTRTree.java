@@ -20,6 +20,7 @@ package at.srfg.graphium.neo4j.persistence.impl;
 import java.util.List;
 
 import org.apache.commons.lang3.time.StopWatch;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.neo4j.graphdb.Label;
@@ -29,6 +30,7 @@ import org.neo4j.graphdb.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -39,6 +41,7 @@ import com.vividsolutions.jts.index.strtree.STRtree;
 import com.vividsolutions.jts.io.ParseException;
 
 import at.srfg.graphium.geomutils.GeometryUtils;
+import at.srfg.graphium.neo4j.ITestGraphiumNeo4j;
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
 import at.srfg.graphium.neo4j.model.index.STRTreeEntity;
 import at.srfg.graphium.neo4j.persistence.configuration.GraphDatabaseProvider;
@@ -51,9 +54,9 @@ import at.srfg.graphium.neo4j.persistence.index.STRTreeIndex;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/application-context-graphium-neo4j_test.xml",
 		"classpath:/application-context-graphium-core.xml"})
-public class TestJtsSTRTree {
+public class SubtestJtsSTRTree implements ITestGraphiumNeo4j {
 	
-	private static Logger log = LoggerFactory.getLogger(TestJtsSTRTree.class);
+	private static Logger log = LoggerFactory.getLogger(SubtestJtsSTRTree.class);
 	
 	@Autowired
 	private GraphDatabaseProvider graphDatabaseProvider;
@@ -61,12 +64,13 @@ public class TestJtsSTRTree {
 	@Autowired
 	private STRTreeIndex treeIndex;
 	
+	@Value("${db.graphName}")
+	String graphName;
+	@Value("${db.version}")
+	String version;
+
 	@Test
 	public void testJtsSTRTreeV1() {
-//		String graphName = "gip_at_frc_0_4";
-//		String version = "16_02_160406";
-		String graphName = "gip_sbg_city_frc_0_4";
-		String version = "16_02_160406";
 		
 		printMemoryUsage();
 		
@@ -102,9 +106,8 @@ public class TestJtsSTRTree {
 		
 		tree.build();
 		
-		double x = 13.043516;
-		double y = 47.815719;
-//		double searchDistance   = 0.0000904776810466969;
+		double x = 10.118073;
+		double y = 56.372965;
 		
 		Point point = GeometryUtils.createPoint2D(x, y, 4326);
 		GeometryItemDistance distance = new GeometryItemDistance();
@@ -112,12 +115,10 @@ public class TestJtsSTRTree {
 		if (!tree.isEmpty()) {
 			entity = (STRTreeEntity) tree.nearestNeighbour(point.getEnvelopeInternal(), point, distance);
 		}
-	
-		if (entity == null)  {
-			log.error("Entity is null");
-		} else {
-			log.info("Nearest segment is " + entity.getSegmentId());
-		}
+		
+		Assert.assertNotNull(entity);
+		
+		log.info("Nearest segment is " + entity.getSegmentId());
 		
 		printMemoryUsage();
 		
@@ -125,12 +126,6 @@ public class TestJtsSTRTree {
 
 	@Test
 	public void testJtsSTRTreeV2() {
-//		String graphName = "gip_at_frc_0_8";
-//		String version = "16_04_161103_2";
-		String graphName = "gip_at_frc_0_4";
-		String version = "16_02_160722";
-//		String graphName = "gip_sbg_city_frc_0_4";
-//		String version = "16_02_160406";
 		String graphVersionName = graphName + "_" + version;
 		
 		printMemoryUsage();
@@ -143,8 +138,8 @@ public class TestJtsSTRTree {
 		watch.stop();
 		log.info("Building STRTree took " + watch.getTime() + "ms");
 		
-		double x = 13.043516;
-		double y = 47.815719;
+		double x = 10.118073;
+		double y = 56.372965;
 		double searchDistance   = 0.000904776810466969;
 		
 		Point point = GeometryUtils.createPoint2D(x, y, 4326);
@@ -154,7 +149,9 @@ public class TestJtsSTRTree {
 		List<Long> segmentIds = treeIndex.findNearestSegmentIds(graphVersionName, point, searchDistance, 10);
 		
 		log.info("findNearestSegmentIds took " + (System.nanoTime() - startTime) + "ns");
-		
+
+		Assert.assertNotNull(segmentIds);
+
 		if (segmentIds == null || segmentIds.isEmpty()) {
 			log.error("No segments found!");
 		} else {
@@ -170,8 +167,6 @@ public class TestJtsSTRTree {
 
 	@Test
 	public void testSerializeJtsTree() {
-		String graphName = "gip_at_frc_0_8";
-		String version = "16_04_161103_2";
 		String graphVersionName = graphName + "_" + version;
 		
 		printMemoryUsage();
@@ -189,6 +184,13 @@ public class TestJtsSTRTree {
 		Runtime runtime = Runtime.getRuntime();
 		long allocatedMemory = runtime.totalMemory();
 		log.info("Memory Usage: " + (allocatedMemory/(1024*1024)) + " MB");
+	}
+
+	@Override
+	public void run() {
+		testJtsSTRTreeV1();
+		testJtsSTRTreeV2();
+		testSerializeJtsTree();
 	}
 	
 }

@@ -35,6 +35,7 @@ import javax.annotation.Resource;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.neo4j.graphdb.Result;
@@ -42,6 +43,7 @@ import org.neo4j.graphdb.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -49,6 +51,7 @@ import at.srfg.graphium.core.persistence.IWayGraphReadDao;
 import at.srfg.graphium.io.outputformat.ISegmentOutputFormat;
 import at.srfg.graphium.io.outputformat.ISegmentOutputFormatFactory;
 import at.srfg.graphium.model.IWaySegment;
+import at.srfg.graphium.neo4j.ITestGraphiumNeo4j;
 import at.srfg.graphium.neo4j.persistence.configuration.GraphDatabaseProvider;
 
 /**
@@ -57,9 +60,9 @@ import at.srfg.graphium.neo4j.persistence.configuration.GraphDatabaseProvider;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/application-context-graphium-neo4j_test.xml",
 		"classpath:/application-context-graphium-core.xml"})
-public class TestNeo4jWayGraphReadDaoImpl {
+public class SubtestNeo4jWayGraphReadDaoImpl implements ITestGraphiumNeo4j {
 
-	private static Logger log = LoggerFactory.getLogger(TestNeo4jWayGraphReadDaoImpl.class);
+	private static Logger log = LoggerFactory.getLogger(SubtestNeo4jWayGraphReadDaoImpl.class);
 	
 	@Resource(name="neo4jWayGraphReadDao")
 	private IWayGraphReadDao<IWaySegment> neo4jGraphReadDao;
@@ -70,9 +73,11 @@ public class TestNeo4jWayGraphReadDaoImpl {
 	@Resource(name="jacksonSegmentOutputFormatFactory")
 	private ISegmentOutputFormatFactory segmentOutputFormatFactory;
 
-	private String graphName = "gip_at_frc_0_4";
-	private String versionName = "16_02_160426";
-	
+	@Value("${db.graphName}")
+	String graphName;
+	@Value("${db.version}")
+	String version;
+
 	@Test
 	public void testStreamSegments() {
 		Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx();
@@ -80,7 +85,7 @@ public class TestNeo4jWayGraphReadDaoImpl {
 			OutputStream os = new ByteArrayOutputStream();
 			ISegmentOutputFormat<IWaySegment> graphOutputFormat;
 			graphOutputFormat = (ISegmentOutputFormat<IWaySegment>) segmentOutputFormatFactory.getSegmentOutputFormat(os);
-			neo4jGraphReadDao.streamSegments(graphOutputFormat, null, graphName, versionName);
+			neo4jGraphReadDao.streamSegments(graphOutputFormat, null, graphName, version);
 			tx.success();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -93,14 +98,14 @@ public class TestNeo4jWayGraphReadDaoImpl {
 	@Test
 	public void testStreamSegmentsWithIdFilter() {
 		Set<Long> ids = new HashSet<>();
-		ids.add(901551169L);
-		ids.add(901551109L);
+		ids.add(99529410L);
+		ids.add(51772367L);
 		Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx();
 		try {
 			OutputStream os = new ByteArrayOutputStream();
 			ISegmentOutputFormat<IWaySegment> graphOutputFormat;
 			graphOutputFormat = (ISegmentOutputFormat<IWaySegment>) segmentOutputFormatFactory.getSegmentOutputFormat(os);
-			neo4jGraphReadDao.streamSegments(graphOutputFormat, graphName, versionName, ids);
+			neo4jGraphReadDao.streamSegments(graphOutputFormat, graphName, version, ids);
 			tx.success();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -112,11 +117,11 @@ public class TestNeo4jWayGraphReadDaoImpl {
 
 	@Test
 	public void testGetSegmentById() {
-		long segmentId = 901414292;
+		long segmentId = 51772367;
 		IWaySegment segment = null;
 		Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx();
 		try {
-			segment = neo4jGraphReadDao.getSegmentById(graphName, versionName, segmentId, true);
+			segment = neo4jGraphReadDao.getSegmentById(graphName, version, segmentId, true);
 			tx.success();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -127,19 +132,17 @@ public class TestNeo4jWayGraphReadDaoImpl {
 		
 		Assert.assertNotNull(segment);
 		Assert.assertEquals(segmentId, segment.getId());
-		Assert.assertEquals(2, segment.getStartNodeCons().size());
+		Assert.assertEquals(0, segment.getStartNodeCons().size());
 		Assert.assertEquals(1, segment.getEndNodeCons().size());
 		
 	}
 	
 	@Test
+	@Ignore
 	public void countSegments() {
 		
-		String graphName = "gip_at_frc_0_4";
-		String versionName = "16_02_160519";
-		
 		Result result = graphDatabaseProvider.getGraphDatabase().execute(
-				"MATCH (n:" + Neo4jWaySegmentHelperImpl.createSegmentNodeLabel(graphName + "_" + versionName) + ") RETURN count(n)");
+				"MATCH (n:" + Neo4jWaySegmentHelperImpl.createSegmentNodeLabel(graphName + "_" + version) + ") RETURN count(n)");
 		List<String> cols = result.columns();
 		//result.columnAs("count(n)");
 		log.info(StringUtils.join(cols));
@@ -153,6 +156,13 @@ public class TestNeo4jWayGraphReadDaoImpl {
 		        }
 		    }
 		
+	}
+
+	@Override
+	public void run() {
+		testGetSegmentById();
+		testStreamSegments();
+		testStreamSegmentsWithIdFilter();
 	}
 
 }
