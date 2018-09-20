@@ -31,13 +31,25 @@
 	</bean>
 	
 	<!-- graph database provider -->	
-	<bean id="graphDatabaseProvider" class="at.srfg.graphium.neo4j.persistence.configuration.GraphDatabaseProvider">
+	<bean id="graphDatabaseProvider" class="at.srfg.graphium.neo4j.persistence.configuration.TempGraphDatabaseProvider">
 		<property name="neo4jPropertiesFile" value="${graphium.neo4j.propertiesFile}"/>
 		<property name="neo4jGraphDBDirectory" value="${graphium.neo4j.dbDirectory}"/>
 	</bean>
+
 	
+	<bean id="strtreeIndex" class="at.srfg.graphium.neo4j.persistence.index.STRTreeIndex" scope="singleton">
+    	<property name="graphDatabaseProvider" ref="graphDatabaseProvider"/>
+    </bean>
+    
+    <bean id="strtreeIndexLoader" class="at.srfg.graphium.neo4j.service.impl.STRTreeIndexLoader">
+    	<property name="metadataDao" ref="neo4jWayGraphVersionMetadataDao"/>
+    	<property name="treeIndex" ref="strtreeIndex"/>
+    </bean>
+	
+	<import resource="classpath:/application-context-graphium-model.xml"/>
+	<import resource="classpath:/application-context-graphium-core.xml"/>
 	<import resource="classpath:/application-context-graphium-neo4j-persistence.xml"/>
 	<import resource="classpath:/application-context-graphium-neo4j-service.xml"/>
 	<import resource="classpath:/application-context-graphium-neo4j-aliasing.xml"/>
-    
+        
 </beans>
