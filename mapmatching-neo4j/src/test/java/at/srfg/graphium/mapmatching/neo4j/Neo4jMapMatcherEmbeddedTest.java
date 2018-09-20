@@ -67,9 +67,9 @@ import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
 		"classpath:/application-context-graphium-mapmatching-neo4j.xml",
 		"classpath:/application-context-graphium-routing-neo4j.xml",
 		"classpath:/application-context-graphium-neo4j_test.xml"})
-public class TestNeo4jMapMatcherEmbedded {
+public class Neo4jMapMatcherEmbeddedTest {
 
-	private static Logger log = LoggerFactory.getLogger(TestNeo4jMapMatcherEmbedded.class);
+	private static Logger log = LoggerFactory.getLogger(Neo4jMapMatcherEmbeddedTest.class);
 
 	@Autowired
 	private Neo4jMapMatcher mapMatcher;

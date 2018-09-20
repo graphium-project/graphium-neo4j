@@ -19,9 +19,8 @@ package at.srfg.graphium.neo4j.service.impl;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
-import java.util.Date;
-import java.util.Map;
 
 import javax.annotation.Resource;
 
@@ -30,21 +29,17 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import com.vividsolutions.jts.geom.Polygon;
 
 import at.srfg.graphium.core.exception.GraphAlreadyExistException;
 import at.srfg.graphium.core.exception.GraphImportException;
 import at.srfg.graphium.core.service.IGraphVersionImportService;
 import at.srfg.graphium.model.IWayGraph;
-import at.srfg.graphium.model.IWayGraphVersionMetadata;
+import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.model.impl.WayGraph;
-import at.srfg.graphium.model.impl.WayGraphVersionMetadata;
-import at.srfg.graphium.model.management.impl.Source;
-import at.srfg.graphium.neo4j.persistence.configuration.GraphDatabaseProvider;
+import at.srfg.graphium.neo4j.ITestGraphiumNeo4j;
 
 /**
  * @author mwimmer
@@ -53,84 +48,57 @@ import at.srfg.graphium.neo4j.persistence.configuration.GraphDatabaseProvider;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/application-context-graphium-core.xml",
 		"classpath:application-context-graphium-neo4j_test.xml"})
-public class TestNeo4jQueuingGraphVersionImportServiceImpl {
+public class SubtestNeo4jQueuingGraphVersionImportServiceImpl implements ITestGraphiumNeo4j {
 
-	private static Logger log = LoggerFactory.getLogger(TestNeo4jQueuingGraphVersionImportServiceImpl.class);
+	private static Logger log = LoggerFactory.getLogger(SubtestNeo4jQueuingGraphVersionImportServiceImpl.class);
 
-	private final static String INPUTFILE = "/development/project_data/evis/gip/1702/gip_at_frc_0_2_17_02_170327_no_pc.json";
+	@Value("${db.graphName}")
+	String graphName;
+	@Value("${db.version}")
+	String version;
+	@Value("${db.inputFileName}")
+	String inputFileName;
 	
 	@Resource(name="neo4jQueuingGraphVersionImportService")
-	private IGraphVersionImportService importService;
+	private IGraphVersionImportService<? extends IWaySegment> importService;
 
-	@Test
-	public void testImportGraphVersion() {
-	// benötigt 4GB Heap, dauert etwa 18min (frc 0-4)
-		String graphName = "gip_at_frc_0_4";
-		String version = "16_02_160519";
-//		String version = "limited_500_15_02_150507";
-		String originGraphName = "gip_at";
-		String originVersion = "test";
-		Date validFrom = new Date();
-		Date validTo = null;
-		Map<String, String> tags = null;
-		int sourceId = 1;
-		String sourceName = "GIP";
-		String type = "graph";
-		String description = "die GIP";
-		String creator = "ich";
-		String originUrl = "http://gip.at";
+	@Override
+	public void run() {
+		try {
+			testImportGraphVersion();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
+	//@Test
+	public void testImportGraphVersion() throws IOException {
 		
-		
-		Polygon coveredArea = null;
 		InputStream stream = null;
 		
-		//Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx();
 		try 
 		{
-			stream = new FileInputStream(INPUTFILE);
-			
-			IWayGraphVersionMetadata metadata = new WayGraphVersionMetadata();
-			metadata.setGraphName(graphName);
-			metadata.setVersion(version);
-			metadata.setOriginGraphName(originGraphName);
-			metadata.setOriginVersion(originVersion);
-			metadata.setValidFrom(validFrom);
-			metadata.setValidTo(validTo);
-			metadata.setType(type);
-			metadata.setCreator(creator);
-			metadata.setCreationTimestamp(new Date());
-			metadata.setCoveredArea(coveredArea);
-			metadata.setSource(new Source(sourceId, sourceName));
-			metadata.setOriginUrl(originUrl);
-			metadata.setDescription(description);
+			stream = new FileInputStream(inputFileName);
 
 			importService.importGraphVersion(graphName, version, stream, true);
 			
-	//		tx.success();
-			
 		} catch (FileNotFoundException e) {
 			log.error("file not found", e);
-	//		tx.failure();
 		} catch (GraphImportException e) {
 			log.error("error importing graph", e);
-	//		tx.failure();
 		} catch (GraphAlreadyExistException e) {
 			log.error("error, graph already exists", e);
-	//		tx.failure();
 		} finally {
-//			tx.close();
 		}
 		
 		log.info("Import finished");
 		
 	}
 	
+	@SuppressWarnings("rawtypes")
 	@Ignore
 	@Test
 	public void testPostImport() {
-		String graphName = "gip_at_frc_0_4";
-		String version = "16_02_160318";
 		IWayGraph wayGraph = new WayGraph(0, graphName);
 		((Neo4jQueuingGraphVersionImportServiceImpl)importService).postImport(wayGraph, version, false);
 	}

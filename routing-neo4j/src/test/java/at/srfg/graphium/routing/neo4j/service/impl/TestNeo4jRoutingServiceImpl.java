@@ -17,6 +17,10 @@
  */
 package at.srfg.graphium.routing.neo4j.service.impl;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -25,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
 import org.apache.commons.lang3.time.StopWatch;
@@ -34,17 +39,22 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.MultiLineString;
 
+import at.srfg.graphium.core.exception.GraphAlreadyExistException;
+import at.srfg.graphium.core.exception.GraphImportException;
 import at.srfg.graphium.core.persistence.IWayGraphVersionMetadataDao;
+import at.srfg.graphium.core.service.IGraphVersionImportService;
 import at.srfg.graphium.model.Access;
 import at.srfg.graphium.model.FormOfWay;
 import at.srfg.graphium.model.FuncRoadClass;
 import at.srfg.graphium.model.ISegmentXInfo;
+import at.srfg.graphium.model.IWayGraphVersionMetadata;
 import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.model.IWaySegmentConnection;
 import at.srfg.graphium.model.OneWay;
@@ -75,51 +85,93 @@ public class TestNeo4jRoutingServiceImpl {
 	
 	@Resource(name="neo4jWayGraphVersionMetadataDao")
 	private IWayGraphVersionMetadataDao metadataDao;
-		
-	String graphName = "osm_at";
-	String graphVersion = "170920";
 	
+	@Resource(name="neo4jQueuingGraphVersionImportService")
+	private IGraphVersionImportService<? extends IWaySegment> importService;
+
+	@Value("${db.graphName}")
+	String graphName;
+	@Value("${db.version1}")
+	String version1;
+	@Value("#{new java.text.SimpleDateFormat(\"${db.dateFormat}\").parse(\"${db.validFrom1}\")}")
+	Date validFrom1;
+	@Value("#{new java.text.SimpleDateFormat(\"${db.dateFormat}\").parse(\"${db.validTo1}\")}")
+	Date validTo1;
+	@Value("${db.version2}")
+	String version2;
+	@Value("#{new java.text.SimpleDateFormat(\"${db.dateFormat}\").parse(\"${db.validFrom2}\")}")
+	Date validFrom2;
+	@Value("#{new java.text.SimpleDateFormat(\"${db.dateFormat}\").parse(\"${db.validTo2}\")}")
+	Date validTo2;
+	@Value("${db.inputFileName}")
+	String inputFileName;
+	
+	//@BeforeClass
+	@PostConstruct
+	public void setup() throws IOException {
+		// import first version
+//		importGraphVersion(graphName, version1, validFrom1, validTo1);
+		
+		// import second version
+		IWayGraphVersionMetadata metadata = metadataDao.getWayGraphVersionMetadata(graphName, version2);
+		if (metadata == null) {
+			importGraphVersion(graphName, version2, validFrom2, null);
+		}
+		
+	}
+	
+	private void importGraphVersion(String graphName, String version, Date validFrom, Date validTo) {
+		InputStream stream = null;
+		try 
+		{
+			stream = new FileInputStream(inputFileName);
+			importService.importGraphVersion(graphName, version, stream, true);
+			
+			IWayGraphVersionMetadata metadata = metadataDao.getWayGraphVersionMetadata(graphName, version);
+			metadata.setValidFrom(validFrom);
+			if (validTo != null) {
+				metadata.setValidTo(validTo);
+			}
+			metadata.setState(State.ACTIVE);
+			
+			metadataDao.updateGraphVersion(metadata);
+			
+		} catch (FileNotFoundException e) {
+			log.error("file not found", e);
+		} catch (GraphImportException e) {
+			log.error("error importing graph", e);
+		} catch (GraphAlreadyExistException e) {
+			log.error("error, graph already exists", e);
+		} finally {
+		}
+		
+		log.info("Import finished");
+	}
+
 	//@Test
 	public void testRouteWithWaySegmentsInLoop() {
+		log.info("Testing testRouteWithWaySegmentsInLoop()...");
 		for (int i=0; i<10; i++) {
 			testRouteWithWaySegments();
 		}
 	}
 	
 	@Test
-	@Ignore
+//	@Ignore
 	public void testRouteWithWaySegments() {
+		log.info("Testing testRouteWithWaySegments()...");
 
-		long startSegmentId = 701177352;
-		long endSegmentId = 701447592;
-//		
-//		long startSegmentId = 901389582;
-////		long startSegmentId = 901415435;
-//		long endSegmentId = 304217999;
-////		long endSegmentId = 901412766;
-		
-//		long startSegmentId = 701177352;
-//		long endSegmentId = 701447592;
-//		
-//		long startSegmentId = 901389582;
-////		long startSegmentId = 901415435;
-//		long endSegmentId = 304217999;
-////		long endSegmentId = 901412766;
-		
-//		String graphName = "osm_at_with_lower_level_streets";
-//		String graphVersion = "161215";
-//		long startSegmentId = 9222916374620766795L; //9222916374620754784L;
-//		long endSegmentId = 9222916374620775804L; //9222916374621773803L;
-
+		long startSegmentId = 4586021;
+		long endSegmentId = 51772367;
 		
 		StopWatch stopWatch = new StopWatch();
 		
-		IRoutingOptions options = new RoutingOptionsImpl(graphName, graphVersion, RoutingCriteria.LENGTH, RoutingMode.CAR);
-//		IRoutingOptions options = new RoutingOptionsImpl(graphName, graphVersion, RoutingAlgorithms.DIJKSTRA, RoutingCriteria.LENGTH, RoutingMode.CAR);
-//		IRoutingOptions options = new RoutingOptionsImpl(graphName, graphVersion, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
+		IRoutingOptions options = new RoutingOptionsImpl(graphName, version2, RoutingCriteria.LENGTH, RoutingMode.CAR);
+//		IRoutingOptions options = new RoutingOptionsImpl(graphName, version, RoutingAlgorithms.DIJKSTRA, RoutingCriteria.LENGTH, RoutingMode.CAR);
+//		IRoutingOptions options = new RoutingOptionsImpl(graphName, version, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
 		
-//		IRoutingOptions options = new RoutingOptionsImpl(graphName, graphVersion, RoutingCriteria.MIN_DURATION, RoutingMode.PEDESTRIAN);
-//		IRoutingOptions options = new RoutingOptionsImpl(graphName, graphVersion, RoutingCriteria.MIN_DURATION, null);
+//		IRoutingOptions options = new RoutingOptionsImpl(graphName, version, RoutingCriteria.MIN_DURATION, RoutingMode.PEDESTRIAN);
+//		IRoutingOptions options = new RoutingOptionsImpl(graphName, version, RoutingCriteria.MIN_DURATION, null);
 		IWaySegment startSegment = new WaySegment();
 		startSegment.setId(startSegmentId);
 		IWaySegment endSegment = new WaySegment();
@@ -137,20 +189,21 @@ public class TestNeo4jRoutingServiceImpl {
 
 	
 	@Test
-	@Ignore
+//	@Ignore
 	public void testRouteWithWaySegmentsForCurrentVersion() {
+		log.info("Testing testRouteWithWaySegmentsForCurrentVersion()...");
 		
-		// activate graph version
-		metadataDao.setGraphVersionState(graphName, graphVersion, State.ACTIVE);
+		long startSegmentId = 4586021;
+		long endSegmentId = 51772367;
 		
 		StopWatch stopWatch = new StopWatch();
 		
 		IRoutingOptions options = new RoutingOptionsImpl(graphName, null, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
 		
 		IWaySegment startSegment = new WaySegment();
-		startSegment.setId(901415435);
+		startSegment.setId(startSegmentId);
 		IWaySegment endSegment = new WaySegment();
-		endSegment.setId(901412766);
+		endSegment.setId(endSegmentId);
 
 		stopWatch.start();
 		IRoute<IWaySegment> route = routingService.route(options, startSegment, endSegment);
@@ -163,11 +216,12 @@ public class TestNeo4jRoutingServiceImpl {
 	}
 
 	@Test
-	@Ignore
+//	@Ignore
 	public void testRouteWithValidFilters() {
+		log.info("Testing testRouteWithValidFilters()...");
 		
-		// activate graph version
-		metadataDao.setGraphVersionState(graphName, graphVersion, State.ACTIVE);
+		long startSegmentId = 4586021;
+		long endSegmentId = 51772367;
 		
 		StopWatch stopWatch = new StopWatch();
 		
@@ -189,9 +243,9 @@ public class TestNeo4jRoutingServiceImpl {
 		options.setTagValueFilters(tagFilters);
 		
 		IWaySegment startSegment = new WaySegment();
-		startSegment.setId(901415435);
+		startSegment.setId(startSegmentId);
 		IWaySegment endSegment = new WaySegment();
-		endSegment.setId(901412766);
+		endSegment.setId(endSegmentId);
 
 		stopWatch.start();
 		IRoute<IWaySegment> route = routingService.route(options, startSegment, endSegment);
@@ -206,10 +260,11 @@ public class TestNeo4jRoutingServiceImpl {
 	@Test
 	@Ignore
 	public void testRouteWithInValidFilters() {
+		log.info("Testing testRouteWithInValidFilters()...");
 		
-		// activate graph version
-		metadataDao.setGraphVersionState(graphName, graphVersion, State.ACTIVE);
-		
+		long startSegmentId = 4586021;
+		long endSegmentId = 51772367;
+
 		StopWatch stopWatch = new StopWatch();
 		
 		IRoutingOptions options = new RoutingOptionsImpl(graphName, null, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
@@ -234,9 +289,9 @@ public class TestNeo4jRoutingServiceImpl {
 		options.setTagValueFilters(tagFilters);
 		
 		IWaySegment startSegment = new WaySegment();
-		startSegment.setId(901415435);
+		startSegment.setId(startSegmentId);
 		IWaySegment endSegment = new WaySegment();
-		endSegment.setId(901412766);
+		endSegment.setId(endSegmentId);
 
 		stopWatch.start();
 		IRoute<IWaySegment> route = routingService.route(options, startSegment, endSegment);
@@ -248,53 +303,24 @@ public class TestNeo4jRoutingServiceImpl {
 		log.info("Routing took " + stopWatch.getTime() + " ms");
 	}
 
-//	@Test
+	@Test
 //	@Ignore
 	public void testRouteWithWaySegmentsForValidTimestamp() {
-		String graphName = "gip_at_frc_0_4";
-		String graphVersion = "16_02_160414";
+		log.info("Testing testRouteWithWaySegmentsForValidTimestamp()...");
+
+		long startSegmentId = 4586021;
+		long endSegmentId = 51772367;
+
 		Calendar cal = Calendar.getInstance();
-		cal.set(2016, 02, 22); // 22. März 2016
-		
-		// activate graph version
-		metadataDao.setGraphVersionState(graphName, graphVersion, State.ACTIVE);
+		cal.set(2018, 03, 22); // 22. April 2018
 		
 		StopWatch stopWatch = new StopWatch();
 		
 		IRoutingOptions options = new RoutingOptionsImpl(graphName, null, cal.getTime(), RoutingAlgorithms.ASTAR, RoutingCriteria.MIN_DURATION, RoutingMode.CAR, 0, null, 0);
 		IWaySegment startSegment = new WaySegment();
-		startSegment.setId(901415435);
+		startSegment.setId(startSegmentId);
 		IWaySegment endSegment = new WaySegment();
-		endSegment.setId(901412766);
-
-		stopWatch.start();
-		IRoute<IWaySegment> route = routingService.route(options, startSegment, endSegment);
-		stopWatch.stop();
-		
-		Assert.assertNotNull(route);
-		
-		printRoute(route);
-		log.info("Routing took " + stopWatch.getTime() + " ms");
-	}
-
-//	@Test
-//	@Ignore
-	public void testRouteWithWaySegmentsForInvalidTimestamp() {
-		String graphName = "gip_at_frc_0_4";
-		String graphVersion = "16_02_160414";
-		Calendar cal = Calendar.getInstance();
-		cal.set(2016, 02, 02); // 2. März 2016
-		
-		// activate graph version
-		metadataDao.setGraphVersionState(graphName, graphVersion, State.ACTIVE);
-		
-		StopWatch stopWatch = new StopWatch();
-		
-		IRoutingOptions options = new RoutingOptionsImpl(graphName, null, cal.getTime(), RoutingAlgorithms.ASTAR, RoutingCriteria.MIN_DURATION, RoutingMode.CAR, 0, null, 0);
-		IWaySegment startSegment = new WaySegment();
-		startSegment.setId(901415435);
-		IWaySegment endSegment = new WaySegment();
-		endSegment.setId(901412766);
+		endSegment.setId(endSegmentId);
 
 		stopWatch.start();
 		IRoute<IWaySegment> route = routingService.route(options, startSegment, endSegment);
@@ -307,73 +333,46 @@ public class TestNeo4jRoutingServiceImpl {
 	}
 
 	@Test
-	//@Ignore
+	@Ignore
+	public void testRouteWithWaySegmentsForInvalidTimestamp() {
+		log.info("Testing testRouteWithWaySegmentsForInvalidTimestamp()...");
+		
+		long startSegmentId = 4586021;
+		long endSegmentId = 51772367;
+
+		Calendar cal = Calendar.getInstance();
+		cal.set(2016, 02, 02); // 2. März 2016
+		
+		StopWatch stopWatch = new StopWatch();
+		
+		IRoutingOptions options = new RoutingOptionsImpl(graphName, null, cal.getTime(), RoutingAlgorithms.ASTAR, RoutingCriteria.MIN_DURATION, RoutingMode.CAR, 0, null, 0);
+		IWaySegment startSegment = new WaySegment();
+		startSegment.setId(startSegmentId);
+		IWaySegment endSegment = new WaySegment();
+		endSegment.setId(endSegmentId);
+
+		stopWatch.start();
+		IRoute<IWaySegment> route = routingService.route(options, startSegment, endSegment);
+		stopWatch.stop();
+		
+		Assert.assertNotNull(route);
+		
+		printRoute(route);
+		log.info("Routing took " + stopWatch.getTime() + " ms");
+	}
+
+	@Test
+//	@Ignore
 	public void testRouteWithCoordinates() {
-//		String graphName = "gip_at_frc_0_4";
-//		String graphVersion = "16_02_160414";
-//		String graphName = "gip_at_frc_0_8";
-//		String graphVersion = "16_04_161103_2";
-		IRoutingOptions options = new RoutingOptionsImpl(graphName, graphVersion, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
-//		IRoutingOptions options = new RoutingOptionsImpl(graphName, graphVersion, RoutingCriteria.LENGTH, RoutingMode.CAR);
-//		options.setSearchDistance(0.0003);
-//		double startX = 13.040493;
-//		double startY = 47.815719;
-//		double endX = 13.039064;
-//		double endY = 47.813570;
+		log.info("Testing testRouteWithCoordinates()...");
 
-//		double startX = 13.043715;
-//		double startY = 47.812866;
-//		double endX = 13.044421;
-//		double endY = 47.812616;
+		double startY = 55.638616;
+		double startX = 9.561346;
+		double endY = 56.33339;
+		double endX = 10.12442;
+		
+		IRoutingOptions options = new RoutingOptionsImpl(graphName, version2, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
 
-//		double startX = 13.043351;
-//		double startY = 47.812319;
-//		double endX = 13.044068;
-//		double endY = 47.812072;
-		
-//		double startX = 13.043516;
-//		double startY = 47.812558;
-//		double endX = 13.044208;
-//		double endY = 47.812287;
-		
-//		double startX = 14.16082;
-//		double startY = 48.15836;
-//		double endX = 14.171212;
-//		double endY = 48.152963;
-		
-		
-//		// Münchner Bundesstraße stadteinwärts
-//		
-//		// start segment 901409724
-//		// end Segmetn  901394179		
-//		double startY = 47.8355406;
-//		double startX = 12.9950780;
-//		double endY = 47.811653;
-//		double endX = 13.026411;
-		
-
-
-	    // stauroute münchner stadtauswärts bundesstraße		
-		double startY = 47.8110640; // lehener brücke
-		double startX = 13.03579700;
-		double endY = 	47.82316024; // knoten salzburg
-		double endX = 13.01423204;
-		
-//	    // ausweichroute siebenstädter bundesstraße TS 1
-//		
-//		double startY = 47.81109922; // siebenstädterstraße
-//		double startX = 13.0330958;
-//		double endY = 47.818473; //
-//		double endX = 13.02372006;
-		
-//	    // ausweichroute siebenstädter bundesstraße TS 2
-//		
-//		double startY = 47.8181344; // 
-//		double startX = 13.0243889;
-//		double endY = 47.81903316; // einmündung bessarabierstraße
-//		double endX = 13.0182091;
-		
-		
 		// by default segments will be cut!
 		IRoute<IWaySegment> route = routingService.route(options, startX, startY, endX, endY);
 		
@@ -385,7 +384,7 @@ public class TestNeo4jRoutingServiceImpl {
 		System.out.println("SRID=4326;POINT (" + startX + " " + startY + ")");
 		System.out.println("SRID=4326;POINT (" + endX + " " + endY + ")");
 		
-//		options = new RoutingOptionsImpl(graphName, graphVersion, RoutingCriteria.LENGTH, RoutingMode.CAR);
+//		options = new RoutingOptionsImpl(graphName, version, RoutingCriteria.LENGTH, RoutingMode.CAR);
 //		
 //		route = routingService.route(options, startX, startY, endX, endY);
 //		
@@ -397,32 +396,18 @@ public class TestNeo4jRoutingServiceImpl {
 	}
 
 	@Test
-	@Ignore
+//	@Ignore
 	public void testRouteWithCoordinatesForCurrentVersion() {
+		log.info("Testing testRouteWithCoordinatesForCurrentVersion()...");
+
 		IRoutingOptions options = new RoutingOptionsImpl(graphName, null, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
 		options.setRoutingTimestamp(new Date());
+		
+		double startY = 55.3948;
+		double startX = 9.4495;
+		double endY = 55.41020;
+		double endX = 10.06664;
 
-	    // stauroute münchner stadtauswärts bundesstraße		
-		double startY = 47.8110640; // lehener brücke
-		double startX = 13.03579700;
-		double endY = 	47.82316024; // knoten salzburg
-		double endX = 13.01423204;
-		
-//	    // ausweichroute siebenstädter bundesstraße TS 1
-//		
-//		double startY = 47.81109922; // siebenstädterstraße
-//		double startX = 13.0330958;
-//		double endY = 47.818473; //
-//		double endX = 13.02372006;
-		
-//	    // ausweichroute siebenstädter bundesstraße TS 2
-//		
-//		double startY = 47.8181344; // 
-//		double startX = 13.0243889;
-//		double endY = 47.81903316; // einmündung bessarabierstraße
-//		double endX = 13.0182091;
-		
-		
 		// by default segments will be cut!
 		IRoute<IWaySegment> route = routingService.route(options, startX, startY, endX, endY);
 		
@@ -440,9 +425,11 @@ public class TestNeo4jRoutingServiceImpl {
 	@Test
 	@Ignore
 	public void testRouteWithCoordinatesCompareRoutingCriterias() {
+		log.info("Testing testRouteWithCoordinatesCompareRoutingCriterias()...");
+
 //		String graphName = "gip_at_frc_0_8";
-//		String graphVersion = "16_04_161103_2";
-		IRoutingOptions options = new RoutingOptionsImpl(graphName, graphVersion, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
+//		String version = "16_04_161103_2";
+		IRoutingOptions options = new RoutingOptionsImpl(graphName, version2, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
 		
 		double startX = 13.02678;
 		double startY = 47.82557;
@@ -492,7 +479,7 @@ public class TestNeo4jRoutingServiceImpl {
 
 		compareRoutes(expectedMinDurationRoute, route);
 
-		options = new RoutingOptionsImpl(graphName, graphVersion, RoutingCriteria.LENGTH, RoutingMode.CAR);
+		options = new RoutingOptionsImpl(graphName, version2, RoutingCriteria.LENGTH, RoutingMode.CAR);
 		route = routingService.route(options, startX, startY, endX, endY);
 		
 		Assert.assertNotNull(route);
@@ -572,11 +559,15 @@ public class TestNeo4jRoutingServiceImpl {
 	@Test
 	@Ignore
 	public void testRouteWithCoordinatesAndWithoutCutting() {
-		IRoutingOptions options = new RoutingOptionsImpl(graphName, graphVersion, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
-		double startX = 13.040493;
-		double startY = 47.815719;
-		double endX = 13.039064;
-		double endY = 47.813570;
+		log.info("Testing testRouteWithCoordinatesAndWithoutCutting()...");
+
+		IRoutingOptions options = new RoutingOptionsImpl(graphName, version2, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
+		
+		double startY = 55.638616;
+		double startX = 9.561346;
+		double endY = 56.33339;
+		double endX = 10.12442;
+
 		IRoute<IWaySegment> route = routingService.route(options, startX, startY, endX, endY, false);
 		
 		Assert.assertNotNull(route);
