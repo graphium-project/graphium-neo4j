@@ -1,0 +1,45 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+		http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-3.0.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd">
+ 
+ 	<bean id="dbConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location" value="classpath:neo4j_db.properties" />
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+	</bean>
+
+    <bean id="subtestJtsSTRTree" class="at.srfg.graphium.neo4j.persistence.impl.SubtestJtsSTRTree" />
+    <bean id="subtestJtsSTRTreeCacheManager" class="at.srfg.graphium.neo4j.persistence.impl.SubtestJtsSTRTreeCacheManager"/>
+    <bean id="subtestNeo4jGraphWriteService" class="at.srfg.graphium.neo4j.persistence.impl.SubtestNeo4jGraphWriteServiceImpl"/>
+    <bean id="subtestNeo4jSubscriptionDao" class="at.srfg.graphium.neo4j.persistence.impl.SubtestNeo4jSubscriptionDaoImpl"/>
+    <bean id="subtestNeo4jWayGraphImportWithCypher" class="at.srfg.graphium.neo4j.persistence.impl.SubtestNeo4jWayGraphImportWithCypher"/>
+    <bean id="subtestNeo4jWayGraphReadDao" class="at.srfg.graphium.neo4j.persistence.impl.SubtestNeo4jWayGraphReadDaoImpl"/>
+    <bean id="subtestNeo4jWayGraphVersionMetadataDao" class="at.srfg.graphium.neo4j.persistence.impl.SubtestNeo4jWayGraphVersionMetadataDaoImpl"/>
+    <bean id="subtestNeo4jWayGraphWriteDao" class="at.srfg.graphium.neo4j.persistence.impl.SubtestNeo4jWayGraphWriteDaoImpl"/>
+    <bean id="subtestNeo4jQueuingGraphVersionImportService" class="at.srfg.graphium.neo4j.service.impl.SubtestNeo4jQueuingGraphVersionImportServiceImpl"/>
+
+    <!-- list of testclass-beans order necessary (write before read)-->
+    <util:list id="testclasses">
+        <ref bean="subtestNeo4jQueuingGraphVersionImportService"/>
+        <ref bean="subtestNeo4jWayGraphWriteDao"/>
+        <ref bean="subtestNeo4jWayGraphReadDao"/>
+        <ref bean="subtestNeo4jWayGraphVersionMetadataDao"/>
+        <ref bean="subtestNeo4jSubscriptionDao"/>
+        <ref bean="subtestJtsSTRTree"/>
+        <ref bean="subtestJtsSTRTreeCacheManager"/>
+        <ref bean="subtestNeo4jGraphWriteService"/>
+    </util:list>
+    
+</beans>

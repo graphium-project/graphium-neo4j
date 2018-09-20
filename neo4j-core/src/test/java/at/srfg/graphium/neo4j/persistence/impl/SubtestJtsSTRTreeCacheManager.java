@@ -30,6 +30,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import com.vividsolutions.jts.geom.Point;
 
 import at.srfg.graphium.geomutils.GeometryUtils;
+import at.srfg.graphium.neo4j.ITestGraphiumNeo4j;
 import at.srfg.graphium.neo4j.service.impl.STRTreeService;
 
 /**
@@ -39,9 +40,9 @@ import at.srfg.graphium.neo4j.service.impl.STRTreeService;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/application-context-graphium-neo4j_test.xml",
 		"classpath:/application-context-graphium-core.xml"})
-public class TestJtsSTRTreeCacheManager {
+public class SubtestJtsSTRTreeCacheManager implements ITestGraphiumNeo4j {
 	
-	private static Logger log = LoggerFactory.getLogger(TestJtsSTRTreeCacheManager.class);
+	private static Logger log = LoggerFactory.getLogger(SubtestJtsSTRTreeCacheManager.class);
 	
 	@Autowired
 	private STRTreeService indexService;
@@ -111,6 +112,10 @@ public class TestJtsSTRTreeCacheManager {
 			}
 		}
 		
+	}
+
+	@Override
+	public void run() {
 	}
 	
 }

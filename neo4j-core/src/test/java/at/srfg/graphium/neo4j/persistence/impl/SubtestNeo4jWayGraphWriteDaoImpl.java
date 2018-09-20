@@ -32,15 +32,18 @@ import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPInputStream;
 
 import javax.annotation.Resource;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.neo4j.graphdb.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -56,6 +59,7 @@ import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.model.IWaySegmentConnection;
 import at.srfg.graphium.model.impl.DefaultConnectionXInfo;
 import at.srfg.graphium.model.impl.DefaultSegmentXInfo;
+import at.srfg.graphium.neo4j.ITestGraphiumNeo4j;
 import at.srfg.graphium.neo4j.persistence.configuration.GraphDatabaseProvider;
 
 /**
@@ -64,9 +68,9 @@ import at.srfg.graphium.neo4j.persistence.configuration.GraphDatabaseProvider;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:/application-context-graphium-neo4j_test.xml",
 		"classpath:/application-context-graphium-core.xml"})
-public class TestNeo4jWayGraphWriteDaoImpl {
+public class SubtestNeo4jWayGraphWriteDaoImpl implements ITestGraphiumNeo4j {
 
-	private static Logger log = LoggerFactory.getLogger(TestNeo4jWayGraphWriteDaoImpl.class);
+	private static Logger log = LoggerFactory.getLogger(SubtestNeo4jWayGraphWriteDaoImpl.class);
 	
 	@Resource(name="neo4jWayGraphWriteDao")
 	private IWayGraphWriteDao<IWaySegment> neo4jGraphWriteDao;
@@ -80,19 +84,24 @@ public class TestNeo4jWayGraphWriteDaoImpl {
 	@Autowired
 	private GraphDatabaseProvider graphDatabaseProvider;
 	
-//	private String graphVersionName = "gip_at_16_02_160420";
-	private String graphName = "gip_at";
-	private String versionName = "16_02_160426";
-//	private String graphVersionName = "gip_at_test";
-//	private String graphName = "gip_at";
-//	private String versionName = "test";
-	
+	@Value("${db.graphName}")
+	String graphName;
+	@Value("${db.version}")
+	String version;
+	@Value("${db.inputFileName}")
+	String inputFileName;
+
+	@Override
+	public void run() {
+		testUpdateSegmentAttributes();
+		testUpdateSegmentWithXInfo();
+	}
+
 	@Test
 	public void testCreateGraph() {
 		Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx();
 		try {
-//		try (Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx()) {
-			neo4jGraphWriteDao.createGraph(graphName, versionName, true);
+			neo4jGraphWriteDao.createGraph(graphName, version, true);
 			tx.success();
 		} catch (GraphAlreadyExistException | GraphNotExistsException e) {
 			e.printStackTrace();
@@ -101,12 +110,11 @@ public class TestNeo4jWayGraphWriteDaoImpl {
 			tx.close();
 		}
 	}
-
+	
+	@Ignore	// implicitly tested by SubtestNeo4jQueuingGraphVersionImportServiceImpl
 	@Test
 	public void testParseAndSaveSgments() {
 		int batchSize = 1000;
-		String jsonFile = "D:/development/project_data/graphserver/upload/gip_at_frc_0_4_limited_500_15_10_151222a.json";
-		//String jsonFile = "C:/development/Graphserver/working_data/central_server/upload/gip_at_frc_0_4_limited_500_15_02_150507.json";
 		BlockingQueue<IWaySegment> segmentsQueue = new ArrayBlockingQueue<IWaySegment>(10000);
 		BlockingQueue<IWayGraphVersionMetadata> metadataQueue = new ArrayBlockingQueue<IWayGraphVersionMetadata>(1);
 
@@ -114,10 +122,11 @@ public class TestNeo4jWayGraphWriteDaoImpl {
 		try {
 			InputStream stream = null;
 			
-			stream = new FileInputStream(jsonFile);
-			inputFormat.deserialize(stream, segmentsQueue, metadataQueue);
+			stream = new FileInputStream(inputFileName);
+			GZIPInputStream zin = new GZIPInputStream(stream);
+			inputFormat.deserialize(zin, segmentsQueue, metadataQueue);
 			
-			neo4jGraphWriteDao.createGraphVersion(graphName, versionName, true, true);
+			neo4jGraphWriteDao.createGraphVersion(graphName, version, true, true);
 
 			// save segments via view
 			List<IWaySegment> segmentsToSave = new ArrayList<IWaySegment>();
@@ -135,9 +144,9 @@ public class TestNeo4jWayGraphWriteDaoImpl {
 						addConnectionsToIntegrityList(segment, connectionIntegrityMap);
 						
 						if (segmentsToSave.size() == batchSize) {
-							neo4jGraphWriteDao.saveSegments(segmentsToSave, graphName, versionName);
+							neo4jGraphWriteDao.saveSegments(segmentsToSave, graphName, version);
 							connectionsToSave = getValidConnections(connectionIntegrityMap, segmentIds);
-							neo4jGraphWriteDao.saveConnections(connectionsToSave, graphName, versionName);
+							neo4jGraphWriteDao.saveConnections(connectionsToSave, graphName, version);
 							segmentsToSave.clear();
 							connectionsToSave.clear();
 						}
@@ -149,9 +158,9 @@ public class TestNeo4jWayGraphWriteDaoImpl {
 			}
 
 			if (!segmentsToSave.isEmpty()) {
-				neo4jGraphWriteDao.saveSegments(segmentsToSave, graphName, versionName);
+				neo4jGraphWriteDao.saveSegments(segmentsToSave, graphName, version);
 				connectionsToSave = getValidConnections(connectionIntegrityMap, segmentIds);
-				neo4jGraphWriteDao.saveConnections(connectionsToSave, graphName, versionName);
+				neo4jGraphWriteDao.saveConnections(connectionsToSave, graphName, version);
 				segmentsToSave.clear();
 				connectionsToSave.clear();
 			}
@@ -165,21 +174,19 @@ public class TestNeo4jWayGraphWriteDaoImpl {
 			tx.close();
 		}
 		
-//		testPrintNodes();
 	}
 	
 	@Test
 	public void testUpdateSegmentAttributes() {
 		try (Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx();) 
 		{
-//			long segmentId = 101166657;
-			long segmentId = 33035975;
-			IWaySegment segment = neo4jGraphReadDao.getSegmentById(graphName, versionName, segmentId, false);
+			long segmentId = 51772367;
+			IWaySegment segment = neo4jGraphReadDao.getSegmentById(graphName, version, segmentId, false);
 			List<IWaySegment> segments = new ArrayList<>(1);
 			segment.setSpeedCalcTow((short) 50);
 			segments.add(segment);
 			
-			neo4jGraphWriteDao.updateSegmentAttributes(segments, graphName, versionName);
+			neo4jGraphWriteDao.updateSegmentAttributes(segments, graphName, version);
 			tx.success();
 		} catch (Exception e) {
 			log.error(e.toString(), e);
@@ -242,9 +249,8 @@ public class TestNeo4jWayGraphWriteDaoImpl {
 	public void testUpdateSegmentWithXInfo() {
 		try (Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx();) 
 		{
-//			long segmentId = 101166657;
-			long segmentId = 901551174;
-			IWaySegment segment = neo4jGraphReadDao.getSegmentById(graphName, versionName, segmentId, true);
+			long segmentId = 51772367;
+			IWaySegment segment = neo4jGraphReadDao.getSegmentById(graphName, version, segmentId, true);
 			List<IWaySegment> segments = new ArrayList<>(1);
 			segments.add(segment);
 			
@@ -264,7 +270,7 @@ public class TestNeo4jWayGraphWriteDaoImpl {
 				segment.getEndNodeCons().get(0).addXInfo(connXInfo);
 			}
 			
-			neo4jGraphWriteDao.updateSegments(segments, graphName, versionName);
+			neo4jGraphWriteDao.updateSegments(segments, graphName, version);
 			tx.success();
 		} catch (Exception e) {
 			log.error(e.toString(), e);
@@ -273,15 +279,12 @@ public class TestNeo4jWayGraphWriteDaoImpl {
 	
 	@Test
 	public void deleteSegments() {
-		String graphName = "gip_at_frc_0_8";
-		String versionName = "16_04_161103_2";
 		try {
-			neo4jGraphWriteDao.deleteSegments(graphName, versionName);
+			neo4jGraphWriteDao.deleteSegments(graphName, version);
 		} catch (GraphNotExistsException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		log.info("Fertig");
+		log.info("finished");
 	}
 
 }
