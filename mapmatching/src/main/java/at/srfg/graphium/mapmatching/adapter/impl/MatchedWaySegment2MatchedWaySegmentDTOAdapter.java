@@ -43,6 +43,7 @@ public class MatchedWaySegment2MatchedWaySegmentDTOAdapter implements IAdapter<M
 		segment.setStartSegment(segmentToAdapt.isStartSegment());
 		segment.setuTurnSegment(segmentToAdapt.isUTurnSegment());
 		segment.setWeight(segmentToAdapt.getWeight());
+		segment.setMatchedFactor(segmentToAdapt.getMatchedFactor());
 		if (segmentToAdapt.getGeometry() != null) {
 			segment.setGeometry(segmentToAdapt.getGeometry().toText());
 		}
