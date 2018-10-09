@@ -31,16 +31,11 @@
 			<name>Andreas Wagner</name>
 			<email>andreas.wagner@salzburgresearch.at</email>
 		</developer>
-		<developer>
-			<id>shennebe</id>
-			<name>Stefan Henneberger</name>
-			<email>stefan.henneberger@salzburgresearch.at</email>
-		</developer>
 	</developers>
  	
 	<properties>
 		<graphium-neo4j.version>1.0.2-SNAPSHOT</graphium-neo4j.version>
-		<graphium.version>1.0.1</graphium.version>
+		<graphium.version>1.0.2-SNAPSHOT</graphium.version>
 
 		<neo4j.version>3.2.5</neo4j.version>	 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
