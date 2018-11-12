@@ -66,6 +66,8 @@ local.properties
 
 # Log file
 *.log
+MapMatching*.csv
+logs/
 
 # BlueJ files
 *.ctxt
