@@ -67,6 +67,7 @@ public class RoutingMatcher {
 	private int maxNrOfTargetSegments = 5;
 	private int MAXSPEED_CAR_FRC_0 = 150; // km/h
 	private int MAXSPEED_CAR_FRC_1_X = 120; // km/h
+	private int MAXSPEED_CAR_URBAN = 70; // km/h
 	private int MAXSPEED_BIKE = 50; // km/h
 	private int MAXSPEED_PEDESTRIAN = 20; // km/h
 	private int skippedPointsThresholdToCreateNewPath = 3;
@@ -335,7 +336,11 @@ public class RoutingMatcher {
 		                	seg.getFormOfWay().getValue() != 10) {
 		                	maxSpeed = MAXSPEED_CAR_FRC_0;
 		                } else {
-		                	maxSpeed = MAXSPEED_CAR_FRC_1_X;
+		                	if (seg.isUrban()) {
+		                		maxSpeed = MAXSPEED_CAR_URBAN;
+		                	} else {
+		                		maxSpeed = MAXSPEED_CAR_FRC_1_X;
+		                	}
 		                }
 	                } else if (routingOptions.getMode().equals(RoutingMode.BIKE)) {
 	                	maxSpeed = MAXSPEED_BIKE;
@@ -543,14 +548,14 @@ public class RoutingMatcher {
 							direction = Direction.START_TO_END;
 						}
 					} else {
-						// the current segment was entered through the start node
+						// the current segment was entered through the end node
 						if (i < routeSegments.size() - 1) {
 							IWaySegment nextSegment = routeSegments.get(i + 1);
 							if (currentSegment.getEndNodeId() == nextSegment.getStartNodeId() ||
 								currentSegment.getEndNodeId() == nextSegment.getEndNodeId()) {
-								direction = Direction.END_TO_START;
-							} else {
 								direction = Direction.END_TO_END;
+							} else {
+								direction = Direction.END_TO_START;
 							}
 						} else {						
 							direction = Direction.END_TO_START;
