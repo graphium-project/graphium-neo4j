@@ -93,7 +93,7 @@ public class Neo4jMapMatcherEmbeddedTest {
 //		long trackId = 19991780;
 //		long trackId = 18241517;
 		
-		String trackId = "487115";
+		String trackId = "track_1210714";
 		
 //		long trackId = 4893166;
 		
@@ -203,7 +203,7 @@ public class Neo4jMapMatcherEmbeddedTest {
 	}
 
 	private List<IMatchedBranch> matchTrack(String trackId, String graphName) {
-		String fileName = "D:/development/project_data/graphserver/tests/tracks/json/" + trackId + ".json";
+		String fileName = "C:/development/project_data/evis/tracks/json/" + trackId + ".json";
 
 		ObjectMapper mapper = new ObjectMapper();
 		TrackDTO trackDto;
@@ -299,11 +299,15 @@ public class Neo4jMapMatcherEmbeddedTest {
 	private void printBranches(List<IMatchedBranch> branches) {
 		for (IMatchedBranch branch : branches) {
 			log.info("Branch with matched factor " + branch.getMatchedFactor());
-			List<Long> segmentIds = new ArrayList<>(branch.getMatchedWaySegments().size());
+
+			List<String> segmentIdsAndIndices = new ArrayList<>(branch.getMatchedWaySegments().size());
+			List<String> segmentIds = new ArrayList<>(branch.getMatchedWaySegments().size());
 			for (IMatchedWaySegment segment : branch.getMatchedWaySegments()) {
-//				log.info("" + segment.getId());
-				segmentIds.add(segment.getId());
+				segmentIdsAndIndices.add(segment.getId() + "(" + segment.getStartPointIndex() + "-" + segment.getEndPointIndex() + ")");
+				segmentIds.add("" + segment.getId());
 			}
+
+			log.info(StringUtils.join(segmentIdsAndIndices, ", "));
 			log.info(StringUtils.join(segmentIds, ", "));
 		}
 	}
