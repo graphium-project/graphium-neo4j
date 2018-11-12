@@ -35,8 +35,7 @@
  	
 	<properties>
 		<graphium-neo4j.version>1.0.2-SNAPSHOT</graphium-neo4j.version>
-		<graphium.version>1.0.2-SNAPSHOT</graphium.version>
-
+		<graphium.version>1.0.2</graphium.version>
 		<neo4j.version>3.2.5</neo4j.version>	 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<slf4j-log4j12.version>1.7.21</slf4j-log4j12.version>
@@ -50,8 +49,6 @@
 		<commons.lang3.version>3.4</commons.lang3.version>
 		<org.apache.httpcomponents.version>4.5.2</org.apache.httpcomponents.version>
 	</properties>
-	
-	
 	
 	<build>
 		<plugins>
@@ -83,16 +80,11 @@
 				</executions>
 			</plugin>
 
-			
-			
-			
-			
 			<plugin>
 				<groupId>com.mycila</groupId>
 				<artifactId>license-maven-plugin</artifactId>
 				<version>3.0</version>
 				<configuration>
-					
 					<header>com/mycila/maven/plugin/license/templates/GPL-3.txt</header>
 			   		<properties>
 						<owner>Salzburg Research Forschungsgesellschaft</owner>
@@ -182,7 +174,6 @@
 				<scope>import</scope>
 			</dependency>
 
-			
 		</dependencies>
 	</dependencyManagement>
 	
