@@ -417,9 +417,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 						IMatchedWaySegment firstUncertainSegment = path.getMatchedWaySegments().get(1);
 						if (firstUncertainSegment.getEndPointIndex() < lastCertainSegmentClone.getEndPointIndex()) {
 							if (lastCertainSegmentClone.getStartPointIndex() < firstUncertainSegment.getStartPointIndex()) {
-								// should not occur
-								log.error("UI");
-								pathsToRemove.add(path);
+								updateIndices(firstUncertainSegment, lastCertainSegmentClone, properties.getMaxMatchingRadiusMeter(), track);
 							} else {
 								lastCertainSegmentClone.setEndPointIndex(firstUncertainSegment.getStartPointIndex());
 								lastCertainSegmentClone.calculateDistances(track);
@@ -496,13 +494,13 @@ public class MapMatchingTask implements IMapMatcherTask {
 					", total track points = " + (path.getNrOfTotalTrackPoints()) +
 					", Segments = " + StringUtils.join(segmentIds, ", "));
 			
-			int prevIdx = 0;
-			for (IMatchedWaySegment seg : path.getMatchedWaySegments()) {
-				if (seg.getStartPointIndex() < prevIdx) {
-					log.warn("////////// (1) Index error at segment " + seg.getId() + ": " + seg.getStartPointIndex() + " < " + prevIdx);
-				}
-				prevIdx = seg.getEndPointIndex();
-			}	
+//			int prevIdx = 0;
+//			for (IMatchedWaySegment seg : path.getMatchedWaySegments()) {
+//				if (seg.getStartPointIndex() < prevIdx) {
+//					log.debug("////////// (1) Index error at segment " + seg.getId() + ": " + seg.getStartPointIndex() + " < " + prevIdx);
+//				}
+//				prevIdx = seg.getEndPointIndex();
+//			}	
 			
 		}
 	}
@@ -649,6 +647,30 @@ public class MapMatchingTask implements IMapMatcherTask {
 				startSegment.setDirection(Direction.END_TO_START);
 			}
 		}
+		
+		// in cases of determining certain paths indices could be invalid
+		correctIndices(bestBranch);
+	}
+
+	private void correctIndices(IMatchedBranch branch) {
+		if (branch.getMatchedWaySegments().size() > 2) {
+			IMatchedWaySegment previousSegment = branch.getMatchedWaySegments().get(0);
+			IMatchedWaySegment currentSegment = branch.getMatchedWaySegments().get(1);
+			for (int i=2; i<branch.getMatchedWaySegments().size(); i++) {
+				if (previousSegment.getEndPointIndex() > currentSegment.getStartPointIndex()) {
+					updateIndices(currentSegment, previousSegment, properties.getMaxMatchingRadiusMeter(), track);
+				}
+				previousSegment = currentSegment;
+				currentSegment = branch.getMatchedWaySegments().get(i);
+			}
+			
+		}
+	}
+
+	private void updateIndices(IMatchedWaySegment currentSegment, IMatchedWaySegment previousSegment,
+			int maxMatchingRadiusMeter, ITrack track2) {
+		int newStartIndex = segmentMatcher.updateMatchesOfPreviousSegment(previousSegment.getEndPointIndex(), previousSegment, currentSegment, properties.getMaxMatchingRadiusMeter(), track);
+		currentSegment.setStartPointIndex(newStartIndex);
 	}
 
 	/**

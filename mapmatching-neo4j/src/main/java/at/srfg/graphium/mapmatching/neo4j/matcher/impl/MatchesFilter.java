@@ -243,15 +243,15 @@ public class MatchesFilter {
 		// look for routing path to avoid lower lever roads
 		addHigherLevelSegmentsAtBypass(paths.get(0), newBranches, track);
 
-		for (IMatchedBranch path : paths) {
-			int prevIdx = 0;
-			for (IMatchedWaySegment seg : path.getMatchedWaySegments()) {
-				if (seg.getStartPointIndex() < prevIdx) {
-					log.warn("////////// (2) Index error at segment " + seg.getId() + ": " + seg.getStartPointIndex() + " < " + prevIdx);
-				}
-				prevIdx = seg.getEndPointIndex();
-			}	
-		}
+//		for (IMatchedBranch path : paths) {
+//			int prevIdx = 0;
+//			for (IMatchedWaySegment seg : path.getMatchedWaySegments()) {
+//				if (seg.getStartPointIndex() < prevIdx) {
+//					log.debug("////////// (2) Index error at segment " + seg.getId() + ": " + seg.getStartPointIndex() + " < " + prevIdx);
+//				}
+//				prevIdx = seg.getEndPointIndex();
+//			}	
+//		}
 
 		newBranches = filterPaths(newBranches);
 		
@@ -515,13 +515,13 @@ public class MatchesFilter {
 			
 
 			
-				int prevIdx = 0;
-				for (IMatchedWaySegment seg : path.getMatchedWaySegments()) {
-					if (seg.getStartPointIndex() < prevIdx) {
-						log.warn("////////// (3) Index error at segment " + seg.getId() + ": " + seg.getStartPointIndex() + " < " + prevIdx);
-					}
-					prevIdx = seg.getEndPointIndex();
-				}	
+//				int prevIdx = 0;
+//				for (IMatchedWaySegment seg : path.getMatchedWaySegments()) {
+//					if (seg.getStartPointIndex() < prevIdx) {
+//						log.debug("////////// (3) Index error at segment " + seg.getId() + ": " + seg.getStartPointIndex() + " < " + prevIdx);
+//					}
+//					prevIdx = seg.getEndPointIndex();
+//				}	
 
 			
 			
@@ -574,12 +574,12 @@ public class MatchesFilter {
 		}
 		
 		// use a map for each segment indicating different endPointIndices between paths
-		Map<IMatchedWaySegment, List<Integer>> segmentsEndPointIndices = new LinkedHashMap<>();
-		for (IMatchedWaySegment segment : bestBranch.getMatchedWaySegments()) {
-			List<Integer> indices = new ArrayList<>();
-			indices.add(segment.getEndPointIndex());
-			segmentsEndPointIndices.put(segment, indices);
-		}
+//		Map<IMatchedWaySegment, List<Integer>> segmentsEndPointIndices = new LinkedHashMap<>();
+//		for (IMatchedWaySegment segment : bestBranch.getMatchedWaySegments()) {
+//			List<Integer> indices = new ArrayList<>();
+//			indices.add(segment.getEndPointIndex());
+//			segmentsEndPointIndices.put(segment, indices);
+//		}
 		
 		// increment segment counters for segments matched in other paths
 		for (int iPath = 1; iPath < nonEmptyPaths.size(); iPath++) {
@@ -593,13 +593,13 @@ public class MatchesFilter {
 					segmentCounts.put(segment.getId(), ++count);
 				}
 				
-				if (segmentsEndPointIndices.containsKey(segment)) {
-					segmentsEndPointIndices.get(segment).add(segment.getEndPointIndex());
-				} else {
-					List<Integer> indices = new ArrayList<>();
-					indices.add(segment.getEndPointIndex());
-					segmentsEndPointIndices.put(segment, indices);
-				}
+//				if (segmentsEndPointIndices.containsKey(segment)) {
+//					segmentsEndPointIndices.get(segment).add(segment.getEndPointIndex());
+//				} else {
+//					List<Integer> indices = new ArrayList<>();
+//					indices.add(segment.getEndPointIndex());
+//					segmentsEndPointIndices.put(segment, indices);
+//				}
 				 
 			}
 			for (IMatchedWaySegment segment : path.getMatchedWaySegments()) {
