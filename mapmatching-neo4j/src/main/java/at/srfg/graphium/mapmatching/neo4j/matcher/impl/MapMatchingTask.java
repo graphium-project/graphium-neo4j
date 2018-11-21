@@ -53,6 +53,7 @@ import at.srfg.graphium.mapmatching.statistics.MapMatcherGlobalStatistics;
 import at.srfg.graphium.mapmatching.statistics.MapMatcherStatistics;
 import at.srfg.graphium.mapmatching.weighting.IWeightingStrategyFactory;
 import at.srfg.graphium.mapmatching.weighting.impl.RouteDistanceWeightingStrategyFactory;
+import at.srfg.graphium.model.IWayGraphVersionMetadata;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
 
 public class MapMatchingTask implements IMapMatcherTask {
@@ -61,8 +62,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 
 	private IMapMatchingProperties properties;
 	private Neo4jMapMatcher mapMatcher;			// TODO: => IMapMatcher
-	private String graphName;
-	private String graphVersion;
+	private IWayGraphVersionMetadata graphMetadata;
 	private Neo4jUtil neo4jUtil;
 
 	// cancel request flag in case of processes taking too much time
@@ -85,18 +85,17 @@ public class MapMatchingTask implements IMapMatcherTask {
 	private IWeightingStrategy weightingStrategy;
 	private static Logger csvLogger = null;
 
-	public MapMatchingTask(Neo4jMapMatcher mapMatcher, MapMatchingProperties properties, String graphName, String graphVersion, Neo4jUtil neo4jUtil, 
+	public MapMatchingTask(Neo4jMapMatcher mapMatcher, MapMatchingProperties properties, IWayGraphVersionMetadata graphMetadata, Neo4jUtil neo4jUtil, 
 			ITrack origTrack, String csvLoggerName, MapMatcherGlobalStatistics globalStatistics) {
-		this(mapMatcher, properties, graphName, graphVersion, neo4jUtil, origTrack, new RouteDistanceWeightingStrategyFactory(), 
+		this(mapMatcher, properties, graphMetadata, neo4jUtil, origTrack, new RouteDistanceWeightingStrategyFactory(), 
 				csvLoggerName, globalStatistics);
 	}
 
-	public MapMatchingTask(Neo4jMapMatcher mapMatcher, MapMatchingProperties properties, String graphName, String graphVersion, 
+	public MapMatchingTask(Neo4jMapMatcher mapMatcher, MapMatchingProperties properties, IWayGraphVersionMetadata graphMetadata, 
 			Neo4jUtil neo4jUtil, ITrack origTrack, IWeightingStrategyFactory weightingStrategyFactory, String csvLoggerName,
 			MapMatcherGlobalStatistics globalStatistics) {
 		this.mapMatcher = mapMatcher;
-		this.graphName = graphName;
-		this.graphVersion = graphVersion;
+		this.graphMetadata = graphMetadata;
 		this.track = origTrack;
 		this.properties = properties.clone();
 		this.neo4jUtil = neo4jUtil;
@@ -139,7 +138,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 	
 	private List<IMatchedBranch> matchTrack(Long startSegmentId, List<IMatchedBranch> branches) {
 		log.info("matching track " + track.getId());
-		log.info("graph name: " + graphName + " in version: " + mapMatcher.getGraphMetadata().getVersion());
+		log.info("graph name: " + graphMetadata.getGraphName() + " in version: " + graphMetadata.getVersion());
 		
 		track.calculateMetaData(true);
 		
@@ -159,7 +158,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 		statistics.setValue(MapMatcherStatistics.AVG_SAMPLING_RATE, TrackUtils.getMeanSamplingRate(track));
 		
 		List<IMatchedBranch> result = null;
-		result = doMatchTrack(this.graphName, this.track, startSegmentId, branches);
+		result = doMatchTrack(graphMetadata.getGraphName(), this.track, startSegmentId, branches);
 		
 		Date endTimestamp = new Date();
 		statistics.setValue(MapMatcherStatistics.END_TIMESTAMP, endTimestamp);
@@ -531,7 +530,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 		trackSanitizer.analyseTrack(origTrack, properties);
 		
 		// check bounds of graph and track
-		if (!trackSanitizer.validateTrack(origTrack, mapMatcher.getGraphMetadata(), graphName)) {
+		if (!trackSanitizer.validateTrack(origTrack, graphMetadata, graphName)) {
 			return false;
 		}
 		
@@ -789,12 +788,12 @@ public class MapMatchingTask implements IMapMatcherTask {
 	
 	@Override
 	public String getGraphName() {
-		return graphName;
+		return graphMetadata.getGraphName();
 	}
 	
 	@Override
 	public String getGraphVersion() {
-		return graphVersion;
+		return graphMetadata.getVersion();
 	}
 
 	public INeo4jWayGraphReadDao getGraphDao() {
