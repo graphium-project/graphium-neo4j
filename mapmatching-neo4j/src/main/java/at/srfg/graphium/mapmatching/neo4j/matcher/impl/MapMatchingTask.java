@@ -422,8 +422,11 @@ public class MapMatchingTask implements IMapMatcherTask {
 								lastCertainSegmentClone.calculateDistances(track);
 							}
 						} else {
-							firstUncertainSegment.setStartPointIndex(lastCertainSegment.getEndPointIndex());
-							firstUncertainSegment.calculateDistances(track);
+							if (!firstUncertainSegment.isAfterSkippedPart() &&
+								 lastCertainSegment.getEndPointIndex() >= firstUncertainSegment.getStartPointIndex()) {
+								firstUncertainSegment.setStartPointIndex(lastCertainSegment.getEndPointIndex());
+								firstUncertainSegment.calculateDistances(track);
+							}
 						}						
 					}
 					
