@@ -138,6 +138,34 @@ public class SubtestNeo4jWayGraphReadDaoImpl implements ITestGraphiumNeo4j {
 	}
 	
 	@Test
+	public void testStreamIncomingConnectedStreetSegments() {
+		long segmentId = 174681248;
+		Set<Long> segmentIds = new HashSet<>();
+		segmentIds.add(segmentId);
+		Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx();
+		try {
+			OutputStream os = new ByteArrayOutputStream();
+			ISegmentOutputFormat<IWaySegment> graphOutputFormat;
+			graphOutputFormat = (ISegmentOutputFormat<IWaySegment>) segmentOutputFormatFactory.getSegmentOutputFormat(os);
+			neo4jGraphReadDao.streamIncomingConnectedStreetSegments(graphOutputFormat, graphName, version, segmentIds);
+			tx.success();
+		} catch (Exception e) {
+			e.printStackTrace();
+			tx.failure();
+		} finally {
+			tx.close();
+		}
+		
+		log.info("" + segmentIds.size());
+		
+//		Assert.assertNotNull(segment);
+//		Assert.assertEquals(segmentId, segment.getId());
+//		Assert.assertEquals(0, segment.getStartNodeCons().size());
+//		Assert.assertEquals(1, segment.getEndNodeCons().size());
+		
+	}
+	
+	@Test
 	@Ignore
 	public void countSegments() {
 		

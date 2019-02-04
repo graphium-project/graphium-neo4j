@@ -35,7 +35,7 @@
  	
 	<properties>
 		<graphium-neo4j.version>1.0.3-SNAPSHOT</graphium-neo4j.version>
-		<graphium.version>1.0.2</graphium.version>
+		<graphium.version>1.0.3-SNAPSHOT</graphium.version>
 		<neo4j.version>3.2.5</neo4j.version>	 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<slf4j-log4j12.version>1.7.21</slf4j-log4j12.version>
