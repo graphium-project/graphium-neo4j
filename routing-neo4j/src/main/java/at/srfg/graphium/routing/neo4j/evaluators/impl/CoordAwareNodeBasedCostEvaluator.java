@@ -27,6 +27,7 @@ import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.linearref.LengthIndexedLine;
 
+import at.srfg.graphium.geomutils.GeometryUtils;
 import at.srfg.graphium.neo4j.persistence.impl.Neo4jWaySegmentHelperImpl;
 
 public class CoordAwareNodeBasedCostEvaluator extends NodeBasedCostEvaluator {
@@ -110,17 +111,11 @@ public class CoordAwareNodeBasedCostEvaluator extends NodeBasedCostEvaluator {
 			seg = endGeom;
 		}
 
-		// geohelper!
-		LengthIndexedLine lengthIndexedGeom = new LengthIndexedLine(seg);
-		double segEndLength =  lengthIndexedGeom.getEndIndex();	
-		double startCoordLength = lengthIndexedGeom.project(coord);
-		double percentageInLine = 100d / segEndLength * startCoordLength;
-		
+		double offsetOnLine = GeometryUtils.offsetOnLineString(coord, seg);
 		if((start && !getDirection(startGeom, endGeom)) || (!start && !getDirectionEndSeg(startGeom, endGeom))) {
-			percentageInLine = 100 - percentageInLine;
+			offsetOnLine = 1 - offsetOnLine;
 		}
-	
-		return percentageInLine / 100;
+		return offsetOnLine;
 	}
 	
 	protected boolean getDirection(LineString firstGeom,

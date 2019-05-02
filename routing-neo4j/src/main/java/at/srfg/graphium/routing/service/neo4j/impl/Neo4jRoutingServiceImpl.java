@@ -40,7 +40,6 @@ import org.slf4j.LoggerFactory;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.linearref.LengthIndexedLine;
 import com.vividsolutions.jts.linearref.LinearLocation;
 import com.vividsolutions.jts.linearref.LocationIndexedLine;
 
@@ -80,6 +79,7 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 	
 	// default search distance (15 meter)
 	protected double searchDistance   = 0.0000904776810466969;
+	protected float astarEstimatorFactor = -1;
 	
 	public Neo4jRoutingServiceImpl() {super();}
 	
@@ -186,7 +186,7 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 	
 	protected IRoute<T> doRoute(final IRoutingOptions options,
 			List<Node> startNodes, List<Node> endNodes, Coordinate startCoord, Coordinate endCoord) {
-		IRoute<T> route;
+		IRoute<T> route = modelFactory.newRoute();
 		long nsTime = System.nanoTime();
 		PathExpander<Object> expander = getExpander(options); 
 		
@@ -224,62 +224,13 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
         	log.error("error in routing", e);
         } 
 		if (weightedPath != null) {
-			float length = 0;
-			int time = 0;
-			List<IPathSegment> path = new ArrayList<IPathSegment>();
-			List<T> segments = new ArrayList<T>();
-			T segment;
+			mapRoute(route, weightedPath, options, startCoord, endCoord);
 			
-			T prevSegment = null;
-			IPathSegment prevPathSegment = null;
-			int i = 0;
-			for (Node node : weightedPath.nodes()) {
-				segment = nodeMapper.map(node);
-				IPathSegment pathSegment = new PathSegmentImpl();
-				pathSegment.setSegmentId(segment.getId());
-				path.add(pathSegment);
-				segments.add(segment);
-				length = length + segment.getLength();
-				// calculate duration
-				if (prevSegment != null) {
-					boolean directionTow = prevSegment.getEndNodeId()   == segment.getStartNodeId() || 
-										   prevSegment.getStartNodeId() == segment.getStartNodeId();
-					time = time + segment.getDuration(directionTow);
-					pathSegment.setDirection(directionTow);
-					
-					if (i == 1) { //Calculate attributes of first segment
-						directionTow = prevSegment.getEndNodeId() == segment.getEndNodeId()
-								|| prevSegment.getEndNodeId() == segment.getStartNodeId();
-						time = time + prevSegment.getDuration(directionTow);
-						prevPathSegment.setDirection(directionTow);
-					}
-				}
-				prevSegment = segment;
-				prevPathSegment = pathSegment;
-				i++;
-			}
-//			// calculate duration for first segment
-//			if (!segments.isEmpty()) {
-//				boolean directionTow = true;
-//				if (segments.size() > 1) {
-//					directionTow = segments.get(1).getEndNodeId()   == segments.get(0).getEndNodeId() || 
-//								   segments.get(1).getStartNodeId() == segments.get(0).getEndNodeId();
-//				}
-//				time = time + segments.get(0).getDuration(directionTow);
-//			}
-			
-			route = modelFactory.newRoute();
-			route.setPath(path);
-			route.setLength(length);
-			route.setDuration(time);
-			
-			route.setSegments(segments);
 			double msTime = ((double)(System.nanoTime()-nsTime) / 1000000);
 			route.setRuntimeInMs((int) Math.ceil(msTime));
-			log.debug("routing and conversion took " + msTime + " ms for a route with " + path.size() + " segments");
+			log.debug("routing and conversion took " + msTime + " ms for a route with " + route.getPath().size() + " segments");
 		} else {
 			log.info("no route found");
-			route = modelFactory.newRoute();
 		}		
 	
 		route.setGraphName(options.getGraphName());
@@ -288,6 +239,89 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 		return route;
 	}
 	
+	protected void mapRoute(IRoute<T> route, WeightedPath weightedPath, IRoutingOptions options, Coordinate startCoord, Coordinate endCoord) {
+		float length = 0;
+		int time = 0;
+		List<IPathSegment> path = new ArrayList<IPathSegment>();
+		List<T> segments = new ArrayList<T>();
+		T segment = null;
+		
+		T prevSegment = null;
+		IPathSegment prevPathSegment = null;
+		int i = 0;
+		for (Node node : weightedPath.nodes()) {
+			segment = nodeMapper.map(node);
+			IPathSegment pathSegment = new PathSegmentImpl();
+			pathSegment.setSegmentId(segment.getId());
+			path.add(pathSegment);
+			segments.add(segment);
+			length = length + segment.getLength();
+			// calculate duration
+			if (prevSegment != null) {
+				boolean directionTow = prevSegment.getEndNodeId()   == segment.getStartNodeId() || 
+									   prevSegment.getStartNodeId() == segment.getStartNodeId();
+
+				
+				// reduce duration for last segment if coordinates / offset are given
+				double offset = 1d;
+				if (endCoord != null && i == (weightedPath.length() + 1)) {
+					offset = GeometryUtils.offsetOnLineString(endCoord, segment.getGeometry());
+					if (!directionTow) {
+						offset = 1 - offset;
+					}
+				}
+				time = time + (int)(getDuration(segment, directionTow, options) * offset);
+				pathSegment.setDirection(directionTow);
+				
+				if (i == 1) { //Calculate attributes of first segment
+					directionTow = prevSegment.getEndNodeId() == segment.getEndNodeId()
+							|| prevSegment.getEndNodeId() == segment.getStartNodeId();
+
+					// reduce duration for first segment if coordinates / offset are given
+					offset = 1d;
+					if (startCoord != null) {
+						offset = GeometryUtils.offsetOnLineString(startCoord, segment.getGeometry());
+						if (directionTow) {
+							offset = 1 - offset;
+						}
+					}
+					time = time + (int)(getDuration(prevSegment, directionTow, options) * offset);
+					prevPathSegment.setDirection(directionTow);
+				}
+			}
+			prevSegment = segment;
+			prevPathSegment = pathSegment;
+			i++;
+		}
+		// calculate duration if path contains only of one segment
+		if (!segments.isEmpty() && segments.size() == 1) {
+			if (startCoord != null && endCoord != null) {
+				double startOffset = GeometryUtils.offsetOnLineString(startCoord, segment.getGeometry());
+				double endOffset = GeometryUtils.offsetOnLineString(endCoord, segment.getGeometry());
+				double totalOffset = 0;
+				boolean directionTow;
+				if (endOffset > startOffset) {
+					directionTow = true;
+					totalOffset = endOffset - startOffset;
+				} else {
+					directionTow = false;
+					totalOffset = startOffset - endOffset;
+				}
+				time = (int) (getDuration(segment, directionTow, options) * totalOffset);
+			}
+		}
+		
+		route.setPath(path);
+		route.setLength(length);
+		route.setDuration(time);
+		
+		route.setSegments(segments);
+	}
+
+	protected double getDuration(T segment, boolean directionTow, IRoutingOptions options) {
+		return segment.getDuration(directionTow);
+	}
+
 	protected PathFinder<WeightedPath> createPathFinder(PathExpander<Object> expander, CostEvaluator<Double> costEvaluator,
 			IRoutingOptions options) {
 		PathFinder<WeightedPath> weightedFinder;
@@ -295,7 +329,12 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
     		weightedFinder =  GraphAlgoFactory.dijkstra(expander, costEvaluator);
     	}
     	else if (options.getAlgorithm().equals(RoutingAlgorithms.ASTAR)) {
-    		EstimateEvaluator<Double> estimateEvaluator = new NodeBasedCostEstimator(options.getCriteria());
+    		EstimateEvaluator<Double> estimateEvaluator;
+    		if (astarEstimatorFactor > 0) {
+    			estimateEvaluator = new NodeBasedCostEstimator(options.getCriteria(), astarEstimatorFactor);
+    		} else {
+    			estimateEvaluator = new NodeBasedCostEstimator(options.getCriteria());
+    		}
     		weightedFinder =  GraphAlgoFactory.aStar(expander, costEvaluator, estimateEvaluator); 
     	}
     	else {
@@ -420,12 +459,6 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 		// refrence startpoint on segment
 		LocationIndexedLine indexedStartSeg = new LocationIndexedLine(startSeg.getGeometry());
 	
-		LengthIndexedLine lengthIndexedStartSeg = new LengthIndexedLine(startSeg.getGeometry());
-		double startSegEndLength =  lengthIndexedStartSeg.getEndIndex();	
-		double startCoordLength = lengthIndexedStartSeg.project(startCoord);
-		double startPercentageInLine = 100d / startSegEndLength * startCoordLength;
-		double lengthCostInStartSeg = ((double)uncutStartSegLengthCost) / 100 * startPercentageInLine;
-		
 		// location in line string
 		LinearLocation startLoc = indexedStartSeg.project(startCoord);
 		
@@ -441,15 +474,10 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 		
 		// set cut segment
 		startSeg.setGeometry((LineString) cutStartGeom);
-		// adjust cost of segment
 		
-		if(direction) {
-			startSeg.setLength((float) lengthCostInStartSeg);
-		}
-		else {
-			startSeg.setLength((float) (uncutStartSegLengthCost - lengthCostInStartSeg));
-		}
-		
+		// calculate length
+		startSeg.setLength((float) GeometryUtils.calculateLengthMeterFromWGS84LineStringAndoyer((LineString) cutStartGeom));
+
 		direction = getDirection(endSeg, beforeEndSeg);	
 		
 		// refrence endpoint on segment
@@ -457,12 +485,6 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 		// location in line string
 		LinearLocation endLoc = indexedEndSeg.project(endCoord);
 		
-		LengthIndexedLine lengthIndexedEndSeg = new LengthIndexedLine(endSeg.getGeometry());
-		double endSegEndLength =  lengthIndexedEndSeg.getEndIndex();	
-		double endCoordLength = lengthIndexedEndSeg.project(endCoord);
-		double endPercentageInLine = 100d / endSegEndLength * endCoordLength;
-		double lengthCostInEndSeg = ((double)uncutEndSegLengthCost) / 100 * endPercentageInLine;
-				
 		Geometry cutEndGeom;
 		// depending on direction cut the segment on the correct end
 		if(direction) {
@@ -475,15 +497,10 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 		
 		// set cutted segment
 		endSeg.setGeometry((LineString) cutEndGeom);
-		// adjust cost of segment
 
-		if(direction) {
-			endSeg.setLength((float) lengthCostInEndSeg);
-		}
-		else {
-			endSeg.setLength((float) (uncutEndSegLengthCost - lengthCostInEndSeg));
-		}	
-		
+		// calculate length
+		endSeg.setLength((float) GeometryUtils.calculateLengthMeterFromWGS84LineStringAndoyer((LineString) cutEndGeom));
+
 		// adjust route results
 		route.setDuration(adjustRouteDuration(route, uncutStartSegDurationTow, uncutStartSegDurationBkw, uncutEndSegDurationTow, uncutEndSegDurationBkw));
 		route.setLength(route.getLength()-uncutStartSegLengthCost-uncutEndSegLengthCost+startSeg.getLength()+ endSeg.getLength());
@@ -584,6 +601,14 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 
 	public void setNodeMapper(INeo4jNodeMapper<T> nodeMapper) {
 		this.nodeMapper = nodeMapper;
+	}
+
+	public float getAstarEstimatorFactor() {
+		return astarEstimatorFactor;
+	}
+
+	public void setAstarEstimatorFactor(float astarEstimatorFactor) {
+		this.astarEstimatorFactor = astarEstimatorFactor;
 	}
 
 }
