@@ -11,6 +11,13 @@
  
 	<import resource="classpath:/application-context-graphium-neo4j-persistence.xml"/>
 
+	<bean id="routingConfigurer"
+		class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
+        <property name="location" value="#{environment.getProperty('graphium.conf.path','classpath:')}routing.properties" />
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="ignoreResourceNotFound" value="true" />		
+	</bean>
+
     <!-- evaluators -->
     <bean id="nodeBasedCostEvaluatorFactory" class="at.srfg.graphium.routing.neo4j.evaluators.impl.NodeBasedCostEvaluatorFactoryImpl"/>
 
@@ -29,6 +36,7 @@
     	<property name="metadataDao" ref="neo4jWayGraphVersionMetadataDao"/>
     	<property name="modelFactory" ref="routeModelFactory"/>
     	<property name="nodeMapper" ref="neo4jWaySegmentMapper"/>
+    	<property name="astarEstimatorFactor" value="${routing.astarEstimatorFactor}"/>
     </bean>
 
 </beans>
