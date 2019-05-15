@@ -387,14 +387,14 @@ public class RoutingMatcher {
 
             // check if route contains U-turn
             // hopefully we don't need this...
-//            if (valid) {
-//            	for (IMatchedWaySegment routedSegment : routedSegments) {
-//            		if (routedSegment.getDirection().equals(Direction.START_TO_START) ||
-//            			routedSegment.getDirection().equals(Direction.END_TO_START)) {
-//            			valid = false;
-//            		}
-//            	}
-//            }
+            if (valid) {
+            	for (IMatchedWaySegment routedSegment : routedSegments) {
+            		if (routedSegment.getDirection().equals(Direction.START_TO_START) ||
+            			routedSegment.getDirection().equals(Direction.END_TO_END)) {
+            			valid = false;
+            		}
+            	}
+            }
             
         } else {
         	valid = false;
