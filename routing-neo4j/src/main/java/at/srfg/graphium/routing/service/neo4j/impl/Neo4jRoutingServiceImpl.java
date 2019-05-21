@@ -46,7 +46,9 @@ import com.vividsolutions.jts.linearref.LocationIndexedLine;
 import at.srfg.graphium.core.persistence.IWayGraphVersionMetadataDao;
 import at.srfg.graphium.geomutils.GeometryUtils;
 import at.srfg.graphium.model.Access;
+import at.srfg.graphium.model.IWayGraphVersionMetadata;
 import at.srfg.graphium.model.IWaySegment;
+import at.srfg.graphium.model.State;
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
 import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
@@ -90,6 +92,7 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 	public IRoute<T> route(IRoutingOptions options,
 			T startSegment, T endSegment) {
 		try (Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx()) {
+			determineGraphVersion(options);
 			Node startNode = graphReadDao.getSegmentNodeBySegmentId(options.getGraphName(), options.getGraphVersion(), startSegment.getId());
 			Node endNode = graphReadDao.getSegmentNodeBySegmentId(options.getGraphName(), options.getGraphVersion(), endSegment.getId());
 			
@@ -128,7 +131,7 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 			
 			IRoute<T> route = doRoute(options, startCoord, endCoord);
 
-			// if coordinates avialable cut the route
+			// if coordinates available cut the route
 			if (cutStartAndEndSegments && startCoord != null && endCoord != null && 
 				route != null && route.getSegments() != null && !route.getSegments().isEmpty()) {
 				route = cutStartAndEndSegment(route, startCoord, endCoord);
@@ -146,6 +149,7 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 			timer.start();
 		}
 		
+		determineGraphVersion(options);
 		double routingSearchDistance = searchDistance;
 		if (options.getSearchDistance() > 0) {
 			routingSearchDistance = options.getSearchDistance();
@@ -239,6 +243,21 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 		return route;
 	}
 	
+	protected void determineGraphVersion(IRoutingOptions options) {
+		if (options.getGraphVersion() == null &&
+			options.getRoutingTimestamp() != null) {
+			List<IWayGraphVersionMetadata> metadataList = metadataDao.getWayGraphVersionMetadataList(options.getGraphName());
+			for (IWayGraphVersionMetadata metadata : metadataList) {
+				if (metadata.getState().equals(State.ACTIVE)) {
+					if (metadata.getValidFrom().getTime() <= options.getRoutingTimestamp().getTime() && 
+						(metadata.getValidTo() == null || metadata.getValidTo().getTime() >= options.getRoutingTimestamp().getTime())) {
+						options.setGraphVersion(metadata.getVersion());
+					}
+				}
+			}
+		}
+	}
+
 	protected void mapRoute(IRoute<T> route, WeightedPath weightedPath, IRoutingOptions options, Coordinate startCoord, Coordinate endCoord) {
 		float length = 0;
 		int time = 0;
