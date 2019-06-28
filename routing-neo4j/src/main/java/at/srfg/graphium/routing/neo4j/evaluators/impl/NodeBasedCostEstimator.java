@@ -85,7 +85,8 @@ public class NodeBasedCostEstimator implements EstimateEvaluator<Double> {
        	}
        	
        	if (log.isDebugEnabled()) {
-       		log.debug("Segment " + node.getProperty(WayGraphConstants.SEGMENT_ID) + ": distance = " + distance);
+       		log.debug("Segment " + node.getProperty(WayGraphConstants.SEGMENT_ID) + " => " + goal.getProperty(WayGraphConstants.SEGMENT_ID) 
+       					+ ": distance = " + distance);
        	}
        	
        	return distance;
