@@ -41,4 +41,8 @@ public interface IRoutingOptionsFactory {
 			Map<String, Set<Object>> segmentTagBlacklist)
 			throws RoutingException;
 	
+	public IRoutingOptions createRoutingOptions(String graphName, String graphVersion, Date routingTimestamp,
+			String routingMode, String routingCriteria, String routingAlgorithm)
+			throws RoutingException;
+	
 }

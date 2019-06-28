@@ -71,14 +71,15 @@ public abstract class GenericRoutingApiController<T extends IWaySegment> {
 			@RequestParam(value = "endY", required = true) double endY,
 			@RequestParam(value = "cutsegments", required = false, defaultValue = "true") boolean cutStartAndEndSegment,
 			@RequestParam(value = "routingMode", required = false, defaultValue = "CAR") String routingMode,
-			@RequestParam(value = "routingCriteria", required = false, defaultValue = "LENGTH") String routingCriteria)
+			@RequestParam(value = "routingCriteria", required = false, defaultValue = "LENGTH") String routingCriteria,
+			@RequestParam(value = "routingAlgorithm", required = false, defaultValue = "DIJKSTRA") String routingAlgorithm)
 			throws RoutingException {
 		log.info("got routing request in graph " + graphName + " from "
 				+ startX + "," + startY + " to " + endX + "," + endY);
 		MappingJackson2JsonView view = new MappingJackson2JsonView();
 
 		IRoutingOptions options = routingOptionsFactory.createRoutingOptions(
-				graphName, null, routingTimestamp, routingMode, routingCriteria);
+				graphName, null, routingTimestamp, routingMode, routingCriteria, routingAlgorithm);
 
 		IRoute<T> route = routeService.route(options, startX, startY, endX,
 				endY, cutStartAndEndSegment);
@@ -104,14 +105,16 @@ public abstract class GenericRoutingApiController<T extends IWaySegment> {
 			@RequestParam(value = "endY", required = true) double endY,
 			@RequestParam(value = "cutsegments", required = false, defaultValue = "true") boolean cutStartAndEndSegment,
 			@RequestParam(value = "routingMode", required = false, defaultValue = "CAR") String routingMode,
-			@RequestParam(value = "routingCriteria", required = false, defaultValue = "LENGTH") String routingCriteria)
+			@RequestParam(value = "routingCriteria", required = false, defaultValue = "LENGTH") String routingCriteria,
+			@RequestParam(value = "routingAlgorithm", required = false, defaultValue = "DIJKSTRA") String routingAlgorithm)
 			throws RoutingException {
 		log.info("got routing request in graph " + graphName + " from "
-				+ startX + "," + startY + " to " + endX + "," + endY);
+				+ startX + "," + startY + " to " + endX + "," + endY + " / Options: cutSegments=" + cutStartAndEndSegment + 
+				", routingMode=" + routingMode + ", routingCriteria=" + routingCriteria);
 		MappingJackson2JsonView view = new MappingJackson2JsonView();
 
 		IRoutingOptions options = routingOptionsFactory.createRoutingOptions(
-				graphName, graphVersion, null, routingMode, routingCriteria);
+				graphName, graphVersion, null, routingMode, routingCriteria, routingAlgorithm);
 
 		IRoute<T> route = routeService.route(options, startX, startY, endX,
 				endY, cutStartAndEndSegment);
@@ -133,10 +136,11 @@ public abstract class GenericRoutingApiController<T extends IWaySegment> {
 			@RequestParam(value = "endY", required = true) double endY,
 			@RequestParam(value = "cutsegments", required = false, defaultValue = "true") boolean cutStartAndEndSegment,
 			@RequestParam(value = "routingMode", required = false, defaultValue = "CAR") String routingMode,
-			@RequestParam(value = "routingCriteria", required = false, defaultValue = "LENGTH") String routingCriteria)
+			@RequestParam(value = "routingCriteria", required = false, defaultValue = "LENGTH") String routingCriteria,
+			@RequestParam(value = "routingAlgorithm", required = false, defaultValue = "DIJKSTRA") String routingAlgorithm)
 			throws RoutingException {
 		IRoutingOptions options = routingOptionsFactory.createRoutingOptions(
-				graphName, null, routingTimestamp, routingMode, routingCriteria);
+				graphName, null, routingTimestamp, routingMode, routingCriteria, routingAlgorithm);
 		
 		MappingJackson2JsonView view = new MappingJackson2JsonView();
 		IRoute<T> route = routeService.route(options, startX, startY, endX,
@@ -156,10 +160,11 @@ public abstract class GenericRoutingApiController<T extends IWaySegment> {
 			@RequestParam(value = "endY", required = true) double endY,
 			@RequestParam(value = "cutsegments", required = false, defaultValue = "true") boolean cutStartAndEndSegment,
 			@RequestParam(value = "routingMode", required = false, defaultValue = "CAR") String routingMode,
-			@RequestParam(value = "routingCriteria", required = false, defaultValue = "LENGTH") String routingCriteria)
+			@RequestParam(value = "routingCriteria", required = false, defaultValue = "LENGTH") String routingCriteria,
+			@RequestParam(value = "routingAlgorithm", required = false, defaultValue = "DIJKSTRA") String routingAlgorithm)
 			throws RoutingException {
 		IRoutingOptions options = routingOptionsFactory.createRoutingOptions(
-				graphName, graphVersion, null, routingMode, routingCriteria);
+				graphName, graphVersion, null, routingMode, routingCriteria, routingAlgorithm);
 		
 		MappingJackson2JsonView view = new MappingJackson2JsonView();
 		IRoute<T> route = routeService.route(options, startX, startY, endX,
