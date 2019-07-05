@@ -20,6 +20,7 @@ package at.srfg.graphium.routing.service.neo4j.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import javax.annotation.PostConstruct;
 
@@ -29,11 +30,11 @@ import org.neo4j.graphalgo.EstimateEvaluator;
 import org.neo4j.graphalgo.GraphAlgoFactory;
 import org.neo4j.graphalgo.PathFinder;
 import org.neo4j.graphalgo.WeightedPath;
-import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PathExpander;
+import org.neo4j.graphdb.PropertyContainer;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.graphdb.impl.StandardExpander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,11 +51,11 @@ import at.srfg.graphium.model.IWayGraphVersionMetadata;
 import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.model.State;
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
-import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
 import at.srfg.graphium.neo4j.persistence.configuration.IGraphDatabaseProvider;
 import at.srfg.graphium.neo4j.persistence.impl.Neo4jWaySegmentHelperImpl;
 import at.srfg.graphium.neo4j.persistence.nodemapper.INeo4jNodeMapper;
+import at.srfg.graphium.neo4j.traversal.DirectedOutgoingConnectionPathExpander;
 import at.srfg.graphium.routing.model.IPathSegment;
 import at.srfg.graphium.routing.model.IRoute;
 import at.srfg.graphium.routing.model.IRouteModelFactory;
@@ -299,7 +300,7 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 					// reduce duration for first segment if coordinates / offset are given
 					offset = 1d;
 					if (startCoord != null) {
-						offset = GeometryUtils.offsetOnLineString(startCoord, segment.getGeometry());
+						offset = GeometryUtils.offsetOnLineString(startCoord, prevSegment.getGeometry());
 						if (directionTow) {
 							offset = 1 - offset;
 						}
@@ -364,8 +365,11 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 
 	protected PathExpander<Object> getExpander(IRoutingOptions options) {
 		// create default path expander
-		StandardExpander expander = StandardExpander.create(WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
-				Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE, Direction.OUTGOING);
+//		StandardExpander expander = StandardExpander.create(WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
+//				Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE, Direction.OUTGOING);
+		
+		// 
+		DirectedOutgoingConnectionPathExpander expander = new DirectedOutgoingConnectionPathExpander(null);
 		
 		// access type restriction on routing mode
 		if (options.getMode() != null) {
@@ -380,18 +384,8 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 			}
 			if (access != null) {
 				final Access accessToFilter = access;
-				expander = expander.addNodeFilter(n -> (n.hasProperty(WayGraphConstants.SEGMENT_ACCESS_BKW) &&
-												Neo4jWaySegmentHelperImpl.parseAccessTypes(
-												(byte[]) n.getProperty(WayGraphConstants.SEGMENT_ACCESS_BKW)
-												).contains(accessToFilter)) ||
-												(n.hasProperty(WayGraphConstants.SEGMENT_ACCESS_TOW) &&
-												Neo4jWaySegmentHelperImpl.parseAccessTypes(
-												(byte[]) n.getProperty(WayGraphConstants.SEGMENT_ACCESS_TOW)
-												).contains(accessToFilter)));
-				expander = expander.addRelationshipFilter(r -> r.hasProperty(WayGraphConstants.CONNECTION_ACCESS) &&
-												Neo4jWaySegmentHelperImpl.parseAccessTypes(
-												(byte[]) r.getProperty(WayGraphConstants.CONNECTION_ACCESS)
-												).contains(accessToFilter));
+				expander.addNodeFilter(getNodePredicate(accessToFilter));
+				expander.addRelationshipFilter(getRelationshipPredicate(accessToFilter));
 			}
 		}
 		
@@ -399,14 +393,31 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 			for (String filterKey : options.getTagValueFilters().keySet()) {
 				Set<Object> filterValues = options.getTagValueFilters().get(filterKey);
 				if (filterValues != null && !filterValues.isEmpty()) {
-					expander = expander.addNodeFilter(n -> n.hasProperty(filterKey) && filterValues.contains(n.getProperty(filterKey)));
-//					expander = expander.addRelationshipFilter(r -> r.getProperty(filterKey) != null && filterValues.contains(r.getProperty(filterKey)));
+					expander.addNodeFilter(n -> ((PropertyContainer) n).hasProperty(filterKey) 
+							&& filterValues.contains(((PropertyContainer) n).getProperty(filterKey)));
 				}
 			}
-			
 		} 
 
 		return expander;
+	}
+
+	protected Predicate<? super Node> getNodePredicate(Access mode) {
+		return n -> (n.hasProperty(WayGraphConstants.SEGMENT_ACCESS_BKW) &&
+				Neo4jWaySegmentHelperImpl.parseAccessTypes(
+				(byte[]) n.getProperty(WayGraphConstants.SEGMENT_ACCESS_BKW)
+				).contains(mode)) ||
+				(n.hasProperty(WayGraphConstants.SEGMENT_ACCESS_TOW) &&
+				Neo4jWaySegmentHelperImpl.parseAccessTypes(
+				(byte[]) n.getProperty(WayGraphConstants.SEGMENT_ACCESS_TOW)
+				).contains(mode));
+	}
+
+	protected Predicate<? super Relationship> getRelationshipPredicate(Access mode) {
+		return r -> r.hasProperty(WayGraphConstants.CONNECTION_ACCESS) &&
+				Neo4jWaySegmentHelperImpl.parseAccessTypes(
+				(byte[]) r.getProperty(WayGraphConstants.CONNECTION_ACCESS)
+				).contains(mode);
 	}
 
 	protected WeightedPath getBestPath(List<WeightedPath> paths) {

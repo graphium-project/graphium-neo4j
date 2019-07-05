@@ -17,14 +17,20 @@
  */
 package at.srfg.graphium.neo4j.traversal;
 
-import at.srfg.graphium.neo4j.model.WayGraphConstants;
-import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
+
 import org.apache.log4j.Logger;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.PathExpander;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.traversal.BranchState;
+
+import at.srfg.graphium.neo4j.model.WayGraphConstants;
+import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
 
 /**
  * The DirectedOutgoingConnectionPathExpander is an own implementation of the PathExpander that allows to expand OUTGOING relationships
@@ -40,38 +46,79 @@ public class DirectedOutgoingConnectionPathExpander<STATE> implements PathExpand
 
     protected Logger log = Logger.getLogger(this.getClass().getName());
 
-    private WaySegmentRelationshipType initialRelation;
-    private boolean init = true;
+    protected WaySegmentRelationshipType initialRelation;
+    protected boolean init = true;
+	protected List<Predicate<? super Node>> nodeFilters = new ArrayList<>();
+	protected List<Predicate<? super Relationship>> relationshipFilters = new ArrayList<>();
 
     public DirectedOutgoingConnectionPathExpander(WaySegmentRelationshipType initialRelation) {
     	this.initialRelation = initialRelation;
     }
     
-    @Override
+	public void addNodeFilter(Predicate<? super Node> nodeFilter) {
+		nodeFilters.add(nodeFilter);
+	}
+	
+	public void addRelationshipFilter(Predicate<? super Relationship> relationshipFilter) {
+		relationshipFilters.add(relationshipFilter);
+	}
+
+	@Override
     public Iterable<Relationship> expand(Path path, BranchState<STATE> state) {
         WaySegmentRelationshipType initialRelationType = null;
         if (init) {
             initialRelationType = this.initialRelation;
             init = false;
         }
+        
+        Node endNode = path.endNode();
+		for (Predicate<? super Node> nodeFilter : nodeFilters) {
+			if (!nodeFilter.test(endNode)) {
+				return new ArrayList<>();
+			}
+		}
+		
+		Relationship lastRel = path.lastRelationship();
+		if (lastRel != null) {
+			for (Predicate<? super Relationship> relationshipFilter : relationshipFilters) {
+				if (!relationshipFilter.test(lastRel)) {
+					return new ArrayList<>();
+				}
+			}
+		}
+        
         return doExpand(path, initialRelationType);      
     }
 
 
     private Iterable<Relationship> doExpand(Path path, WaySegmentRelationshipType initialRelationType) {
-        Iterable<Relationship> result;
+        //Iterable<Relationship> result;
+    	List<Relationship> result = new ArrayList<>();
         if (path.lastRelationship() == null) {
-            result = path.endNode().getRelationships(Direction.OUTGOING, initialRelationType);
+        	if (initialRelationType != null) {
+        		addRelationships(result, path, Direction.OUTGOING, initialRelationType);
+        	} else {
+        		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE);
+        		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE);
+        	}
         } else if (path.lastRelationship().getProperty(WayGraphConstants.CONNECTION_NODE_ID).equals
                 (path.endNode().getProperty(WayGraphConstants.SEGMENT_STARTNODE_ID))) {
-            result = path.endNode().getRelationships(Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE);
+    		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE);
         } else {
-            result = path.endNode().getRelationships(Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE);
+    		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE);
         }
         return result;
     }
 
-    @Override
+    private void addRelationships(List<Relationship> result, Path path, Direction outgoing,
+			WaySegmentRelationshipType initialRelationType) {
+		Iterable<Relationship> res = path.endNode().getRelationships(Direction.OUTGOING, initialRelationType);
+		if (res != null) {
+			res.forEach(result::add);
+		}
+	}
+
+	@Override
     public PathExpander<STATE> reverse() {
     	// TODO: 
         return this;
