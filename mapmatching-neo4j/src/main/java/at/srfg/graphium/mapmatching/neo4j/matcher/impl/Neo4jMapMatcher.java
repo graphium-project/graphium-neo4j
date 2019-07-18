@@ -350,5 +350,13 @@ public class Neo4jMapMatcher implements IMapMatcher {
 	public void setRoutingCriteria(String routingCriteria) {
 		properties.setRoutingCriteria(routingCriteria);;
 	}
+	
+	public String getRoutingAlgorithm() {
+		return properties.getRoutingAlgorithm();
+	}
 
+	public void setRoutingAlgorithm(String routingAlgorithm) {
+		properties.setRoutingAlgorithm(routingAlgorithm);
+	}
+	
 }

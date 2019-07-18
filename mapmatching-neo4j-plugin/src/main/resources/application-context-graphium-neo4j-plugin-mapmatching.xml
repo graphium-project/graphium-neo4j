@@ -42,6 +42,7 @@
 		<property name="pointsDiffThresholdForSkipRouting" value="${mapmatcher.pointsDiffThresholdForSkipRouting}"/>
 		<property name="routingMode" value="${mapmatcher.routingMode}"/>
 		<property name="routingCriteria" value="${mapmatcher.routingCriteria}"/>
+		<property name="routingAlgorithm" value="${mapmatcher.routingAlgorithm}"/>
 	</bean>
 	
 	<bean id="mapMatcherTimerService" class="at.srfg.graphium.mapmatching.timer.MapMatcherTimerService" lazy-init="true" >

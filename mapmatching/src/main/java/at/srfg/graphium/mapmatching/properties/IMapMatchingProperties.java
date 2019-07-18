@@ -103,4 +103,7 @@ public interface IMapMatchingProperties {
 	String getRoutingCriteria();
 	void setRoutingCriteria(String routingCriteria);
 	
+	String getRoutingAlgorithm();
+	void setRoutingAlgorithm(String routingAlgorithm);
+	
 }

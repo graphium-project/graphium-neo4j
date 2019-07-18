@@ -86,9 +86,15 @@ public class RoutingMatcher {
 			routingMode = RoutingMode.CAR;
 		}
 		RoutingCriteria routingCriteria = RoutingCriteria.fromValue(properties.getRoutingCriteria());
+		RoutingAlgorithms routingAlgorithm;
+		if (properties.getRoutingAlgorithm() != null && properties.getRoutingAlgorithm().length() > 0) {
+			routingAlgorithm = RoutingAlgorithms.valueOf(properties.getRoutingAlgorithm());
+		} else {
+			routingAlgorithm = RoutingAlgorithms.DIJKSTRA;
+		}
 		
 		routingOptions = new RoutingOptionsImpl(matchingTask.getGraphName(), mapMatchingTask.getGraphVersion(),
-				 RoutingAlgorithms.ASTAR, routingCriteria, routingMode);
+				routingAlgorithm, routingCriteria, routingMode);
 		
 		if (log.isDebugEnabled()) {
 			log.debug("created " + this.getClass().getSimpleName() + " with following routing options: " + routingOptions.toString());

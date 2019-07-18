@@ -113,6 +113,7 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 	 */
 	private String routingMode;
 	private String routingCriteria;
+	private String routingAlgorithm;
 	
 	@Override
 	public String toString() {
@@ -134,6 +135,7 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 				+ ", online=" + online 
 				+ ", routingMode=" + routingMode
 				+ ", routingCriteria=" + routingCriteria
+				+ ", routingAlgorithm=" + routingAlgorithm
 				+ "]";
 	}
 	
@@ -395,6 +397,16 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 	@Override
 	public void setRoutingCriteria(String routingCriteria) {
 		this.routingCriteria = routingCriteria;
+	}
+
+	@Override
+	public String getRoutingAlgorithm() {
+		return routingAlgorithm;
+	}
+
+	@Override
+	public void setRoutingAlgorithm(String routingAlgorithm) {
+		this.routingAlgorithm = routingAlgorithm;
 	}
 	
 }

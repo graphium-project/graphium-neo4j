@@ -77,8 +77,8 @@ public class DirectedOutgoingConnectionPathExpander<STATE> implements PathExpand
 				return new ArrayList<>();
 			}
 		}
-		
-		Relationship lastRel = path.lastRelationship();
+
+		Relationship lastRel = getLastRelationship(path);
 		if (lastRel != null) {
 			for (Predicate<? super Relationship> relationshipFilter : relationshipFilters) {
 				if (!relationshipFilter.test(lastRel)) {
@@ -90,18 +90,18 @@ public class DirectedOutgoingConnectionPathExpander<STATE> implements PathExpand
         return doExpand(path, initialRelationType);      
     }
 
-
     private Iterable<Relationship> doExpand(Path path, WaySegmentRelationshipType initialRelationType) {
         //Iterable<Relationship> result;
     	List<Relationship> result = new ArrayList<>();
-        if (path.lastRelationship() == null) {
+    	Relationship lastRel = getLastRelationship(path);
+        if (lastRel == null) {
         	if (initialRelationType != null) {
         		addRelationships(result, path, Direction.OUTGOING, initialRelationType);
         	} else {
         		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE);
         		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE);
         	}
-        } else if (path.lastRelationship().getProperty(WayGraphConstants.CONNECTION_NODE_ID).equals
+        } else if (lastRel.getProperty(WayGraphConstants.CONNECTION_NODE_ID).equals
                 (path.endNode().getProperty(WayGraphConstants.SEGMENT_STARTNODE_ID))) {
     		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE);
         } else {
@@ -110,6 +110,17 @@ public class DirectedOutgoingConnectionPathExpander<STATE> implements PathExpand
         return result;
     }
 
+    // some Path's implementation throw an exception within lastRelationship()
+    private Relationship getLastRelationship(Path path) {
+    	Relationship lastRel = null;
+    	try {
+			lastRel = path.lastRelationship();
+		} catch (Exception e) {
+			// do nothing
+		}
+    	return lastRel;
+    }
+    
     private void addRelationships(List<Relationship> result, Path path, Direction outgoing,
 			WaySegmentRelationshipType initialRelationType) {
 		Iterable<Relationship> res = path.endNode().getRelationships(Direction.OUTGOING, initialRelationType);
