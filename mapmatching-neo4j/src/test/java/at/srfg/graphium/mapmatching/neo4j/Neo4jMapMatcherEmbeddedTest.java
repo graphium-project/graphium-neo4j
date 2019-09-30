@@ -20,6 +20,7 @@ package at.srfg.graphium.mapmatching.neo4j;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -41,12 +42,19 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import at.srfg.graphium.core.exception.GraphNotExistsException;
+import at.srfg.graphium.geomutils.GeometryUtils;
 import at.srfg.graphium.io.adapter.IAdapter;
 import at.srfg.graphium.mapmatching.dto.TrackDTO;
 import at.srfg.graphium.mapmatching.matcher.IMapMatcherTask;
+import at.srfg.graphium.mapmatching.matcher.impl.MapMatchingServiceImpl;
 import at.srfg.graphium.mapmatching.model.IMatchedBranch;
 import at.srfg.graphium.mapmatching.model.IMatchedWaySegment;
 import at.srfg.graphium.mapmatching.model.ITrack;
+import at.srfg.graphium.mapmatching.model.ITrackMetadata;
+import at.srfg.graphium.mapmatching.model.ITrackPoint;
+import at.srfg.graphium.mapmatching.model.impl.TrackImpl;
+import at.srfg.graphium.mapmatching.model.impl.TrackMetadataImpl;
+import at.srfg.graphium.mapmatching.model.impl.TrackPointImpl;
 import at.srfg.graphium.mapmatching.neo4j.matcher.impl.MapMatchingTask;
 import at.srfg.graphium.mapmatching.neo4j.matcher.impl.Neo4jMapMatcher;
 import at.srfg.graphium.mapmatching.neo4j.matcher.impl.Neo4jUtil;
@@ -80,20 +88,26 @@ public class Neo4jMapMatcherEmbeddedTest {
 	@Autowired
 	private Neo4jUtil neo4jUtil;
 	
+	@Autowired
+	private MapMatchingServiceImpl mapMatchingService;
+	
 //	private String routingMode = "bike";
 	private String routingMode = "car";
 	
 	@Test
 	public void testMatchTrack() {
 //		String graphName = "osm_at";
-//		String graphName = "osm_at_with_lower_level_streets";
-		String graphName = "gip_at_frc_0_4";
+		String graphName = "osm_at_with_lower_level_streets";
+//		String graphName = "gip_at_frc_0_4";
+//		String graphName = "osm_biobs";
 //		String graphName = "gip_at_frc_0_8";
 //		long trackId = 18394396;
 //		long trackId = 19991780;
 //		long trackId = 18241517;
 		
-		String trackId = "track_1210714";
+//		String trackId = "12_0028_prepr_loc";
+//		String trackId = "62880610";
+		String trackId = "200021380678";
 		
 //		long trackId = 4893166;
 		
@@ -102,7 +116,21 @@ public class Neo4jMapMatcherEmbeddedTest {
 		//long trackId = 12779916;	// kein Routing
 		//long trackId = 12779918;	// 4 Routings
 
-		matchTrack(trackId, graphName);
+		matchTrack(trackId, graphName, false);
+		
+	}		
+	
+	@Test
+	public void testMatchTrackWithTimeoutGuard() {
+//		String graphName = "osm_at";
+//		String graphName = "osm_at_with_lower_level_streets";
+		String graphName = "gip_at_frc_0_4";
+//		String graphName = "osm_biobs";
+//		String graphName = "gip_at_frc_0_8";
+
+		String trackId = "62880610";
+		
+		matchTrack(trackId, graphName, true);
 		
 	}		
 	
@@ -197,13 +225,14 @@ public class Neo4jMapMatcherEmbeddedTest {
 		};
 				
 		for (String trackId : trackIds) {
-			matchTrack(trackId, graphName);
+			matchTrack(trackId, graphName, false);
 		}
 		
 	}
 
-	private List<IMatchedBranch> matchTrack(String trackId, String graphName) {
-		String fileName = "C:/development/project_data/evis/tracks/json/" + trackId + ".json";
+	private List<IMatchedBranch> matchTrack(String trackId, String graphName, boolean considerTimeout) {
+//		String fileName = "C:/development/project_data/evis/tracks/json/" + trackId + ".json";
+		String fileName = "C:/development/project_data/mapmatcher/testsuite/tracks_json/" + trackId + ".json";
 
 		ObjectMapper mapper = new ObjectMapper();
 		TrackDTO trackDto;
@@ -214,7 +243,12 @@ public class Neo4jMapMatcherEmbeddedTest {
 			
 			log.info("Matching Track " + trackId);
 			
-			branches = matchTrack(track, graphName);
+			if (considerTimeout) {
+				int timeoutInMs = 300;
+				branches = matchTrackWithTimeoutGuard(track, graphName, timeoutInMs);
+			} else {
+				branches = matchTrack(track, graphName);
+			}
 			
 			printBranches(branches);
 		} catch (IOException e) {
@@ -292,6 +326,18 @@ public class Neo4jMapMatcherEmbeddedTest {
 		long startTime = System.nanoTime();
 		IMapMatcherTask task = mapMatcher.getTask(graphName, track, routingMode);
 		List<IMatchedBranch> branches = task.matchTrack();
+		log.info("Map matching took " +  + (System.nanoTime() - startTime) + "ns = " + ((System.nanoTime() - startTime) / 1000000) + "ms");
+		return branches;
+	}
+
+	/**
+	 * @param track
+	 * @return
+	 * @throws GraphNotExistsException 
+	 */
+	private List<IMatchedBranch> matchTrackWithTimeoutGuard(ITrack track, String graphName, int timeoutInMs) throws GraphNotExistsException {
+		long startTime = System.nanoTime();
+		List<IMatchedBranch> branches = mapMatchingService.matchTrack(graphName, null, track, null, null, timeoutInMs, true, routingMode);
 		log.info("Map matching took " +  + (System.nanoTime() - startTime) + "ns = " + ((System.nanoTime() - startTime) / 1000000) + "ms");
 		return branches;
 	}
@@ -380,6 +426,71 @@ public class Neo4jMapMatcherEmbeddedTest {
 		TraversalDescription traversalDescription = neo4jUtil.getTraverser(relationshipType1, relationshipType2, nrOfHops);
 
 		return traversalDescription.traverse(node);
+	}
+	
+	@Test
+	public void testExtendedPathFinding() {
+		String graphName = "osm_dk";
+		
+		try {
+			ITrack track = createTempTrack();
+			
+			List<IMatchedBranch> branches = matchTrack(track, graphName);
+				
+			printBranches(branches);
+			
+		} catch (GraphNotExistsException e) {
+			log.error(e.getMessage(), e);
+		}
+
+	}
+
+	private ITrack createTempTrack() {
+		int srid = 4326;
+		
+		ITrackMetadata metadata = new TrackMetadataImpl();
+		metadata.setNumberOfPoints(4);
+		
+		Calendar cal = Calendar.getInstance();
+		cal.set(2019, Calendar.AUGUST, 20, 10, 0, 0);
+		
+		List<ITrackPoint> trackPoints = new ArrayList<>();
+		ITrackPoint tp1 = new TrackPointImpl();
+		tp1.setPoint(GeometryUtils.createPoint2D(12.52916, 55.74783, srid));
+		tp1.setTimestamp(cal.getTime());
+		trackPoints.add(tp1);
+		
+		cal.add(Calendar.SECOND, 3);
+		ITrackPoint tp2 = new TrackPointImpl();
+		tp2.setPoint(GeometryUtils.createPoint2D(12.52832, 55.74851, srid));
+		tp2.setTimestamp(cal.getTime());
+		trackPoints.add(tp2);
+		
+		cal.add(Calendar.SECOND, 5);
+		ITrackPoint tp3 = new TrackPointImpl();
+		tp3.setPoint(GeometryUtils.createPoint2D(12.52559, 55.75068, srid));
+		tp3.setTimestamp(cal.getTime());
+		trackPoints.add(tp3);
+		
+		cal.add(Calendar.SECOND, 50);
+		ITrackPoint tp4 = new TrackPointImpl();
+		tp4.setPoint(GeometryUtils.createPoint2D(12.51508, 55.762, srid));
+		tp4.setTimestamp(cal.getTime());
+		trackPoints.add(tp4);
+
+		cal.add(Calendar.SECOND, 25);
+		ITrackPoint tp5 = new TrackPointImpl();
+		tp5.setPoint(GeometryUtils.createPoint2D(12.50423, 55.76817, srid));
+		tp5.setTimestamp(cal.getTime());
+		trackPoints.add(tp5);
+		
+		ITrack track = new TrackImpl();
+		track.setId(1);
+		track.setMetadata(metadata);
+		track.setTrackPoints(trackPoints);
+		track.calculateLineString();
+		track.calculateTrackPointValues();
+		return track;
 	}
 	
 }
