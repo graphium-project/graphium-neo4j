@@ -201,7 +201,7 @@ public class RoutingMatcher {
 		int skippedPoints = pointIndex - lastSegment.getEndPointIndex();
 		
 		int initialPointIndexRoutingFrom = lastSegment.getEndPointIndex() - 1;
-		int trieRouteToNextPoint = 0;
+		int tryRouteToNextPoint = 0;
 		do {
 			matchingTask.checkCancelStatus();
 			
@@ -230,11 +230,11 @@ public class RoutingMatcher {
 			} else if (foundTargetSegment && potentialShortestPaths.isEmpty()) {
 				
  				while (properties.getMeanSamplingInterval() < properties.getThresholdSamplingIntervalForTryingFurtherPathSearches() && // statistically this methodology results in worse paths for higher sampling intervals
-					   trieRouteToNextPoint <= properties.getNrOfPointsToSkip() && 
+					   tryRouteToNextPoint <= properties.getNrOfPointsToSkip() && 
 					   potentialShortestPaths.isEmpty()) {
 					pointIndex++;
 					skippedPoints++;
-					trieRouteToNextPoint++;
+					tryRouteToNextPoint++;
 					List<AlternativePath> dummySkippedPaths = new ArrayList<>();
 					List<AlternativePath> dummyFallbackRoutes = new ArrayList<>();
 					foundTargetSegment = getShortestPath(lastSegment, track, pointIndex, skippedPoints, radius, initialPointIndexRoutingFrom, 
