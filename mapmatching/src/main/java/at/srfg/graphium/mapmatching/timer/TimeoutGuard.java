@@ -46,8 +46,13 @@ public class TimeoutGuard extends TimerTask {
 				if (log.isDebugEnabled()) {
 					log.debug("Cancelling map matching task for trackId " + task.getTrack().getId() 
 							+ " (expired at " + service.getMapMatcherTasks().get(task) + ")");
+					log.info((service.getMapMatcherTasks().keySet().size() - 1) + " map matching tasks active");
 				}
-				task.cancel();
+				try {
+					task.cancel();
+				} catch (InterruptedException e) {
+					
+				}
 			}
 		}
 	}
@@ -55,7 +60,11 @@ public class TimeoutGuard extends TimerTask {
 	public void cancelAllTasks() {
 		log.info("Cancelling all map matching tasks...");
 		for (IMapMatcherTask task : service.getMapMatcherTasks().keySet()) {
-			task.cancel();
+			try {
+				task.cancel();
+			} catch (InterruptedException e) {
+				
+			}
 		}
 	}
 

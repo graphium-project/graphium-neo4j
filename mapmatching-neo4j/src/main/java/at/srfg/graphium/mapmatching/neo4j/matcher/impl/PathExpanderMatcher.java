@@ -30,10 +30,16 @@ import org.neo4j.graphdb.traversal.Traverser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.vividsolutions.jts.geom.Point;
+
+import at.srfg.graphium.geomutils.GeometryUtils;
 import at.srfg.graphium.mapmatching.model.IMatchedBranch;
 import at.srfg.graphium.mapmatching.model.IMatchedWaySegment;
 import at.srfg.graphium.mapmatching.model.ITrack;
+import at.srfg.graphium.mapmatching.model.ITrackPoint;
+import at.srfg.graphium.mapmatching.model.impl.MatchedWaySegmentImpl;
 import at.srfg.graphium.mapmatching.properties.IMapMatchingProperties;
+import at.srfg.graphium.mapmatching.util.MapMatchingUtil;
 import at.srfg.graphium.model.FuncRoadClass;
 import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
@@ -47,6 +53,7 @@ public class PathExpanderMatcher {
 	private MapMatchingTask matchingTask;
 	private IMapMatchingProperties properties;
 	private Neo4jUtil neo4jUtil;
+	private int maxDepthExtPathMatching = 5; // extended path matching is better than routing only in a small network 
 
 	public PathExpanderMatcher(MapMatchingTask mapMatchingTask,
 			IMapMatchingProperties properties, Neo4jUtil neo4jUtil) {
@@ -76,6 +83,9 @@ public class PathExpanderMatcher {
 		for (IMatchedBranch branch : branches) {
 			matchingTask.checkCancelStatus();
 			
+			// check if all distances and matched points are calculated correctly
+			sanitizeMatchedSegments(branch, track);
+
 			boolean oneOrMorePointsMatchedOfBranch = processPath(branch, track,
 					newBranches, incomingBranchesWithDeadEnd,
 					unmanipulatedBranches);
@@ -114,6 +124,14 @@ public class PathExpanderMatcher {
 		return newBranches;
 	}
 
+	private void sanitizeMatchedSegments(IMatchedBranch clonedBranch, ITrack track) {
+		for (IMatchedWaySegment segment : clonedBranch.getMatchedWaySegments()) {
+			if (!segment.isValid()) {
+				segment.calculateDistances(track);
+			}
+		}
+	}
+	
 	/**
 	 * Tries to expand a path. First connected segments for the last path segment
 	 * are queried, then these connected segment are matched. 
@@ -130,11 +148,46 @@ public class PathExpanderMatcher {
 			ITrack track, List<IMatchedBranch> newBranches,
 			List<IMatchedBranch> incomingBranchesWithDeadEnd,
 			List<IMatchedBranch> unmanipulatedBranches) {
-		boolean oneOrMorePointsMatched = false;
 		
 		IMatchedWaySegment segment = branch.getMatchedWaySegments().get(branch.getMatchedWaySegments().size() - 1);
 		WaySegmentRelationshipType traverserDirection = getTraverserDirection(segment);
 		
+		if (segment.getEndPointIndex() >= track.getTrackPoints().size()) {
+			return false;
+		}
+		
+		double distanceTrackPoints = GeometryUtils.distanceAndoyer(track.getTrackPoints().get(segment.getEndPointIndex()-1).getPoint(), 
+				track.getTrackPoints().get(segment.getEndPointIndex()).getPoint());
+		if (properties.isActivateExtendedPathMatching() && 
+			distanceTrackPoints < properties.getMaxDistanceForExtendedPathMatching()) {
+			log.debug("matching point " + segment.getEndPointIndex() + " using extended path matching");
+			return extendedSegmentPathMatching(
+					branch,
+					track,
+					distanceTrackPoints,
+					newBranches,
+					incomingBranchesWithDeadEnd,
+					unmanipulatedBranches,
+					segment,
+					traverserDirection);
+		} else {
+			return singleSegmentPathMatching(
+					branch,
+					track, 
+					newBranches,
+					incomingBranchesWithDeadEnd,
+					unmanipulatedBranches,
+					segment,
+					traverserDirection);
+		}
+				
+	}
+
+	private boolean singleSegmentPathMatching(IMatchedBranch branch, ITrack track,
+			List<IMatchedBranch> newBranches, List<IMatchedBranch> incomingBranchesWithDeadEnd,
+			List<IMatchedBranch> unmanipulatedBranches, IMatchedWaySegment segment, WaySegmentRelationshipType traverserDirection) {
+		boolean oneOrMorePointsMatched = false;
+
 		// get all outgoing connections from the current segment
 		Traverser traverser = getTraverser(
 								segment, 
@@ -305,6 +358,180 @@ public class PathExpanderMatcher {
 		return oneOrMorePointsMatched;
 	}
 
+	private boolean extendedSegmentPathMatching(IMatchedBranch branch, ITrack track, double distanceTrackPoints,
+			List<IMatchedBranch> newBranches, List<IMatchedBranch> incomingBranchesWithDeadEnd,
+			List<IMatchedBranch> unmanipulatedBranches, IMatchedWaySegment segment,
+			WaySegmentRelationshipType traverserDirection) {
+		boolean oneOrMorePointsMatched = false;
+
+		// TODO für Routing: nur ausführen, wenn die Geschwindigkeit aufgrund der Distanz und der Timestamps realistisch ist
+		// TODO: Traverser soll Node- und Relationship-Filter berücksichtigen (z.B. Bike/Car, etc.)
+		if (segment.getEndPointIndex() < track.getTrackPoints().size()) {
+			List<IMatchedBranch> clonedBranches = new ArrayList<>();
+			clonedBranches = matchSegment(segment, branch, traverserDirection, track, properties, distanceTrackPoints, 0, clonedBranches, 1);
+
+			List<IMatchedBranch> filteredBranches = filterEmptyBranches(clonedBranches);
+			if (!filteredBranches.isEmpty()) {
+				for (IMatchedBranch extendedBranch : filteredBranches) {
+					if (matchingTask.getWeightingStrategy().branchIsValid(extendedBranch)) {
+						oneOrMorePointsMatched = true;
+						newBranches.add(extendedBranch);
+					}
+				}
+			} else {
+				// end of street reached
+				// put or incoming branch into outgoing newBranches (as it is) - maybe branch is OK
+				storeNotExtendedPath(segment, branch,
+						track, incomingBranchesWithDeadEnd,
+						unmanipulatedBranches);
+			}
+		}			
+
+		return oneOrMorePointsMatched;
+
+	}
+	
+	private List<IMatchedBranch> matchSegment(IMatchedWaySegment segment, IMatchedBranch branch, WaySegmentRelationshipType lastRel, 
+			ITrack track, IMapMatchingProperties properties, double distanceTrackPoints, double distanceSoFar,
+			List<IMatchedBranch> resultBranches, int depth) {
+		
+		if (branch == null) {
+			return null;
+		}
+		
+		// get all outgoing connections from the current segment
+		Traverser traverser = getTraverser(
+								segment, 
+								lastRel, 
+								matchingTask.getGraphDao(),
+								matchingTask.getGraphName(),
+								matchingTask.getGraphVersion());
+			
+		if (traverser != null) {
+			Iterator<Path> connectedPaths = traverser.iterator();
+			while (connectedPaths.hasNext()) {
+				IMatchedBranch clonedBranch = matchingTask.getSegmentMatcher().getClonedBranch(branch);
+				if (clonedBranch == null) {
+					return null;
+				}
+
+				Path connectedPath = connectedPaths.next();
+				Node connectedSegmentNode = connectedPath.endNode();
+
+				IWaySegment connectedSegment = matchingTask.getGraphDao().mapNode(matchingTask.getGraphName(), matchingTask.getGraphVersion(), connectedSegmentNode);
+				
+				if (!isVisited(clonedBranch, connectedSegment) && 
+					isCloser(track.getTrackPoints().get(segment.getEndPointIndex()), segment, connectedSegment, properties.getMaxMatchingRadiusMeter())) {
+					IMatchedWaySegment matchedSegment = matchingTask.getSegmentMatcher().matchSegment(
+															connectedSegment, 
+															track, 
+															segment.getEndPointIndex(), 
+															properties.getMaxMatchingRadiusMeter(), 
+															clonedBranch);
+
+					double distanceForBranch;
+					if (matchedSegment != null && matchedSegment.getMatchedPoints() > 0) {
+						setSegmentDirection(segment, matchedSegment);
+						clonedBranch.addMatchedWaySegment(matchedSegment);
+						resultBranches.add(clonedBranch);
+					} else {
+						distanceForBranch = distanceSoFar + connectedSegment.getLength();
+						if (matchedSegment == null) {
+							matchedSegment = createMatchedSegment(connectedSegment, segment.getEndPointIndex(), track);
+						}
+		
+						if (distanceForBranch < properties.getMaxDistanceForExtendedPathMatching() &&
+							distanceForBranch < distanceTrackPoints * 1.5 &&
+							depth < maxDepthExtPathMatching) {
+							setSegmentDirection(segment, matchedSegment);
+							WaySegmentRelationshipType newLastRel = determineDirection(matchedSegment);
+							clonedBranch.addMatchedWaySegment(matchedSegment);
+							matchSegment(matchedSegment, clonedBranch, newLastRel, track, properties, distanceTrackPoints, distanceForBranch, resultBranches, depth++);
+						}
+					}
+				}
+				
+			}
+		}
+			
+		return resultBranches;
+	}
+	
+	private boolean isCloser(ITrackPoint tp, IMatchedWaySegment segment, IWaySegment connectedSegment, int matchingRadius) {
+		double distanceSegment = GeometryUtils.distanceMeters(connectedSegment.getGeometry(), tp.getPoint());
+		
+		if (distanceSegment <= matchingRadius) {
+			return true;
+		} else {
+
+			// check if path with connected segment comes closer to target track point
+			Point point1 = null;
+			Point point2 = null;
+			if (segment.getStartNodeId() == connectedSegment.getStartNodeId()) {
+				point1 = segment.getGeometry().getStartPoint();
+				point2 = connectedSegment.getGeometry().getStartPoint();
+			} else if (segment.getStartNodeId() == connectedSegment.getEndNodeId()) {
+				point1 = segment.getGeometry().getStartPoint();
+				point2 = connectedSegment.getGeometry().getEndPoint();
+			} else if (segment.getEndNodeId() == connectedSegment.getStartNodeId()) {
+				point1 = segment.getGeometry().getEndPoint();
+				point2 = connectedSegment.getGeometry().getStartPoint();
+			} else if (segment.getEndNodeId() == connectedSegment.getEndNodeId()) {
+				point1 = segment.getGeometry().getEndPoint();
+				point2 = connectedSegment.getGeometry().getEndPoint();
+			}
+			
+			double distance2 = GeometryUtils.distanceAndoyer(point2, tp.getPoint());
+			double distance1 = GeometryUtils.distanceAndoyer(point1, tp.getPoint());
+			return distance1 >= distance2;
+		}
+	}
+
+	private boolean isVisited(IMatchedBranch clonedBranch, IWaySegment connectedSegment) {
+		boolean visited = false;
+		Iterator<IMatchedWaySegment> it = clonedBranch.getMatchedWaySegments().iterator();
+		while (it.hasNext() && !visited) {
+			if (it.next().getId() == connectedSegment.getId()) {
+				visited = true;
+			}
+		}
+		return visited;
+	}
+
+	private IMatchedWaySegment createMatchedSegment(IWaySegment segment, int endPointIndex, ITrack track) {
+		IMatchedWaySegment matchedWaySegment = new MatchedWaySegmentImpl();
+		matchedWaySegment.setSegment(segment);
+		matchedWaySegment.setStartPointIndex(endPointIndex);
+		matchedWaySegment.setEndPointIndex(endPointIndex);
+		matchedWaySegment.calculateDistances(track);
+		return matchedWaySegment;
+	}
+	
+	private WaySegmentRelationshipType determineDirection(IMatchedWaySegment currentSegment) {
+		if (currentSegment.getDirection().isEnteringThroughStartNode()) {
+			return WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE;
+		} else {
+			return WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE;
+		}
+	}
+
+	private List<IMatchedBranch> filterEmptyBranches(List<IMatchedBranch> branches) {
+		return MapMatchingUtil.filterEmptyBranches(branches);
+	}
+
+//	private IMatchedBranch selectBestBranch(List<IMatchedBranch> branches) {
+//		List<IMatchedBranch> nonEmptyPaths = filterEmptyBranches(branches);
+//		
+//		if (nonEmptyPaths.isEmpty()) {
+//			return null;
+//		}
+//		
+//		// sort paths
+//		Collections.sort(nonEmptyPaths, matchingTask.getWeightingStrategy().getComparator());
+//		
+//		return nonEmptyPaths.get(0);
+//	}
+	
 	private int numberOfFurtherConnections(Node connectedSegmentNode, WaySegmentRelationshipType directionType) {
 		Iterator<Relationship> itEndConns = connectedSegmentNode.getRelationships(Direction.OUTGOING, directionType).iterator();
 		int endConnsCounter = 0;

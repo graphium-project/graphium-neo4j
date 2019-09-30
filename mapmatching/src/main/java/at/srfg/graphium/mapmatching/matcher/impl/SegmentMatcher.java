@@ -19,7 +19,10 @@ package at.srfg.graphium.mapmatching.matcher.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.math.DoubleMath;
 import com.vividsolutions.jts.geom.Coordinate;
@@ -422,6 +425,7 @@ public class SegmentMatcher {
 				for (int i=0; i<diff; i++) {
 					previousSegment.removeLastDistance();
 				}
+				previousSegment.calculateDistances(track);
 			}
 		}
 		
@@ -747,6 +751,99 @@ public class SegmentMatcher {
 		segment.setSegment(newSegment);
 		segment.calculateDistances(track);
 		return segment;
+	}
+
+	/**
+	 * reacalculation of start and end point indexes of routed segments
+	 * @param track
+	 * @param endPointIndex
+	 * @param matchedWaySegments
+	 */
+	public void recalculateSegmentsIndexes(ITrack track, int startPointIndexOfRouting, int routeEndPointIndex,
+			List<IMatchedWaySegment> segments) {
+		
+		if (segments.isEmpty()) {
+			return;
+		}
+
+		// build metadata about segment order
+		int iSegs = 0;
+		Map<IMatchedWaySegment, Integer> segsReverseMap = new HashMap<>();
+		for (IMatchedWaySegment seg : segments) {
+			segsReverseMap.put(seg, iSegs++);
+			if (iSegs > 0 && iSegs < segments.size()) {
+				// set startPointIndex of each segment except start and end segment of list to 0 => indicates to be updated in further step
+				seg.setStartPointIndex(0);
+			}
+		}
+		
+		// identify segments with min distance to each track point
+		Map<IMatchedWaySegment, Integer> minDistanceSegments = new LinkedHashMap<>();
+		for (int iTp=startPointIndexOfRouting; iTp<routeEndPointIndex; iTp++) {
+			ITrackPoint tp = track.getTrackPoints().get(iTp);
+			double minDistance = -1;
+			IMatchedWaySegment minDistSegment = null;
+			for (IMatchedWaySegment seg : segments) {
+				double distance = GeometryUtils.distanceMeters(seg.getGeometry(), tp.getPoint());
+				if (minDistance == -1 || minDistance >= distance) {
+					minDistance = distance;
+					minDistSegment = seg;
+				}
+			}
+			minDistanceSegments.put(minDistSegment, iTp);
+		}
+		
+		// identify start point index for segments having min distances to track points
+		iSegs = -1;
+		int currentIndex = startPointIndexOfRouting;
+		for (IMatchedWaySegment segment : segments) {
+			Integer iTp = minDistanceSegments.get(segment);
+			if (iTp != null) {
+				if (iTp > currentIndex) {
+					currentIndex = iTp;					
+				}
+			}
+			segment.setStartPointIndex(currentIndex);
+		}
+		
+		// set end point indexes
+		IMatchedWaySegment lastSegment = segments.get(segments.size()-1);
+		int nextStartPointIndex = 0;
+		IMatchedWaySegment currSegment = null;
+		IMatchedWaySegment nextSegment = null;
+		if (segments.size() > 1) {
+			IMatchedWaySegment nextToLastSegment = segments.get(segments.size()-2);
+			if (nextToLastSegment.getStartPointIndex() > lastSegment.getStartPointIndex()) {
+				lastSegment.setStartPointIndex(routeEndPointIndex);
+			}
+			for (iSegs = segments.size()-2; iSegs >= 0; iSegs--) {
+				currSegment = segments.get(iSegs);
+				nextSegment = segments.get(iSegs + 1);
+				
+				if (nextSegment.getStartPointIndex() > 0) {
+					nextStartPointIndex = nextSegment.getStartPointIndex();
+				}
+				currSegment.setEndPointIndex(nextStartPointIndex);
+				
+			}
+		}
+		
+		if (lastSegment.getEndPointIndex() < lastSegment.getStartPointIndex()) {
+			lastSegment.setEndPointIndex(routeEndPointIndex);
+		}
+
+		// set start point indexes
+		for (IMatchedWaySegment seg : segments) {
+			if (seg.getStartPointIndex() == 0) {
+				seg.setStartPointIndex(seg.getEndPointIndex());
+			}
+		}
+		
+		// calculate distances for each segment
+		for (IMatchedWaySegment seg : segments) {
+			seg.calculateDistances(track);
+		}
+		
 	}
 
 }

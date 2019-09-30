@@ -260,6 +260,7 @@ public class MatchedWaySegmentImpl implements IMatchedWaySegment, Cloneable, Ser
 			int endIndexMin = Math.min(this.getEndPointIndex(), ((IMatchedWaySegment)obj).getEndPointIndex());
 			
 			if (((IMatchedWaySegment)obj).getId() == this.getId() && 
+				((IMatchedWaySegment)obj).getDirection().equals(this.getDirection()) &&
 				startIndexMax <= endIndexMin) {	// fuzzy index compare => one segment could be match twice (UTurn); in this case indices are different
 				return true;
 			}
@@ -620,7 +621,7 @@ public class MatchedWaySegmentImpl implements IMatchedWaySegment, Cloneable, Ser
 
 	@Override
 	public int hashCode() {
-		return Objects.hashCode(getId());
+		return Objects.hashCode(getId(), getDirection());
 	}
 
 	@Override
@@ -737,6 +738,11 @@ public class MatchedWaySegmentImpl implements IMatchedWaySegment, Cloneable, Ser
 	@Override
 	public void setCertain(boolean certain) {
 		this.certain = certain;
+	}
+
+	@Override
+	public boolean isValid() {
+		return matchedPoints.size() == endPointIndex - startPointIndex;
 	}
 
 }

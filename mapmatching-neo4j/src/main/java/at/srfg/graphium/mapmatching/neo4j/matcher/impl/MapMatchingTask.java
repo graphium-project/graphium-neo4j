@@ -34,9 +34,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Lists;
 
 import at.srfg.graphium.mapmatching.matcher.IMapMatcher;
 import at.srfg.graphium.mapmatching.matcher.IMapMatcherTask;
@@ -51,6 +48,7 @@ import at.srfg.graphium.mapmatching.properties.IMapMatchingProperties;
 import at.srfg.graphium.mapmatching.properties.impl.MapMatchingProperties;
 import at.srfg.graphium.mapmatching.statistics.MapMatcherGlobalStatistics;
 import at.srfg.graphium.mapmatching.statistics.MapMatcherStatistics;
+import at.srfg.graphium.mapmatching.util.MapMatchingUtil;
 import at.srfg.graphium.mapmatching.weighting.IWeightingStrategyFactory;
 import at.srfg.graphium.mapmatching.weighting.impl.RouteDistanceWeightingStrategyFactory;
 import at.srfg.graphium.model.IWayGraphVersionMetadata;
@@ -416,7 +414,9 @@ public class MapMatchingTask implements IMapMatcherTask {
 						IMatchedWaySegment firstUncertainSegment = path.getMatchedWaySegments().get(1);
 						if (firstUncertainSegment.getEndPointIndex() < lastCertainSegmentClone.getEndPointIndex()) {
 							if (lastCertainSegmentClone.getStartPointIndex() < firstUncertainSegment.getStartPointIndex()) {
-								updateIndices(firstUncertainSegment, lastCertainSegmentClone, properties.getMaxMatchingRadiusMeter(), track);
+								//updateIndices(firstUncertainSegment, lastCertainSegmentClone, properties.getMaxMatchingRadiusMeter());
+								getSegmentMatcher().recalculateSegmentsIndexes(track, Math.min(lastCertainSegmentClone.getStartPointIndex(), firstUncertainSegment.getStartPointIndex()), 
+										Math.max(lastCertainSegmentClone.getEndPointIndex(), firstUncertainSegment.getEndPointIndex()), path.getMatchedWaySegments());
 							} else {
 								lastCertainSegmentClone.setEndPointIndex(firstUncertainSegment.getStartPointIndex());
 								lastCertainSegmentClone.calculateDistances(track);
@@ -588,11 +588,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 			detectedPaths = postSegmentFilter(detectedPaths);
 			
 			// filter empty paths
-			List<IMatchedBranch> nonEmptyPaths = Lists.newArrayList(Collections2.filter(detectedPaths, new Predicate<IMatchedBranch>() {
-				public boolean apply(IMatchedBranch branch) {
-					return !branch.getMatchedWaySegments().isEmpty();
-				}
-			}));
+			List<IMatchedBranch> nonEmptyPaths = MapMatchingUtil.filterEmptyBranches(detectedPaths);
 			
 			if (nonEmptyPaths.isEmpty()) {
 				return Collections.emptyList();
@@ -650,6 +646,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 			}
 		}
 		
+		// TODO: Could this result in errors?
 		// in cases of determining certain paths indices could be invalid
 		correctIndices(bestBranch);
 	}
@@ -660,7 +657,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 			IMatchedWaySegment currentSegment = branch.getMatchedWaySegments().get(1);
 			for (int i=2; i<branch.getMatchedWaySegments().size(); i++) {
 				if (previousSegment.getEndPointIndex() > currentSegment.getStartPointIndex()) {
-					updateIndices(currentSegment, previousSegment, properties.getMaxMatchingRadiusMeter(), track);
+					updateIndices(currentSegment, previousSegment, properties.getMaxMatchingRadiusMeter());
 				}
 				previousSegment = currentSegment;
 				currentSegment = branch.getMatchedWaySegments().get(i);
@@ -670,7 +667,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 	}
 
 	private void updateIndices(IMatchedWaySegment currentSegment, IMatchedWaySegment previousSegment,
-			int maxMatchingRadiusMeter, ITrack track2) {
+			int maxMatchingRadiusMeter) {
 		int newStartIndex = segmentMatcher.updateMatchesOfPreviousSegment(previousSegment.getEndPointIndex(), previousSegment, currentSegment, properties.getMaxMatchingRadiusMeter(), track);
 		currentSegment.setStartPointIndex(newStartIndex);
 	}
@@ -770,9 +767,10 @@ public class MapMatchingTask implements IMapMatcherTask {
 		branch.removeMatchedWaySegments(segmentsToRemove);
 	}
 	
-	public void cancel() {
+	public void cancel() throws InterruptedException {
 		log.info("Cancel requested for track " + track.getId());
-		cancelRequested = true;
+		throw new InterruptedException();
+//		cancelRequested = true;
 	}
 	
 	private void logCsv() {

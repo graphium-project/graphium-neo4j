@@ -566,73 +566,36 @@ public class MatchesFilter {
 			return null;
 		}
 		
-		// initialize list with segment counters; only segments of best path will be considered
-		Map<IMatchedWaySegment, Integer> segmentCounters = new LinkedHashMap<>();
-		IMatchedBranch bestBranch = nonEmptyPaths.get(0);
-		for (IMatchedWaySegment segment : bestBranch.getMatchedWaySegments()) {
-			segmentCounters.put(segment, 1);
-		}
-		
-		// use a map for each segment indicating different endPointIndices between paths
-//		Map<IMatchedWaySegment, List<Integer>> segmentsEndPointIndices = new LinkedHashMap<>();
-//		for (IMatchedWaySegment segment : bestBranch.getMatchedWaySegments()) {
-//			List<Integer> indices = new ArrayList<>();
-//			indices.add(segment.getEndPointIndex());
-//			segmentsEndPointIndices.put(segment, indices);
-//		}
-		
-		// increment segment counters for segments matched in other paths
-		for (int iPath = 1; iPath < nonEmptyPaths.size(); iPath++) {
-			IMatchedBranch path = nonEmptyPaths.get(iPath);
-			Map<Long, Integer> segmentCounts = new HashMap<>();
-			for (IMatchedWaySegment segment : path.getMatchedWaySegments()) {
-				Integer count = segmentCounts.get(segment.getId());
-				if (count == null) {
-					segmentCounts.put(segment.getId(), 1);
-				} else {
-					segmentCounts.put(segment.getId(), ++count);
-				}
-				
-//				if (segmentsEndPointIndices.containsKey(segment)) {
-//					segmentsEndPointIndices.get(segment).add(segment.getEndPointIndex());
-//				} else {
-//					List<Integer> indices = new ArrayList<>();
-//					indices.add(segment.getEndPointIndex());
-//					segmentsEndPointIndices.put(segment, indices);
-//				}
-				 
-			}
-			for (IMatchedWaySegment segment : path.getMatchedWaySegments()) {
-				if (segmentCounts.get(segment.getId()) == 1 && segmentCounters.containsKey(segment)) {
-					segmentCounters.put(segment, segmentCounters.get(segment) + 1);
-				}
-			}
-		}
-		
-		// look for first matched segment with total count of paths, beginning at the end of the best path
-		List<MatchedSegmentCounter> orderedCounters = new ArrayList<>();
-		for (IMatchedWaySegment segment : segmentCounters.keySet()) {
-			orderedCounters.add(new MatchedSegmentCounter(segment, segmentCounters.get(segment)));
-		}
-		Collections.reverse(orderedCounters);
 		IMatchedWaySegment certainSegment = null;
-		Iterator<MatchedSegmentCounter> itOrderedCounters = orderedCounters.iterator();
-		MatchedSegmentCounter currentCounter;
-		int totalCount = nonEmptyPaths.size();
 		
-		while (certainSegment == null && itOrderedCounters.hasNext()) {
-			currentCounter = itOrderedCounters.next();
-			if (currentCounter.getCount() == totalCount &&
-				currentCounter.getSegment().getMatchedPoints() > 0 &&
-				!currentCounter.getSegment().equals(bestBranch.getMatchedWaySegments().get(bestBranch.getMatchedWaySegments().size()-1))) {
-				
-				certainSegment = currentCounter.getSegment();
-				
+		int i = 0;
+		IMatchedWaySegment certainSegmentCandidate;
+		while (valid) {
+			certainSegmentCandidate = null;
+			for (IMatchedBranch branch : nonEmptyPaths) {
+				if (branch.getMatchedWaySegments().size() > i) {
+					IMatchedWaySegment currentSegment = branch.getMatchedWaySegments().get(i);
+					if (certainSegmentCandidate == null) {
+						certainSegmentCandidate = currentSegment;
+					} else if (certainSegmentCandidate.getId() != currentSegment.getId()) {
+						valid = false;
+					}
+				} else {
+					valid = false;
+				}
 			}
+			
+			if (valid) {
+				if (certainSegmentCandidate.getMatchedPoints() > 0) {
+					certainSegment = certainSegmentCandidate;
+				}
+			}
+			
+			i++;
 		}
 		
 		return certainSegment;
-
+		
 	}
 
 	private IMatchedWaySegment findLastSegmentWithMatchedPoint(List<IMatchedWaySegment> matchedWaySegments, int startIndex) {
@@ -650,5 +613,4 @@ public class MatchesFilter {
 		}
 		return segmentToReturn;
 	}
-
 }

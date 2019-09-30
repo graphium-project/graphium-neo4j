@@ -106,4 +106,9 @@ public interface IMapMatchingProperties {
 	String getRoutingAlgorithm();
 	void setRoutingAlgorithm(String routingAlgorithm);
 	
+	boolean isActivateExtendedPathMatching();
+	void setActivateExtendedPathMatching(boolean activateExtendedPathMatching);
+	
+	int getMaxDistanceForExtendedPathMatching();
+	void setMaxDistanceForExtendedPathMatching(int maxDistanceForExtendedPathMatching);
 }

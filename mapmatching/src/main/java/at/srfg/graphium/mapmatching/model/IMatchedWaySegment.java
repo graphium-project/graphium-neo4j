@@ -89,4 +89,6 @@ public interface IMatchedWaySegment extends IWaySegment {
 
 	boolean isCertain();
 	void setCertain(boolean certain);
+
+	boolean isValid();
 }

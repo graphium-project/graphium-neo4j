@@ -359,4 +359,21 @@ public class Neo4jMapMatcher implements IMapMatcher {
 		properties.setRoutingAlgorithm(routingAlgorithm);
 	}
 	
+	public boolean isActivateExtendedPathMatching() {
+		return properties.isActivateExtendedPathMatching();
+	}
+	
+	public void setActivateExtendedPathMatching(boolean activateExtendedPathMatching) {
+		properties.setActivateExtendedPathMatching(activateExtendedPathMatching);;
+	}
+
+	public int getMaxDistanceForExtendedPathMatching() {
+		return properties.getMaxDistanceForExtendedPathMatching();
+	}
+
+	public void setMaxDistanceForExtendedPathMatching(int maxDistanceForExtendedPathMatching) {
+		properties.setMaxDistanceForExtendedPathMatching(maxDistanceForExtendedPathMatching);
+		
+	}
+
 }
