@@ -399,6 +399,10 @@ public class PathExpanderMatcher {
 			return null;
 		}
 		
+		if (depth > maxDepthExtPathMatching) {
+			return null;
+		}
+		
 		// get all outgoing connections from the current segment
 		Traverser traverser = getTraverser(
 								segment, 
@@ -441,8 +445,7 @@ public class PathExpanderMatcher {
 						}
 		
 						if (distanceForBranch < properties.getMaxDistanceForExtendedPathMatching() &&
-							distanceForBranch < distanceTrackPoints * 1.5 &&
-							depth < maxDepthExtPathMatching) {
+							distanceForBranch < distanceTrackPoints * 1.5) {
 							setSegmentDirection(segment, matchedSegment);
 							WaySegmentRelationshipType newLastRel = determineDirection(matchedSegment);
 							clonedBranch.addMatchedWaySegment(matchedSegment);
