@@ -15,26 +15,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package at.srfg.graphium.mapmatching.matcher;
+package at.srfg.graphium.mapmatching.util;
 
 import java.util.List;
 
-import at.srfg.graphium.mapmatching.model.IMatchedBranch;
-import at.srfg.graphium.mapmatching.model.ITrack;
-import at.srfg.graphium.mapmatching.statistics.MapMatcherStatistics;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Lists;
 
-public interface IMapMatcherTask {
-	
-	public List<IMatchedBranch> matchTrack();
-	public List<IMatchedBranch> matchTrack(Long startSegmentId);
-	public List<IMatchedBranch> matchTrack(List<IMatchedBranch> branches);
-	
-	public void cancel() throws InterruptedException;
-	
-	public ITrack getTrack();
-	public MapMatcherStatistics getStatistics();
-	
-	public String getGraphName();	
-	public String getGraphVersion();
-	
+import at.srfg.graphium.mapmatching.model.IMatchedBranch;
+
+/**
+ * Created by mwimmer
+ */
+public class MapMatchingUtil {
+
+	public static List<IMatchedBranch> filterEmptyBranches(List<IMatchedBranch> branches) {
+		// filter empty paths
+		return Lists.newArrayList(Collections2.filter(branches, new Predicate<IMatchedBranch>() {
+			public boolean apply(IMatchedBranch branch) {
+				return !branch.getMatchedWaySegments().isEmpty();
+			}
+		}));
+
+	}
+
 }

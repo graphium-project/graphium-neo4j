@@ -113,6 +113,14 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 	 */
 	private String routingMode;
 	private String routingCriteria;
+	private String routingAlgorithm;
+	
+	
+	boolean activateExtendedPathMatching;
+	/**
+	 * Maximum distance of path between two track points without routing (in meter)
+	 */
+	int maxDistanceForExtendedPathMatching = 700;
 	
 	@Override
 	public String toString() {
@@ -134,6 +142,9 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 				+ ", online=" + online 
 				+ ", routingMode=" + routingMode
 				+ ", routingCriteria=" + routingCriteria
+				+ ", routingAlgorithm=" + routingAlgorithm
+				+ ", activateExtendedPathMatching=" + activateExtendedPathMatching
+				+ ", maxDistanceForExtendedPathMatching=" + maxDistanceForExtendedPathMatching
 				+ "]";
 	}
 	
@@ -395,6 +406,36 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 	@Override
 	public void setRoutingCriteria(String routingCriteria) {
 		this.routingCriteria = routingCriteria;
+	}
+
+	@Override
+	public String getRoutingAlgorithm() {
+		return routingAlgorithm;
+	}
+
+	@Override
+	public void setRoutingAlgorithm(String routingAlgorithm) {
+		this.routingAlgorithm = routingAlgorithm;
+	}
+
+	@Override
+	public boolean isActivateExtendedPathMatching() {
+		return activateExtendedPathMatching;
+	}
+
+	@Override
+	public void setActivateExtendedPathMatching(boolean activateExtendedPathMatching) {
+		this.activateExtendedPathMatching = activateExtendedPathMatching;
+	}
+
+	@Override
+	public int getMaxDistanceForExtendedPathMatching() {
+		return maxDistanceForExtendedPathMatching;
+	}
+
+	@Override
+	public void setMaxDistanceForExtendedPathMatching(int maxDistanceForExtendedPathMatching) {
+		this.maxDistanceForExtendedPathMatching = maxDistanceForExtendedPathMatching;
 	}
 	
 }

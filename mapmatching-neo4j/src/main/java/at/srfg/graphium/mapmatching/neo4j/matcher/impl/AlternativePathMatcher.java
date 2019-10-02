@@ -20,7 +20,6 @@ package at.srfg.graphium.mapmatching.neo4j.matcher.impl;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -29,12 +28,10 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import at.srfg.graphium.geomutils.GeometryUtils;
 import at.srfg.graphium.mapmatching.model.Direction;
 import at.srfg.graphium.mapmatching.model.IMatchedBranch;
 import at.srfg.graphium.mapmatching.model.IMatchedWaySegment;
 import at.srfg.graphium.mapmatching.model.ITrack;
-import at.srfg.graphium.mapmatching.model.ITrackPoint;
 import at.srfg.graphium.mapmatching.properties.IMapMatchingProperties;
 import at.srfg.graphium.mapmatching.statistics.MapMatcherStatistics;
 
@@ -272,21 +269,23 @@ public class AlternativePathMatcher {
 			// because the segment might get removed if there are no matches for the segment
 			checkUTurnForLastSegment(routedSegments, alternativePath.isCausesUTurn(), clonedBranch);
 
-			// add segments of shortest path search to branch
-			clonedBranch = addSegmentsToClonedBranch(
-					startPointIndex, 
-					routedSegments, track, clonedBranch);
-			
-			if (clonedBranch != null) {
-				clonedBranch.incrementNrOfShortestPathSearches();
+			if (!clonedBranch.getMatchedWaySegments().isEmpty()) {
+				// add segments of shortest path search to branch
+				clonedBranch = addSegmentsToClonedBranch(
+						startPointIndex, 
+						routedSegments, track, clonedBranch);
 				
-				if (alternativePath.isAfterSkippedPart()) {
-					newBranches.add(clonedBranch);
-				} else {
-					matchRoutingPath(clonedBranch, newBranches, track);
+				if (clonedBranch != null) {
+					clonedBranch.incrementNrOfShortestPathSearches();
+					
+					if (alternativePath.isAfterSkippedPart()) {
+						newBranches.add(clonedBranch);
+					} else {
+						matchRoutingPath(clonedBranch, newBranches, track);
+					}
+					
+					return true;
 				}
-				
-				return true;
 			}
 		}
 		
@@ -430,6 +429,8 @@ public class AlternativePathMatcher {
 					segmentsStartPointIndex = matchShortestPathSegment(matchedWaySegment,
 							segmentsStartPointIndex, track,
 							clonedBranch, true);
+				} else {
+					log.debug("previous segment is null");
 				}
 				
 				previousSegment = matchedWaySegment;
@@ -441,7 +442,7 @@ public class AlternativePathMatcher {
 				routeEndPointIndex != segments.get(segments.size()-1).getStartPointIndex()) {
 				// if we have a routed path without skipped parts (e.g. track left graph and returns...) AND there is a gap between indexes (could occur if
 				// some track points we want to route to have GPS errors and couldn't be matched on any segment) we have to recalculate indexes of routed segments
-				recalculateRoutedSegmentsIndexes(track, routeStartSegment.getEndPointIndex(), routeEndPointIndex, clonedBranch);
+				this.matchingTask.getSegmentMatcher().recalculateSegmentsIndexes(track, routeStartSegment.getEndPointIndex(), routeEndPointIndex, segments);
 			}
 		}
 
@@ -465,103 +466,7 @@ public class AlternativePathMatcher {
 		
 		return null;
 	}
-
-	/**
-	 * reacalculation of start and end point indexes of routed segments
-	 * @param track
-	 * @param endPointIndex
-	 * @param matchedWaySegments
-	 */
-	private void recalculateRoutedSegmentsIndexes(ITrack track, int startPointIndexOfRouting, int routeEndPointIndex,
-			IMatchedBranch branch) {
-		// extract routed segments - only those segments at the beginning having no matched points
-		List<IMatchedWaySegment> segments = new ArrayList<>();
-		for (IMatchedWaySegment segment : branch.getMatchedWaySegments()) {
-			if (segment.getStartPointIndex() >= startPointIndexOfRouting) {
-				if (segment.getStartPointIndex() < segment.getEndPointIndex()) {
-					break;
-				}
-				segments.add(segment);
-			}
-		}
-		
-		if (segments.isEmpty()) {
-			return;
-		}
-		
-		// build metadata about segment order
-		int iSegs = 0;
-		Map<IMatchedWaySegment, Integer> segsReverseMap = new HashMap<>();
-		for (IMatchedWaySegment seg : segments) {
-			segsReverseMap.put(seg, iSegs++);
-			if (iSegs > 0 && iSegs < segments.size()) {
-				// set startPointIndex of each segment except start and end segment of list to 0 => indicates to be updated in further step
-				seg.setStartPointIndex(0);
-			}
-		}
-				
-		// identify segments with min distance to each track point
-		Map<Integer, IMatchedWaySegment> minDistanceSegments = new LinkedHashMap<>();
-		for (int iTp=startPointIndexOfRouting; iTp<routeEndPointIndex; iTp++) {
-			ITrackPoint tp = track.getTrackPoints().get(iTp);
-			double minDistance = -1;
-			IMatchedWaySegment minDistSegment = null;
-			for (IMatchedWaySegment seg : segments) {
-				double distance = GeometryUtils.distanceMeters(seg.getGeometry(), tp.getPoint());
-				if (minDistance == -1 || minDistance > distance) {
-					minDistance = distance;
-					minDistSegment = seg;
-				}
-			}
-			minDistanceSegments.put(iTp, minDistSegment);
-		}
-		
-		// identify start point index for segments having min distances to track points
-		iSegs = -1;
-		for (int indexTp : minDistanceSegments.keySet()) {
-			IMatchedWaySegment segment = minDistanceSegments.get(indexTp);
-			int indexOfSegment = segsReverseMap.get(segment);
-			if (iSegs < indexOfSegment) {
-				segment.setStartPointIndex(indexTp);
-				iSegs = segsReverseMap.get(segment);
-			}
-		}
-		
-		// set end point indexes
-		int nextStartPointIndex = 0;
-		IMatchedWaySegment currSegment = null;
-		IMatchedWaySegment nextSegment = null;
-		if (segments.size() > 1) {
-			for (iSegs = segments.size()-2; iSegs >= 0; iSegs--) {
-				currSegment = segments.get(iSegs);
-				nextSegment = segments.get(iSegs + 1);
-				
-				if (nextSegment.getStartPointIndex() > 0) {
-					nextStartPointIndex = nextSegment.getStartPointIndex();
-				}
-				currSegment.setEndPointIndex(nextStartPointIndex);
-				
-			}
-		}
-		IMatchedWaySegment lastSegment = segments.get(segments.size()-1);
-		if (lastSegment.getEndPointIndex() < lastSegment.getStartPointIndex()) {
-			lastSegment.setEndPointIndex(routeEndPointIndex);
-		}
-		
-		// set start point indexes
-		for (IMatchedWaySegment seg : segments) {
-			if (seg.getStartPointIndex() == 0) {
-				seg.setStartPointIndex(seg.getEndPointIndex());
-			}
-		}
-		
-		// calculate distances for each segment
-		for (IMatchedWaySegment seg : segments) {
-			seg.calculateDistances(track);
-		}
-		
-	}
-
+	
 	/**
 	 * Updates the matched points of the previous segments and sets the matches
 	 * for the current.
@@ -676,9 +581,14 @@ public class AlternativePathMatcher {
 				// rematch all points starting from the last matching segment
 				newStartIndex = matchingTask.getSegmentMatcher().updateMatchesOfPreviousEmptySegments(previousSegment, matchedWaySegment, 
 						clonedBranch, properties.getMaxMatchingRadiusMeter(), track);
-				List<Double> distances = matchingTask.getSegmentMatcher().getValidPointDistances(matchedWaySegment, newStartIndex, track, properties.getMaxMatchingRadiusMeter());
+				// matchedWaySegment has wrong indexes
+//				matchedWaySegment.setStartPointIndex(startPointIndex);
+
+				//				matchedWaySegment.setEndPointIndex(endPointIndex);
+//				List<Double> distances = matchingTask.getSegmentMatcher().getValidPointDistances(matchedWaySegment, newStartIndex, track, properties.getMaxMatchingRadiusMeter());
+//				List<Double> distances = matchingTask.getSegmentMatcher().getValidPointDistances(matchedWaySegment, startPointIndex, track, properties.getMaxMatchingRadiusMeter());
 				
-				endPointIndex = newStartIndex + distances.size();
+//				endPointIndex = newStartIndex + distances.size();
 			}
 		}
 		

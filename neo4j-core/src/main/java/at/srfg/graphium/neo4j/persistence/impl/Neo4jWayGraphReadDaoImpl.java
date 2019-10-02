@@ -19,6 +19,7 @@ package at.srfg.graphium.neo4j.persistence.impl;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
 
+import at.srfg.graphium.core.exception.GraphNotExistsException;
 import at.srfg.graphium.core.service.impl.GraphReadOrder;
 import at.srfg.graphium.io.exception.WaySegmentSerializationException;
 import at.srfg.graphium.io.outputformat.ISegmentOutputFormat;
@@ -40,6 +42,7 @@ import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.model.IWaySegmentConnection;
 import at.srfg.graphium.model.view.IWayGraphView;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
+import at.srfg.graphium.neo4j.persistence.nodemapper.INeo4jXInfoConnectionMapper;
 import at.srfg.graphium.neo4j.persistence.nodemapper.INeo4jXInfoNodeMapper;
 import at.srfg.graphium.neo4j.service.impl.STRTreeService;
 
@@ -55,7 +58,7 @@ public class Neo4jWayGraphReadDaoImpl extends AbstractNeo4jDaoImpl implements IN
 	// TODO: Performance-Tuning: Caching von SpatialLayer zu GraphVersionName => macht das Sinn?
 	
 	private INeo4jXInfoNodeMapper<IWaySegment> segmentMapper;
-	private INeo4jXInfoNodeMapper<List<IWaySegmentConnection>> neo4jWaySegmentConnectionsNodeMapper;
+	private INeo4jXInfoConnectionMapper<List<IWaySegmentConnection>> neo4jWaySegmentConnectionsNodeMapper;
 	private STRTreeService treeIndexService = null;
 	
 	@Override
@@ -82,7 +85,8 @@ public class Neo4jWayGraphReadDaoImpl extends AbstractNeo4jDaoImpl implements IN
 	}
 	
 	@Override
-	public IWaySegment getSegmentById(String graphName, String version, long segmentId, boolean includeConnections) {
+	public IWaySegment getSegmentById(String graphName, String version, long segmentId, 
+			boolean includeConnections) {
 		try (Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx()) {
 			// wird derzeit nicht verwendet
 			String graphVersionName = createGraphVersionName(graphName, version);
@@ -110,6 +114,45 @@ public class Neo4jWayGraphReadDaoImpl extends AbstractNeo4jDaoImpl implements IN
 				segments = new ArrayList<>(segmentIds.size());
 				for (Long id : segmentIds) {
 					segments.add(getSegmentById(graphName, version, id, includeConnections));
+				}
+			}
+			
+			tx.success();
+			return segments;
+		}
+	}
+
+	@Override
+	public void streamIncomingConnectedStreetSegments(ISegmentOutputFormat<IWaySegment> outputFormat, String graphName,
+			String version, Set<Long> ids) throws WaySegmentSerializationException, GraphNotExistsException {
+		try (Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx()) {
+			// special treatment in case of including incoming connections: here segments connected with incoming direction 
+			// have to be read (their outgoing connected segment is the requested segment)
+			Set<IWaySegment> segments = new HashSet<>();
+			for (Long id : ids) {
+				segments.addAll(getIncomingConnectedSegments(graphName, version, id));
+			}
+
+			// we have to load all segments first to avoid duplicate segment entries
+			if (segments != null) {
+				for (IWaySegment segment : segments) {
+					outputFormat.serialize(segment);
+				}
+			}
+			
+			tx.success();
+		}
+	}
+
+	private Set<IWaySegment> getIncomingConnectedSegments(String graphName, String version, Long segmentId) {
+		try (Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx()) {
+			Set<IWaySegment> segments = new HashSet<>();
+			String graphVersionName = createGraphVersionName(graphName, version);
+			Node node = getSegmentNode(graphVersionName, segmentId);
+			if (node != null) {
+				List<IWaySegmentConnection> incomingConnections = neo4jWaySegmentConnectionsNodeMapper.mapWithXInfoTypes(node, true, false);
+				for (IWaySegmentConnection conn : incomingConnections) {
+					segments.add(getSegmentById(graphName, version, conn.getFromSegmentId(), true));
 				}
 			}
 			
@@ -318,11 +361,11 @@ public class Neo4jWayGraphReadDaoImpl extends AbstractNeo4jDaoImpl implements IN
 		this.segmentMapper = segmentMapper;
 	}
 
-	public INeo4jXInfoNodeMapper<List<IWaySegmentConnection>> getNeo4jWaySegmentConnectionsNodeMapper() {
+	public INeo4jXInfoConnectionMapper<List<IWaySegmentConnection>> getNeo4jWaySegmentConnectionsNodeMapper() {
 		return neo4jWaySegmentConnectionsNodeMapper;
 	}
 
-	public void setNeo4jWaySegmentConnectionsNodeMapper(INeo4jXInfoNodeMapper<List<IWaySegmentConnection>> neo4jWaySegmentConnectionsNodeMapper) {
+	public void setNeo4jWaySegmentConnectionsNodeMapper(INeo4jXInfoConnectionMapper<List<IWaySegmentConnection>> neo4jWaySegmentConnectionsNodeMapper) {
 		this.neo4jWaySegmentConnectionsNodeMapper = neo4jWaySegmentConnectionsNodeMapper;
 	}
 

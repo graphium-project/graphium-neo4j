@@ -66,6 +66,8 @@ local.properties
 
 # Log file
 *.log
+MapMatching*.csv
+logs/
 
 # BlueJ files
 *.ctxt
@@ -99,3 +101,4 @@ buildNumber.properties
 !/.mvn/wrapper/maven-wrapper.jar
 
 # End of https://www.gitignore.io/api/java,maven,eclipse
+/.DS_Store

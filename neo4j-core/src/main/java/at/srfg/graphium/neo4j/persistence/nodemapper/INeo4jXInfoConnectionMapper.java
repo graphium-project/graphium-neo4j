@@ -1,5 +1,5 @@
 /**
- * Graphium Neo4j - Map Matching module of Graphium
+ * Graphium Neo4j - Module of Graphserver for Neo4j extension
  * Copyright © 2017 Salzburg Research Forschungsgesellschaft (graphium@salzburgresearch.at)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,26 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package at.srfg.graphium.mapmatching.matcher;
+package at.srfg.graphium.neo4j.persistence.nodemapper;
 
-import java.util.List;
+import org.neo4j.graphdb.Node;
 
-import at.srfg.graphium.mapmatching.model.IMatchedBranch;
-import at.srfg.graphium.mapmatching.model.ITrack;
-import at.srfg.graphium.mapmatching.statistics.MapMatcherStatistics;
+/**
+ * Salzburg Research ForschungsgesmbH (c) 2019
+ *
+ * Project: graphium
+ * Created by mwimmer
+ */
+public interface INeo4jXInfoConnectionMapper<T> extends INeo4jXInfoNodeMapper<T> {
 
-public interface IMapMatcherTask {
-	
-	public List<IMatchedBranch> matchTrack();
-	public List<IMatchedBranch> matchTrack(Long startSegmentId);
-	public List<IMatchedBranch> matchTrack(List<IMatchedBranch> branches);
-	
-	public void cancel() throws InterruptedException;
-	
-	public ITrack getTrack();
-	public MapMatcherStatistics getStatistics();
-	
-	public String getGraphName();	
-	public String getGraphVersion();
+	T mapWithXInfoTypes(Node node, boolean includeIncomings, boolean includeOutgoings, String... types);
 	
 }

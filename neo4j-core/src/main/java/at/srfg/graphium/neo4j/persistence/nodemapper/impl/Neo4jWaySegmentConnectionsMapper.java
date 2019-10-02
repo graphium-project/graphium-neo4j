@@ -21,23 +21,27 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import at.srfg.graphium.model.*;
-import at.srfg.graphium.neo4j.persistence.nodemapper.INeo4jXInfoNodeMapper;
-import at.srfg.graphium.neo4j.persistence.propertyhandler.IConnectionXInfoPropertyHandler;
-import at.srfg.graphium.neo4j.persistence.propertyhandler.impl.ConnectionXInfoPropertyHandlerRegistry;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 
+import at.srfg.graphium.model.Access;
+import at.srfg.graphium.model.IConnectionXInfo;
+import at.srfg.graphium.model.IWayGraphModelFactory;
+import at.srfg.graphium.model.IWaySegment;
+import at.srfg.graphium.model.IWaySegmentConnection;
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
 import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
 import at.srfg.graphium.neo4j.persistence.impl.Neo4jWaySegmentHelperImpl;
+import at.srfg.graphium.neo4j.persistence.nodemapper.INeo4jXInfoConnectionMapper;
+import at.srfg.graphium.neo4j.persistence.propertyhandler.IConnectionXInfoPropertyHandler;
+import at.srfg.graphium.neo4j.persistence.propertyhandler.impl.ConnectionXInfoPropertyHandlerRegistry;
 
 /**
  * @author mwimmer
  *
  */
-public class Neo4jWaySegmentConnectionsMapper implements INeo4jXInfoNodeMapper<List<IWaySegmentConnection>> {
+public class Neo4jWaySegmentConnectionsMapper implements INeo4jXInfoConnectionMapper<List<IWaySegmentConnection>> {
 
 	private IWayGraphModelFactory<IWaySegment> factory;
 
@@ -61,6 +65,7 @@ public class Neo4jWaySegmentConnectionsMapper implements INeo4jXInfoNodeMapper<L
 		}
 	}
 
+	@Override
 	public List<IWaySegmentConnection> mapWithXInfoTypes(Node node, String... types) {
 		List<IWaySegmentConnection> connections = new ArrayList<>();
 		Iterable<Relationship> relationships = node.getRelationships(Direction.OUTGOING,
@@ -80,6 +85,41 @@ public class Neo4jWaySegmentConnectionsMapper implements INeo4jXInfoNodeMapper<L
 			connections.add(connection);
 		}
 
+		if (connections.isEmpty()) {
+			return null;
+		} else {
+			return connections;
+		}
+	}
+
+	@Override
+	public List<IWaySegmentConnection> mapWithXInfoTypes(Node node, boolean includeIncomings, boolean includeOutgoings,
+			String... types) {
+		List<IWaySegmentConnection> connections = new ArrayList<>();
+		
+		if (includeOutgoings) {
+			connections.addAll(mapWithXInfoTypes(node, types));
+		}
+
+		if (includeIncomings) {
+			Iterable<Relationship> relationships = node.getRelationships(Direction.INCOMING,
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE);
+			long toSegmentId = (long) node.getProperty(WayGraphConstants.SEGMENT_ID);
+			for (Relationship relationship : relationships) {
+				Set<Access> accesses = null;
+				if (relationship.getAllProperties().containsKey(WayGraphConstants.CONNECTION_ACCESS)) {
+					accesses = Neo4jWaySegmentHelperImpl.parseAccessTypes((byte[]) relationship.getProperty(WayGraphConstants.CONNECTION_ACCESS));
+				}
+				IWaySegmentConnection connection = factory.newWaySegmentConnection((long) relationship.getProperty(WayGraphConstants.CONNECTION_NODE_ID),
+						(long) relationship.getStartNode().getProperty(WayGraphConstants.SEGMENT_ID),
+						toSegmentId,
+						accesses);
+				this.addConnectionXInfos(relationship,connection,types);
+				connections.add(connection);
+			}
+		}
+	
 		if (connections.isEmpty()) {
 			return null;
 		} else {

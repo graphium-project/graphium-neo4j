@@ -46,8 +46,15 @@ public abstract class GenericRouteModelFactory<T extends IWaySegment> implements
 	@Override
 	public IRoutingOptions createRoutingOptions(String graphName, String graphVersion, Date routingTimestamp, String routingMode,
 			String routingCriteria) throws RoutingException {
+		return createRoutingOptions(graphName, graphVersion, routingTimestamp, routingMode, routingCriteria, RoutingAlgorithms.ASTAR.name());
+	}
+	
+	@Override
+	public IRoutingOptions createRoutingOptions(String graphName, String graphVersion, Date routingTimestamp, String routingMode,
+			String routingCriteria, String routingAlgorithm) throws RoutingException {
 		RoutingCriteria criteria = RoutingCriteria.fromValue(routingCriteria);
 		RoutingMode mode = RoutingMode.fromValue(routingMode);
+		RoutingAlgorithms algo = RoutingAlgorithms.valueOf(routingAlgorithm);
 		if (criteria == null) {
 			String msg = routingCriteria + " is not a valid routing criteria";
 			log.warn(msg);
@@ -58,7 +65,7 @@ public abstract class GenericRouteModelFactory<T extends IWaySegment> implements
 			log.warn(msg);
 			throw new RoutingException(msg);
 		}
-		IRoutingOptions options = new RoutingOptionsImpl(graphName, graphVersion, routingTimestamp, RoutingAlgorithms.ASTAR, criteria, mode, 0, null, 0);
+		IRoutingOptions options = new RoutingOptionsImpl(graphName, graphVersion, routingTimestamp, algo, criteria, mode, 0, null, 0);
 		return options;
 	}	
 	

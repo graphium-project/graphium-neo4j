@@ -34,9 +34,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Lists;
 
 import at.srfg.graphium.mapmatching.matcher.IMapMatcher;
 import at.srfg.graphium.mapmatching.matcher.IMapMatcherTask;
@@ -51,8 +48,10 @@ import at.srfg.graphium.mapmatching.properties.IMapMatchingProperties;
 import at.srfg.graphium.mapmatching.properties.impl.MapMatchingProperties;
 import at.srfg.graphium.mapmatching.statistics.MapMatcherGlobalStatistics;
 import at.srfg.graphium.mapmatching.statistics.MapMatcherStatistics;
+import at.srfg.graphium.mapmatching.util.MapMatchingUtil;
 import at.srfg.graphium.mapmatching.weighting.IWeightingStrategyFactory;
 import at.srfg.graphium.mapmatching.weighting.impl.RouteDistanceWeightingStrategyFactory;
+import at.srfg.graphium.model.IWayGraphVersionMetadata;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
 
 public class MapMatchingTask implements IMapMatcherTask {
@@ -61,8 +60,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 
 	private IMapMatchingProperties properties;
 	private Neo4jMapMatcher mapMatcher;			// TODO: => IMapMatcher
-	private String graphName;
-	private String graphVersion;
+	private IWayGraphVersionMetadata graphMetadata;
 	private Neo4jUtil neo4jUtil;
 
 	// cancel request flag in case of processes taking too much time
@@ -85,18 +83,17 @@ public class MapMatchingTask implements IMapMatcherTask {
 	private IWeightingStrategy weightingStrategy;
 	private static Logger csvLogger = null;
 
-	public MapMatchingTask(Neo4jMapMatcher mapMatcher, MapMatchingProperties properties, String graphName, String graphVersion, Neo4jUtil neo4jUtil, 
+	public MapMatchingTask(Neo4jMapMatcher mapMatcher, MapMatchingProperties properties, IWayGraphVersionMetadata graphMetadata, Neo4jUtil neo4jUtil, 
 			ITrack origTrack, String csvLoggerName, MapMatcherGlobalStatistics globalStatistics) {
-		this(mapMatcher, properties, graphName, graphVersion, neo4jUtil, origTrack, new RouteDistanceWeightingStrategyFactory(), 
+		this(mapMatcher, properties, graphMetadata, neo4jUtil, origTrack, new RouteDistanceWeightingStrategyFactory(), 
 				csvLoggerName, globalStatistics);
 	}
 
-	public MapMatchingTask(Neo4jMapMatcher mapMatcher, MapMatchingProperties properties, String graphName, String graphVersion, 
+	public MapMatchingTask(Neo4jMapMatcher mapMatcher, MapMatchingProperties properties, IWayGraphVersionMetadata graphMetadata, 
 			Neo4jUtil neo4jUtil, ITrack origTrack, IWeightingStrategyFactory weightingStrategyFactory, String csvLoggerName,
 			MapMatcherGlobalStatistics globalStatistics) {
 		this.mapMatcher = mapMatcher;
-		this.graphName = graphName;
-		this.graphVersion = graphVersion;
+		this.graphMetadata = graphMetadata;
 		this.track = origTrack;
 		this.properties = properties.clone();
 		this.neo4jUtil = neo4jUtil;
@@ -139,7 +136,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 	
 	private List<IMatchedBranch> matchTrack(Long startSegmentId, List<IMatchedBranch> branches) {
 		log.info("matching track " + track.getId());
-		log.info("graph name: " + graphName + " in version: " + mapMatcher.getGraphMetadata().getVersion());
+		log.info("graph name: " + graphMetadata.getGraphName() + " in version: " + graphMetadata.getVersion());
 		
 		track.calculateMetaData(true);
 		
@@ -159,7 +156,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 		statistics.setValue(MapMatcherStatistics.AVG_SAMPLING_RATE, TrackUtils.getMeanSamplingRate(track));
 		
 		List<IMatchedBranch> result = null;
-		result = doMatchTrack(this.graphName, this.track, startSegmentId, branches);
+		result = doMatchTrack(graphMetadata.getGraphName(), this.track, startSegmentId, branches);
 		
 		Date endTimestamp = new Date();
 		statistics.setValue(MapMatcherStatistics.END_TIMESTAMP, endTimestamp);
@@ -417,14 +414,19 @@ public class MapMatchingTask implements IMapMatcherTask {
 						IMatchedWaySegment firstUncertainSegment = path.getMatchedWaySegments().get(1);
 						if (firstUncertainSegment.getEndPointIndex() < lastCertainSegmentClone.getEndPointIndex()) {
 							if (lastCertainSegmentClone.getStartPointIndex() < firstUncertainSegment.getStartPointIndex()) {
-								updateIndices(firstUncertainSegment, lastCertainSegmentClone, properties.getMaxMatchingRadiusMeter(), track);
+								//updateIndices(firstUncertainSegment, lastCertainSegmentClone, properties.getMaxMatchingRadiusMeter());
+								getSegmentMatcher().recalculateSegmentsIndexes(track, Math.min(lastCertainSegmentClone.getStartPointIndex(), firstUncertainSegment.getStartPointIndex()), 
+										Math.max(lastCertainSegmentClone.getEndPointIndex(), firstUncertainSegment.getEndPointIndex()), path.getMatchedWaySegments());
 							} else {
 								lastCertainSegmentClone.setEndPointIndex(firstUncertainSegment.getStartPointIndex());
 								lastCertainSegmentClone.calculateDistances(track);
 							}
 						} else {
-							firstUncertainSegment.setStartPointIndex(lastCertainSegment.getEndPointIndex());
-							firstUncertainSegment.calculateDistances(track);
+							if (!firstUncertainSegment.isAfterSkippedPart() &&
+								 lastCertainSegment.getEndPointIndex() >= firstUncertainSegment.getStartPointIndex()) {
+								firstUncertainSegment.setStartPointIndex(lastCertainSegment.getEndPointIndex());
+								firstUncertainSegment.calculateDistances(track);
+							}
 						}						
 					}
 					
@@ -531,7 +533,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 		trackSanitizer.analyseTrack(origTrack, properties);
 		
 		// check bounds of graph and track
-		if (!trackSanitizer.validateTrack(origTrack, mapMatcher.getGraphMetadata(), graphName)) {
+		if (!trackSanitizer.validateTrack(origTrack, graphMetadata, graphName)) {
 			return false;
 		}
 		
@@ -586,11 +588,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 			detectedPaths = postSegmentFilter(detectedPaths);
 			
 			// filter empty paths
-			List<IMatchedBranch> nonEmptyPaths = Lists.newArrayList(Collections2.filter(detectedPaths, new Predicate<IMatchedBranch>() {
-				public boolean apply(IMatchedBranch branch) {
-					return !branch.getMatchedWaySegments().isEmpty();
-				}
-			}));
+			List<IMatchedBranch> nonEmptyPaths = MapMatchingUtil.filterEmptyBranches(detectedPaths);
 			
 			if (nonEmptyPaths.isEmpty()) {
 				return Collections.emptyList();
@@ -648,6 +646,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 			}
 		}
 		
+		// TODO: Could this result in errors?
 		// in cases of determining certain paths indices could be invalid
 		correctIndices(bestBranch);
 	}
@@ -658,7 +657,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 			IMatchedWaySegment currentSegment = branch.getMatchedWaySegments().get(1);
 			for (int i=2; i<branch.getMatchedWaySegments().size(); i++) {
 				if (previousSegment.getEndPointIndex() > currentSegment.getStartPointIndex()) {
-					updateIndices(currentSegment, previousSegment, properties.getMaxMatchingRadiusMeter(), track);
+					updateIndices(currentSegment, previousSegment, properties.getMaxMatchingRadiusMeter());
 				}
 				previousSegment = currentSegment;
 				currentSegment = branch.getMatchedWaySegments().get(i);
@@ -668,7 +667,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 	}
 
 	private void updateIndices(IMatchedWaySegment currentSegment, IMatchedWaySegment previousSegment,
-			int maxMatchingRadiusMeter, ITrack track2) {
+			int maxMatchingRadiusMeter) {
 		int newStartIndex = segmentMatcher.updateMatchesOfPreviousSegment(previousSegment.getEndPointIndex(), previousSegment, currentSegment, properties.getMaxMatchingRadiusMeter(), track);
 		currentSegment.setStartPointIndex(newStartIndex);
 	}
@@ -768,9 +767,10 @@ public class MapMatchingTask implements IMapMatcherTask {
 		branch.removeMatchedWaySegments(segmentsToRemove);
 	}
 	
-	public void cancel() {
+	public void cancel() throws InterruptedException {
 		log.info("Cancel requested for track " + track.getId());
-		cancelRequested = true;
+		throw new InterruptedException();
+//		cancelRequested = true;
 	}
 	
 	private void logCsv() {
@@ -789,12 +789,12 @@ public class MapMatchingTask implements IMapMatcherTask {
 	
 	@Override
 	public String getGraphName() {
-		return graphName;
+		return graphMetadata.getGraphName();
 	}
 	
 	@Override
 	public String getGraphVersion() {
-		return graphVersion;
+		return graphMetadata.getVersion();
 	}
 
 	public INeo4jWayGraphReadDao getGraphDao() {

@@ -34,6 +34,7 @@ public class NodeBasedCostEstimator implements EstimateEvaluator<Double> {
 	
 	private final static double LOWERCOSTTRESH = 0.01;
 	private RoutingCriteria routingCriteria;
+	private float estimateFactor = 0.8f;
 	
 	public NodeBasedCostEstimator() {
 		this.routingCriteria = RoutingCriteria.LENGTH;
@@ -41,6 +42,11 @@ public class NodeBasedCostEstimator implements EstimateEvaluator<Double> {
 	
 	public NodeBasedCostEstimator(RoutingCriteria routingCriteria) {
 		this.routingCriteria = routingCriteria;
+	}
+	
+	public NodeBasedCostEstimator(RoutingCriteria routingCriteria, float estimateFactor) {
+		this(routingCriteria);
+		this.estimateFactor = estimateFactor;
 	}
 	
     public Double getCost(final Node node, final Node goal) {
@@ -68,7 +74,7 @@ public class NodeBasedCostEstimator implements EstimateEvaluator<Double> {
        		distance = 0;
        	}
        	
-       	distance = distance * 0.9; // unterschätzen!
+       	distance = distance * estimateFactor; // unterschätzen!
 
        	if (!routingCriteria.equals(RoutingCriteria.LENGTH)) {       	
 	   		distance = distance / (130 / 3.6);
@@ -79,7 +85,8 @@ public class NodeBasedCostEstimator implements EstimateEvaluator<Double> {
        	}
        	
        	if (log.isDebugEnabled()) {
-       		log.debug("Segment " + node.getProperty(WayGraphConstants.SEGMENT_ID) + ": distance = " + distance);
+       		log.debug("Segment " + node.getProperty(WayGraphConstants.SEGMENT_ID) + " => " + goal.getProperty(WayGraphConstants.SEGMENT_ID) 
+       					+ ": distance = " + distance);
        	}
        	
        	return distance;

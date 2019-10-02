@@ -86,9 +86,15 @@ public class RoutingMatcher {
 			routingMode = RoutingMode.CAR;
 		}
 		RoutingCriteria routingCriteria = RoutingCriteria.fromValue(properties.getRoutingCriteria());
+		RoutingAlgorithms routingAlgorithm;
+		if (properties.getRoutingAlgorithm() != null && properties.getRoutingAlgorithm().length() > 0) {
+			routingAlgorithm = RoutingAlgorithms.valueOf(properties.getRoutingAlgorithm());
+		} else {
+			routingAlgorithm = RoutingAlgorithms.DIJKSTRA;
+		}
 		
 		routingOptions = new RoutingOptionsImpl(matchingTask.getGraphName(), mapMatchingTask.getGraphVersion(),
-				 RoutingAlgorithms.ASTAR, routingCriteria, routingMode);
+				routingAlgorithm, routingCriteria, routingMode);
 		
 		if (log.isDebugEnabled()) {
 			log.debug("created " + this.getClass().getSimpleName() + " with following routing options: " + routingOptions.toString());
@@ -195,7 +201,7 @@ public class RoutingMatcher {
 		int skippedPoints = pointIndex - lastSegment.getEndPointIndex();
 		
 		int initialPointIndexRoutingFrom = lastSegment.getEndPointIndex() - 1;
-		int trieRouteToNextPoint = 0;
+		int tryRouteToNextPoint = 0;
 		do {
 			matchingTask.checkCancelStatus();
 			
@@ -224,11 +230,11 @@ public class RoutingMatcher {
 			} else if (foundTargetSegment && potentialShortestPaths.isEmpty()) {
 				
  				while (properties.getMeanSamplingInterval() < properties.getThresholdSamplingIntervalForTryingFurtherPathSearches() && // statistically this methodology results in worse paths for higher sampling intervals
-					   trieRouteToNextPoint <= properties.getNrOfPointsToSkip() && 
+					   tryRouteToNextPoint <= properties.getNrOfPointsToSkip() && 
 					   potentialShortestPaths.isEmpty()) {
 					pointIndex++;
 					skippedPoints++;
-					trieRouteToNextPoint++;
+					tryRouteToNextPoint++;
 					List<AlternativePath> dummySkippedPaths = new ArrayList<>();
 					List<AlternativePath> dummyFallbackRoutes = new ArrayList<>();
 					foundTargetSegment = getShortestPath(lastSegment, track, pointIndex, skippedPoints, radius, initialPointIndexRoutingFrom, 
@@ -387,14 +393,14 @@ public class RoutingMatcher {
 
             // check if route contains U-turn
             // hopefully we don't need this...
-//            if (valid) {
-//            	for (IMatchedWaySegment routedSegment : routedSegments) {
-//            		if (routedSegment.getDirection().equals(Direction.START_TO_START) ||
-//            			routedSegment.getDirection().equals(Direction.END_TO_START)) {
-//            			valid = false;
-//            		}
-//            	}
-//            }
+            if (valid) {
+            	for (IMatchedWaySegment routedSegment : routedSegments) {
+            		if (routedSegment.getDirection().equals(Direction.START_TO_START) ||
+            			routedSegment.getDirection().equals(Direction.END_TO_END)) {
+            			valid = false;
+            		}
+            	}
+            }
             
         } else {
         	valid = false;
