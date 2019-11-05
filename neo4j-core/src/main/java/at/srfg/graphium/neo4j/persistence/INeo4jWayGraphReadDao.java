@@ -31,7 +31,7 @@ import at.srfg.graphium.neo4j.persistence.configuration.IGraphDatabaseProvider;
  * @author mwimmer
  *
  */
-public interface INeo4jWayGraphReadDao extends IWayGraphReadDao<IWaySegment> {
+public interface INeo4jWayGraphReadDao<W extends IWaySegment> extends IWayGraphReadDao<W> {
 
 	/**
 	 * @param graphName
@@ -60,7 +60,7 @@ public interface INeo4jWayGraphReadDao extends IWayGraphReadDao<IWaySegment> {
 	 * @param node
 	 * @return
 	 */
-	IWaySegment mapNode(String graphName, String version, Node node);
+	W mapNode(String graphName, String version, Node node);
 	
 	/**
 	 * @return <code>IGraphDatabaseProvider</code>

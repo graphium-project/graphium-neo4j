@@ -19,5 +19,6 @@
 	<alias name="neo4jBaseSegmentReadDao" alias="baseSegmentReadDao"/>
   
   	<alias name="neo4jQueuingGraphVersionImportService" alias="queuingGraphVersionImportService"/>
+ 	<alias name="neo4jQueuingHDGraphVersionImportService" alias="queuingHDGraphVersionImportService"/>
     
 </beans>

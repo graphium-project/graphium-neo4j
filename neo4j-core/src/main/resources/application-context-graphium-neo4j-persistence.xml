@@ -115,4 +115,31 @@
     	</property>
     </bean>
 
+	<!-- HD way segment stuff -->
+	<import resource="classpath:/application-context-graphium-hd-core.xml" />
+	
+	<bean id="neo4jHDWaySegmentHelper" class="at.srfg.graphium.neo4j.persistence.hd.impl.Neo4jHDWaySegmentHelperImpl">
+	</bean>
+
+ 	<bean id="neo4jHDWaySegmentMapper" class="at.srfg.graphium.neo4j.persistence.nodemapper.hd.impl.Neo4jHDWaySegmentMapper">
+ 		<property name="factory" ref="hdWayGraphModelFactory"/>
+ 	</bean>
+
+	<bean id="neo4jHDWayGraphWriteDao" class="at.srfg.graphium.neo4j.persistence.hd.impl.Neo4jHDWayGraphWriteDaoImpl" parent="abstractNeo4jDao">
+		<property name="segmentHelper" ref="neo4jHDWaySegmentHelper"/>
+		<property name="indexDao" ref="neo4jWayGraphIndexDao"/>
+		<property name="batchSizeForNodeDeletion" value="${graphium.neo4j.batchSizeForNodeDeletion}"/>
+		<property name="segmentPropertyHandlerRegistry" ref="neo4jSegmentXInfoPropertyHandlerRegistry"/>
+		<property name="connectionPropertyHandlerRegistry" ref="neo4jConnectionXInfoPropertyHandlerRegistry"/>
+	</bean>
+ 
+	<bean id="neo4jHDWayGraphReadDao" class="at.srfg.graphium.neo4j.persistence.hd.impl.Neo4jHDWayGraphReadDaoImpl" parent="abstractNeo4jDao">
+		<property name="segmentMapper" ref="neo4jHDWaySegmentMapper"/>
+		<property name="neo4jWaySegmentConnectionsNodeMapper" ref="neo4jWaySegmentConnectionsNodeMapper"/>
+		<property name="treeIndexService" ref="strtreeService"/>
+	</bean>
+
+    <alias name="neo4jHDWayGraphReadDao" alias="hdWayGraphReadDao"/>
+    <alias name="neo4jHDWayGraphWriteDao" alias="hdWayGraphWriteDao"/>
+
 </beans>

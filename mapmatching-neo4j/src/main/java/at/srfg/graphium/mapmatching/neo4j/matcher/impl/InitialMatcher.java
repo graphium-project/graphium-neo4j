@@ -205,7 +205,7 @@ public class InitialMatcher {
 	
 		IWaySegment startSegment = null;
 		try {
-			startSegment = matchingTask.getGraphDao().getSegmentById(matchingTask.getGraphName(), matchingTask.getGraphVersion(), startSegmentId, true);
+			startSegment = (IWaySegment) matchingTask.getGraphDao().getSegmentById(matchingTask.getGraphName(), matchingTask.getGraphVersion(), startSegmentId, true);
 		} catch (GraphNotExistsException e) {
 			log.warn("could not find near segments for graph: " + e.getGraphName());
 		}

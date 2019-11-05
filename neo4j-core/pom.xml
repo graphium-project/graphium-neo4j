@@ -21,6 +21,17 @@
 			<artifactId>graphium-core</artifactId>
 		</dependency>
 		
+		<dependency>
+			<groupId>at.srfg.graphium</groupId>
+			<artifactId>graphium-hd</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		
 	 	<dependency>
 			<groupId>org.neo4j</groupId>
 			<artifactId>neo4j</artifactId>

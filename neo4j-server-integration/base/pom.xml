@@ -201,6 +201,11 @@
 				<artifactId>graphium-utils</artifactId>
 			</dependency>  	
 		
+			<dependency>
+				<groupId>at.srfg.graphium</groupId>
+				<artifactId>graphium-hd</artifactId>
+			</dependency>  	
+		
 		</dependencies>
 
 	</dependencyManagement>

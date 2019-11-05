@@ -47,6 +47,6 @@ public interface INeo4jWaySegmentHelper<T extends IWaySegment> {
 	 * @param segment Way segment object
 	 * @param node Node to update
 	 */
-	void updateNodeProperties(GraphDatabaseService graphDb, IWaySegment segment, Node node);
+	void updateNodeProperties(GraphDatabaseService graphDb, T segment, Node node);
 
 }

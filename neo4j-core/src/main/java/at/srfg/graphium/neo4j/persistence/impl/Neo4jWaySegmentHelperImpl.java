@@ -15,12 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-/**
- * (C) 2016 Salzburg Research Forschungsgesellschaft m.b.H.
- *
- * All rights reserved.
- *
- */
 package at.srfg.graphium.neo4j.persistence.impl;
 
 import java.util.HashSet;
@@ -45,20 +39,20 @@ import at.srfg.graphium.neo4j.persistence.nodemapper.utils.Neo4jTagMappingUtils;
 /**
  * @author mwimmer
  */
-public class Neo4jWaySegmentHelperImpl implements INeo4jWaySegmentHelper<IWaySegment> {
+public class Neo4jWaySegmentHelperImpl<W extends IWaySegment> implements INeo4jWaySegmentHelper<W> {
 	
-	private WKBWriter wkbWriter = new WKBWriter();
-	private static WKBReader wkbReader = new WKBReader();
+	protected WKBWriter wkbWriter = new WKBWriter();
+	protected static WKBReader wkbReader = new WKBReader();
 	
 	@Override
-	public Node createNode(GraphDatabaseService graphDb, IWaySegment segment, String graphVersionName) {
+	public Node createNode(GraphDatabaseService graphDb, W segment, String graphVersionName) {
 		Node node = graphDb.createNode(Label.label(createSegmentNodeLabel(graphVersionName)));
 		updateNodeProperties(graphDb, segment, node);
 		return node;
 	}
 
 	@Override
-	public synchronized void updateNodeProperties(GraphDatabaseService graphDb, IWaySegment segment,
+	public synchronized void updateNodeProperties(GraphDatabaseService graphDb, W segment,
 			Node node) {
 		
 		// AccessTypes dürfen nicht als HashSet gespeichert werden => short[]
@@ -174,6 +168,10 @@ public class Neo4jWaySegmentHelperImpl implements INeo4jWaySegmentHelper<IWaySeg
 	
 	public static LineString encodeLineString(Node node) throws ParseException {
 		return (LineString) wkbReader.read((byte[]) node.getProperty(WayGraphConstants.SEGMENT_GEOM));
+	}
+	
+	public static LineString encodeLineString(Node node, String propertyName) throws ParseException {
+		return (LineString) wkbReader.read((byte[]) node.getProperty(propertyName));
 	}
 	
 }

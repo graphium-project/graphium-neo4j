@@ -39,20 +39,20 @@ import at.srfg.graphium.neo4j.persistence.nodemapper.utils.Neo4jTagMappingUtils;
  * @author mwimmer
  *
  */
-public class Neo4jWaySegmentMapper implements INeo4jXInfoNodeMapper<IWaySegment> {
+public class Neo4jWaySegmentMapper<W extends IWaySegment> implements INeo4jXInfoNodeMapper<W> {
 
 	private static Logger log = LoggerFactory.getLogger(Neo4jWayGraphWriteDaoImpl.class);
 	
-	private IWayGraphModelFactory<IWaySegment> factory;
+	protected IWayGraphModelFactory<W> factory;
 	
 	@Override
-	public synchronized IWaySegment map(Node node) {
+	public synchronized W map(Node node) {
 		return this.mapWithXInfoTypes(node);
 	}
 
 	@Override
-	public IWaySegment mapWithXInfoTypes(Node node, String... types) {
-		IWaySegment segment = factory.newSegment();
+	public W mapWithXInfoTypes(Node node, String... types) {
+		W segment = factory.newSegment();
 
 		Map<String, Object> properties = node.getAllProperties();
 		segment.setId((long) properties.get(WayGraphConstants.SEGMENT_ID));
@@ -146,11 +146,11 @@ public class Neo4jWaySegmentMapper implements INeo4jXInfoNodeMapper<IWaySegment>
 		}
 	}
 
-	public IWayGraphModelFactory<IWaySegment> getFactory() {
+	public IWayGraphModelFactory<W> getFactory() {
 		return factory;
 	}
 
-	public void setFactory(IWayGraphModelFactory<IWaySegment> factory) {
+	public void setFactory(IWayGraphModelFactory<W> factory) {
 		this.factory = factory;
 	}
 

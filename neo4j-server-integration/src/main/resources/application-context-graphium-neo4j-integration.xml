@@ -17,6 +17,10 @@
 	<import resource="classpath:/application-context-graphium-neo4j-aliasing.xml" />
 	<import resource="classpath*:application-context-graphium-neo4j-plugin*.xml" />
 
+	<import resource="classpath:/application-context-graphium-hd-api.xml" />
+	<import resource="classpath:/application-context-graphium-hd-core.xml" />
+	<import resource="classpath:/application-context-graphium-hd-io.xml" />
+	
 	<!-- graph database provider -->	
 	<bean id="graphDatabaseProvider" 
 		class="at.srfg.graphium.neo4j.configuration.GraphiumNeo4jDatabaseProvider">
