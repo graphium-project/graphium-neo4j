@@ -33,12 +33,12 @@ public class Neo4jHDWaySegmentHelperImpl<W extends IHDWaySegment> extends Neo4jW
 	@Override
 	public synchronized void updateNodeProperties(GraphDatabaseService graphDb, W segment, Node node) {
 		super.updateNodeProperties(graphDb, segment, node);
-		node.setProperty(WayGraphConstants.HDSEGMENT_LEFT_BOARDER_GEOM, wkbWriter.write(segment.getLeftBoarderGeometry()));
-		node.setProperty(WayGraphConstants.HDSEGMENT_LEFT_BOARDER_STARTNODE_ID, segment.getLeftBoarderStartNodeId());
-		node.setProperty(WayGraphConstants.HDSEGMENT_LEFT_BOARDER_ENDNODE_ID, segment.getLeftBoarderEndNodeId());
-		node.setProperty(WayGraphConstants.HDSEGMENT_RIGHT_BOARDER_GEOM, wkbWriter.write(segment.getRightBoarderGeometry()));
-		node.setProperty(WayGraphConstants.HDSEGMENT_RIGHT_BOARDER_STARTNODE_ID, segment.getRightBoarderStartNodeId());
-		node.setProperty(WayGraphConstants.HDSEGMENT_RIGHT_BOARDER_ENDNODE_ID, segment.getRightBoarderEndNodeId());
+		node.setProperty(WayGraphConstants.HDSEGMENT_LEFT_BORDER_GEOM, wkbWriter.write(segment.getLeftBorderGeometry()));
+		node.setProperty(WayGraphConstants.HDSEGMENT_LEFT_BORDER_STARTNODE_ID, segment.getLeftBorderStartNodeId());
+		node.setProperty(WayGraphConstants.HDSEGMENT_LEFT_BORDER_ENDNODE_ID, segment.getLeftBorderEndNodeId());
+		node.setProperty(WayGraphConstants.HDSEGMENT_RIGHT_BORDER_GEOM, wkbWriter.write(segment.getRightBorderGeometry()));
+		node.setProperty(WayGraphConstants.HDSEGMENT_RIGHT_BORDER_STARTNODE_ID, segment.getRightBorderStartNodeId());
+		node.setProperty(WayGraphConstants.HDSEGMENT_RIGHT_BORDER_ENDNODE_ID, segment.getRightBorderEndNodeId());
 	}
 	
 }

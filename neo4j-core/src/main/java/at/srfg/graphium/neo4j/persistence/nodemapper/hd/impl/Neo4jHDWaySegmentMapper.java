@@ -44,29 +44,29 @@ public class Neo4jHDWaySegmentMapper<W extends IHDWaySegment> extends Neo4jWaySe
 
 		Map<String, Object> properties = node.getAllProperties();
 		
-		if (properties.containsKey(WayGraphConstants.HDSEGMENT_LEFT_BOARDER_STARTNODE_ID)) {
-			segment.setLeftBoarderStartNodeId((long) properties.get(WayGraphConstants.HDSEGMENT_LEFT_BOARDER_STARTNODE_ID));
+		if (properties.containsKey(WayGraphConstants.HDSEGMENT_LEFT_BORDER_STARTNODE_ID)) {
+			segment.setLeftBorderStartNodeId((long) properties.get(WayGraphConstants.HDSEGMENT_LEFT_BORDER_STARTNODE_ID));
 		}
-		if (properties.containsKey(WayGraphConstants.HDSEGMENT_LEFT_BOARDER_ENDNODE_ID)) {
-			segment.setLeftBoarderEndNodeId((long) properties.get(WayGraphConstants.HDSEGMENT_LEFT_BOARDER_ENDNODE_ID));
+		if (properties.containsKey(WayGraphConstants.HDSEGMENT_LEFT_BORDER_ENDNODE_ID)) {
+			segment.setLeftBorderEndNodeId((long) properties.get(WayGraphConstants.HDSEGMENT_LEFT_BORDER_ENDNODE_ID));
 		}
-		if (properties.containsKey(WayGraphConstants.HDSEGMENT_LEFT_BOARDER_GEOM)) {
+		if (properties.containsKey(WayGraphConstants.HDSEGMENT_LEFT_BORDER_GEOM)) {
 			try {
-				segment.setLeftBoarderGeometry(Neo4jWaySegmentHelperImpl.encodeLineString(node, WayGraphConstants.HDSEGMENT_LEFT_BOARDER_GEOM));
+				segment.setLeftBorderGeometry(Neo4jWaySegmentHelperImpl.encodeLineString(node, WayGraphConstants.HDSEGMENT_LEFT_BORDER_GEOM));
 			} catch (ParseException e) {
 				log.error("Could not parse geometry", e);
 			}
 		}
 		
-		if (properties.containsKey(WayGraphConstants.HDSEGMENT_RIGHT_BOARDER_STARTNODE_ID)) {
-			segment.setRightBoarderStartNodeId((long) properties.get(WayGraphConstants.HDSEGMENT_RIGHT_BOARDER_STARTNODE_ID));
+		if (properties.containsKey(WayGraphConstants.HDSEGMENT_RIGHT_BORDER_STARTNODE_ID)) {
+			segment.setRightBorderStartNodeId((long) properties.get(WayGraphConstants.HDSEGMENT_RIGHT_BORDER_STARTNODE_ID));
 		}
-		if (properties.containsKey(WayGraphConstants.HDSEGMENT_RIGHT_BOARDER_ENDNODE_ID)) {
-			segment.setRightBoarderEndNodeId((long) properties.get(WayGraphConstants.HDSEGMENT_RIGHT_BOARDER_ENDNODE_ID));
+		if (properties.containsKey(WayGraphConstants.HDSEGMENT_RIGHT_BORDER_ENDNODE_ID)) {
+			segment.setRightBorderEndNodeId((long) properties.get(WayGraphConstants.HDSEGMENT_RIGHT_BORDER_ENDNODE_ID));
 		}
-		if (properties.containsKey(WayGraphConstants.HDSEGMENT_RIGHT_BOARDER_GEOM)) {
+		if (properties.containsKey(WayGraphConstants.HDSEGMENT_RIGHT_BORDER_GEOM)) {
 			try {
-				segment.setRightBoarderGeometry(Neo4jWaySegmentHelperImpl.encodeLineString(node, WayGraphConstants.HDSEGMENT_RIGHT_BOARDER_GEOM));
+				segment.setRightBorderGeometry(Neo4jWaySegmentHelperImpl.encodeLineString(node, WayGraphConstants.HDSEGMENT_RIGHT_BORDER_GEOM));
 			} catch (ParseException e) {
 				log.error("Could not parse geometry", e);
 			}

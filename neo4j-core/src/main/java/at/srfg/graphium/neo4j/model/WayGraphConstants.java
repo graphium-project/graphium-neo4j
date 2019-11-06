@@ -65,12 +65,12 @@ public class WayGraphConstants {
 	public static final String SEGMENT_END_Y = "end_y";
 	public static final String SEGMENT_TAG_PREFIX = "segtag:";
 
-	public static final String HDSEGMENT_LEFT_BOARDER_GEOM = "left_boarder_geom";
-	public static final String HDSEGMENT_LEFT_BOARDER_STARTNODE_ID = "left_boarder_startnode_id";
-	public static final String HDSEGMENT_LEFT_BOARDER_ENDNODE_ID = "left_boarder_endnode_id";
-	public static final String HDSEGMENT_RIGHT_BOARDER_GEOM = "right_boarder_geom";
-	public static final String HDSEGMENT_RIGHT_BOARDER_STARTNODE_ID = "right_boarder_startnode_id";
-	public static final String HDSEGMENT_RIGHT_BOARDER_ENDNODE_ID = "right_boarder_endnode_id";
+	public static final String HDSEGMENT_LEFT_BORDER_GEOM = "left_border_geom";
+	public static final String HDSEGMENT_LEFT_BORDER_STARTNODE_ID = "left_border_startnode_id";
+	public static final String HDSEGMENT_LEFT_BORDER_ENDNODE_ID = "left_border_endnode_id";
+	public static final String HDSEGMENT_RIGHT_BORDER_GEOM = "right_border_geom";
+	public static final String HDSEGMENT_RIGHT_BORDER_STARTNODE_ID = "right_border_startnode_id";
+	public static final String HDSEGMENT_RIGHT_BORDER_ENDNODE_ID = "right_border_endnode_id";
 
 	public static final String SEGMENT_XINFO_DIRECTION_TOW = "segxinfo_direction_tow";
 	
