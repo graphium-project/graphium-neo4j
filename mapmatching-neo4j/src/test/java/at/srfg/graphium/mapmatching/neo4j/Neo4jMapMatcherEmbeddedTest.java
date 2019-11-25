@@ -57,11 +57,11 @@ import at.srfg.graphium.mapmatching.model.impl.TrackMetadataImpl;
 import at.srfg.graphium.mapmatching.model.impl.TrackPointImpl;
 import at.srfg.graphium.mapmatching.neo4j.matcher.impl.MapMatchingTask;
 import at.srfg.graphium.mapmatching.neo4j.matcher.impl.Neo4jMapMatcher;
-import at.srfg.graphium.mapmatching.neo4j.matcher.impl.Neo4jUtil;
 import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
 import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
+import at.srfg.graphium.neo4j.persistence.Neo4jUtil;
 
 /**
  * @author mwimmer
@@ -379,7 +379,7 @@ public class Neo4jMapMatcherEmbeddedTest {
 			Transaction tx = task.getGraphDao().getGraphDatabaseProvider().getGraphDatabase().beginTx();
 			try {
 				
-				IWaySegment segment = task.getGraphDao().getSegmentById(graphName, version, segmentId, false);
+				IWaySegment segment = (IWaySegment) task.getGraphDao().getSegmentById(graphName, version, segmentId, false);
 				
 				Traverser traverser = getTraverser(
 						segment, 

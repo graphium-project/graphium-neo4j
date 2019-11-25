@@ -53,6 +53,7 @@ import at.srfg.graphium.mapmatching.weighting.IWeightingStrategyFactory;
 import at.srfg.graphium.mapmatching.weighting.impl.RouteDistanceWeightingStrategyFactory;
 import at.srfg.graphium.model.IWayGraphVersionMetadata;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
+import at.srfg.graphium.neo4j.persistence.Neo4jUtil;
 
 public class MapMatchingTask implements IMapMatcherTask {
 

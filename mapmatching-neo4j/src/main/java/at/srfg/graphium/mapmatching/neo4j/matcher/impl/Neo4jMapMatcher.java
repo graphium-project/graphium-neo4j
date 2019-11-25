@@ -31,6 +31,7 @@ import at.srfg.graphium.mapmatching.statistics.MapMatcherGlobalStatistics;
 import at.srfg.graphium.model.IWayGraphVersionMetadata;
 import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
+import at.srfg.graphium.neo4j.persistence.Neo4jUtil;
 import at.srfg.graphium.routing.service.IRoutingService;
 
 public class Neo4jMapMatcher implements IMapMatcher {
