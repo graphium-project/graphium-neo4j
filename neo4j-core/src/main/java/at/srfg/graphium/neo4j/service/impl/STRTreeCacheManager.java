@@ -197,6 +197,9 @@ implements IGraphVersionStateModifiedObserver {
 						 activeIndexCache.get(metadata.getGraphName()).getMetadata().getValidFrom().before(metadata.getValidFrom()))))) {
 						log.info("Got update to rebuild STR-Tree");
 						String graphVersionName = GraphVersionHelper.createGraphVersionName(metadata.getGraphName(), metadata.getVersion());
+						if (activeIndexCache == null) {
+							activeIndexCache = new HashMap<>();
+						}
 						activeIndexCache.put(metadata.getGraphName(), new STRTreeCacheEntry(metadata, buildTree(graphVersionName)));
 					}
 				} else if (metadata.getState().equals(State.DELETED)) {
