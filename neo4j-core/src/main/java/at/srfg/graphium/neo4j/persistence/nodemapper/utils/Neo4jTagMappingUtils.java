@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
 
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
 
@@ -36,10 +37,34 @@ public class Neo4jTagMappingUtils {
 	public static Map<String, String> mapTagProperties(Node node) {
 		Map<String, String> tags = new HashMap<>();
 		
-		for (String key : node.getPropertyKeys()) {			
+		for (String key : node.getPropertyKeys()) {
 			if (key.startsWith(WayGraphConstants.SEGMENT_TAG_PREFIX)) {
 				tags.put(StringUtils.removeStart(
 						key, WayGraphConstants.SEGMENT_TAG_PREFIX), (String) node.getProperty(key));
+			}
+		}
+		
+		if (tags.isEmpty()) {
+			tags = null;
+		}
+		return tags;
+	}
+
+	public static void createTagProperties(Relationship relationship, Map<String,String> tags, String prefix) {
+		for (String key : tags.keySet()) {
+			// neo4j does not allow null values (raises IllegalArgumentException)
+			String value = tags.get(key);
+			relationship.setProperty(prefix+key, (value != null) ? value : "");
+		}
+	}
+	
+	public static Map<String, String> mapTagProperties(Relationship relationship) {
+		Map<String, String> tags = new HashMap<>();
+		
+		for (String key : relationship.getPropertyKeys()) {
+			if (key.startsWith(WayGraphConstants.CONNECTION_TAG_PREFIX)) {
+				tags.put(StringUtils.removeStart(
+						key, WayGraphConstants.CONNECTION_TAG_PREFIX), (String) relationship.getProperty(key));
 			}
 		}
 		

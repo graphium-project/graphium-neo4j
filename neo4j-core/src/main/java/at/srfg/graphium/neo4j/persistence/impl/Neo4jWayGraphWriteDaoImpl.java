@@ -60,6 +60,7 @@ import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphIndexDao;
 import at.srfg.graphium.neo4j.persistence.INeo4jWaySegmentHelper;
 import at.srfg.graphium.neo4j.persistence.configuration.IGraphDatabaseProvider;
+import at.srfg.graphium.neo4j.persistence.nodemapper.utils.Neo4jTagMappingUtils;
 import at.srfg.graphium.neo4j.persistence.propertyhandler.IConnectionXInfoPropertyHandler;
 import at.srfg.graphium.neo4j.persistence.propertyhandler.ISegmentXInfoPropertyHandler;
 import at.srfg.graphium.neo4j.persistence.propertyhandler.impl.ConnectionXInfoPropertyHandlerRegistry;
@@ -304,6 +305,9 @@ public class Neo4jWayGraphWriteDaoImpl<W extends IWaySegment>
 						Relationship rel = fromSegmentNode.createRelationshipTo(toSegmentNode, relType);
 						rel.setProperty(WayGraphConstants.CONNECTION_ACCESS, Neo4jWaySegmentHelperImpl.createAccessArray(connection.getAccess()));
 						rel.setProperty(WayGraphConstants.CONNECTION_NODE_ID, connection.getNodeId());
+						if (connection.getTags() != null) {
+							Neo4jTagMappingUtils.createTagProperties(rel, connection.getTags(), WayGraphConstants.CONNECTION_TAG_PREFIX);
+						}
 						
 						// if XInfo exists for connection
 						saveConnectionXInfo(connection, rel, null);

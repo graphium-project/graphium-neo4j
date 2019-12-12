@@ -76,6 +76,7 @@ public class WayGraphConstants {
 	
 	public static final String CONNECTION_ACCESS = "access";
 	public static final String CONNECTION_NODE_ID = "node_id";
+	public static final String CONNECTION_TAG_PREFIX = "conntag:";
 	
 	public static final String METADATA_GRAPHNAME = "meta_graphname";
 	public static final String METADATA_GRAPHVERSIONNAME = "meta_graphversionname";
