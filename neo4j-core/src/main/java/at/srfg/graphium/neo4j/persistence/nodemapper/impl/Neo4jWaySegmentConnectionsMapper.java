@@ -49,7 +49,7 @@ public class Neo4jWaySegmentConnectionsMapper implements INeo4jXInfoConnectionMa
 
 	@Override
 	public List<IWaySegmentConnection> map(Node node) {
-		return this.mapWithXInfoTypes(node);
+		return this.mapWithXInfoTypes(node, null, null);
 	}
 
 	private void addConnectionXInfos(Relationship relationship, IWaySegmentConnection connection, String... types) {
@@ -66,7 +66,7 @@ public class Neo4jWaySegmentConnectionsMapper implements INeo4jXInfoConnectionMa
 	}
 
 	@Override
-	public List<IWaySegmentConnection> mapWithXInfoTypes(Node node, String... types) {
+	public List<IWaySegmentConnection> mapWithXInfoTypes(Node node, String graphName, String version, String... types) {
 		List<IWaySegmentConnection> connections = new ArrayList<>();
 		Iterable<Relationship> relationships = node.getRelationships(Direction.OUTGOING,
 				WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
@@ -98,7 +98,7 @@ public class Neo4jWaySegmentConnectionsMapper implements INeo4jXInfoConnectionMa
 		List<IWaySegmentConnection> connections = new ArrayList<>();
 		
 		if (includeOutgoings) {
-			connections.addAll(mapWithXInfoTypes(node, types));
+			connections.addAll(mapWithXInfoTypes(node, null, null, types));
 		}
 
 		if (includeIncomings) {

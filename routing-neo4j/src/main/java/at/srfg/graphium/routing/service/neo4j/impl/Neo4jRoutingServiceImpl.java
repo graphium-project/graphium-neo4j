@@ -55,6 +55,7 @@ import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
 import at.srfg.graphium.neo4j.persistence.configuration.IGraphDatabaseProvider;
 import at.srfg.graphium.neo4j.persistence.impl.Neo4jWaySegmentHelperImpl;
 import at.srfg.graphium.neo4j.persistence.nodemapper.INeo4jNodeMapper;
+import at.srfg.graphium.neo4j.service.impl.STRTreeCacheManager;
 import at.srfg.graphium.neo4j.traversal.DirectedOutgoingConnectionPathExpander;
 import at.srfg.graphium.routing.model.IPathSegment;
 import at.srfg.graphium.routing.model.IRoute;
@@ -79,6 +80,7 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 	protected INeo4jCostEvaluatorFactory costEvaluatorFactory;
 	protected IRouteModelFactory<T> modelFactory;
 	protected INeo4jNodeMapper<T> nodeMapper;
+	protected STRTreeCacheManager cache;
 	
 	// default search distance (15 meter)
 	protected double searchDistance   = 0.0000904776810466969;
@@ -197,7 +199,7 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 		
 		// have to implement our own cost evaluator, because costs are mapped to nodes, not the relations.
 		CostEvaluator<Double> costEvaluator;
-		costEvaluator = costEvaluatorFactory.createCostEvaluator(options);				
+		costEvaluator = costEvaluatorFactory.createCostEvaluator(cache, options);				
 		
     	WeightedPath weightedPath = null;
         try {        	
@@ -210,7 +212,7 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 				for (Node endNode : endNodes) {
 					
 					if (startCoord != null && endCoord != null) {		
-						costEvaluator = costEvaluatorFactory.createCoordAwareCostEvaluator(
+						costEvaluator = costEvaluatorFactory.createCoordAwareCostEvaluator(cache,
 								options, startNode.getId(), endNode.getId(), startCoord, endCoord);
 						weightedFinder = createPathFinder(expander, costEvaluator, options);
 					} 
@@ -639,6 +641,14 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 
 	public void setAstarEstimatorFactor(float astarEstimatorFactor) {
 		this.astarEstimatorFactor = astarEstimatorFactor;
+	}
+
+	public STRTreeCacheManager getCache() {
+		return cache;
+	}
+
+	public void setCache(STRTreeCacheManager cache) {
+		this.cache = cache;
 	}
 
 }

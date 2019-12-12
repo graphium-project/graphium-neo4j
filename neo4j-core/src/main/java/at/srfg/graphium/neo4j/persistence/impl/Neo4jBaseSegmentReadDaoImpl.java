@@ -45,7 +45,7 @@ public class Neo4jBaseSegmentReadDaoImpl extends AbstractNeo4jDaoImpl implements
     public void streamBaseConnectionXInfos(String graph, String version, ISegmentOutputFormat<IBaseSegment> outputFormat, String... types) throws GraphNotExistsException, WaySegmentSerializationException, XInfoNotSupportedException {
         try (Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx()) {
             super.iterateSegmentNodes(this.getNodeIterator(graph,version),
-                    outputFormat,baseSegmentMapper,connectionsXInfoMapper, false, types);
+                    outputFormat, baseSegmentMapper,connectionsXInfoMapper, false, graph, version, types);
             tx.success();
         }
     }
@@ -54,7 +54,7 @@ public class Neo4jBaseSegmentReadDaoImpl extends AbstractNeo4jDaoImpl implements
     public void streamBaseSegmentXInfos(String graph, String version, ISegmentOutputFormat<IBaseSegment> outputFormat, String... types) throws GraphNotExistsException, WaySegmentSerializationException, XInfoNotSupportedException {
         try (Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx()) {
             super.iterateSegmentNodes(this.getNodeIterator(graph,version),
-                    outputFormat,baseSegmentMapper,connectionsXInfoMapper, true, types);
+                    outputFormat, baseSegmentMapper, connectionsXInfoMapper, true, graph, version, types);
             tx.success();
         }
     }

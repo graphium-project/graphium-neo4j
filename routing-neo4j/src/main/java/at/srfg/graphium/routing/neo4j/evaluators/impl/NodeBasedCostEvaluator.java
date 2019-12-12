@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
+import at.srfg.graphium.neo4j.service.impl.STRTreeCacheManager;
 import at.srfg.graphium.routing.model.impl.RoutingCriteria;
 
 public class NodeBasedCostEvaluator extends AbstractSegmentEvaluator implements CostEvaluator<Double>{
@@ -35,8 +36,8 @@ public class NodeBasedCostEvaluator extends AbstractSegmentEvaluator implements 
 	private final static double LOWERCOSTTRESH = 0.0000001;
 	protected String costProperty;
 	
-	public NodeBasedCostEvaluator(String costProperty) {
-		super();
+	public NodeBasedCostEvaluator(String graphName, String version, STRTreeCacheManager cache, String costProperty) {
+		super(graphName, version, cache);
 		this.costProperty = costProperty;
 	}
 	

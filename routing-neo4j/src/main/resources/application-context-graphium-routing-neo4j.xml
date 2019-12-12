@@ -36,6 +36,7 @@
     	<property name="metadataDao" ref="neo4jWayGraphVersionMetadataDao"/>
     	<property name="modelFactory" ref="routeModelFactory"/>
     	<property name="nodeMapper" ref="neo4jWaySegmentMapper"/>
+    	<property name="cache" ref="strtreeCacheManager"/>
     	<property name="astarEstimatorFactor" value="${routing.astarEstimatorFactor}"/>
     </bean>
 

@@ -36,11 +36,11 @@ public class Neo4jBaseSegmentXInfoMapper implements INeo4jXInfoNodeMapper<IBaseS
 
     @Override
     public IBaseSegment map(Node node) {
-        return this.mapWithXInfoTypes(node);
+        return this.mapWithXInfoTypes(node, null, null);
     }
 
     @Override
-    public IBaseSegment mapWithXInfoTypes(Node node, String... types) {
+    public IBaseSegment mapWithXInfoTypes(Node node, String graphName, String version, String... types) {
         IBaseSegment segment = new BaseSegment();
         Map<String, Object> properties = node.getAllProperties();
         segment.setId((long) properties.get(WayGraphConstants.SEGMENT_ID));
