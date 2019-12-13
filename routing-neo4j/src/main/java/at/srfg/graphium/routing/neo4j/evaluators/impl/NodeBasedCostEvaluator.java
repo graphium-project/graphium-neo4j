@@ -67,7 +67,7 @@ public class NodeBasedCostEvaluator extends AbstractSegmentEvaluator implements 
 				costObject = getMinDurationCosts(node, relationship);
 			}
 		} else {
-			costObject = node.getProperty(propertyName);
+			costObject = getNodeProperty(node, propertyName);
 		}
 		
 		Number cost;

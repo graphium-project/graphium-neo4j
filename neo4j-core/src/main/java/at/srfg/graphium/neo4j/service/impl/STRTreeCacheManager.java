@@ -82,6 +82,14 @@ implements IGraphVersionStateModifiedObserver {
 										 .maximumSize(maximumHistoricCachSize)
 										 .build();
 		
+		graphsSegmentIdCache = CacheBuilder.newBuilder()
+										 .expireAfterAccess(expirationTime, TimeUnit.SECONDS)
+										 .build();
+		
+		graphsNodeIdCache = CacheBuilder.newBuilder()
+										 .expireAfterAccess(expirationTime, TimeUnit.SECONDS)
+										 .build();
+
 		List<String> graphNamesToIndex = metadataService.getGraphs();
 		
 		if (graphNamesToIndex != null && !graphNamesToIndex.isEmpty()) {
@@ -122,7 +130,7 @@ implements IGraphVersionStateModifiedObserver {
 			int i=0;
 			Node segmentNode = null;
 			Long segmentId = null;
-			Short length = null;
+			Float length = null;
 			Short maxSpeedTow = null;
 			Short maxSpeedBkw = null;
 			Short frc = null;
@@ -135,7 +143,7 @@ implements IGraphVersionStateModifiedObserver {
 					
 					// TODO: currently only max speed attributes considered - no current speeds!
 					segmentId = (Long)segmentNode.getProperty(WayGraphConstants.SEGMENT_ID);
-					length = (Short)segmentNode.getProperty(WayGraphConstants.SEGMENT_LENGTH);
+					length = (Float)segmentNode.getProperty(WayGraphConstants.SEGMENT_LENGTH);
 					maxSpeedTow = (Short)segmentNode.getProperty(WayGraphConstants.SEGMENT_MAXSPEED_TOW);
 					maxSpeedBkw = (Short)segmentNode.getProperty(WayGraphConstants.SEGMENT_MAXSPEED_BKW);
 					frc = (Short)segmentNode.getProperty(WayGraphConstants.SEGMENT_FRC);
