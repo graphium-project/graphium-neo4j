@@ -50,7 +50,7 @@ public class Neo4jWaySegmentMapper implements INeo4jXInfoNodeMapper<IWaySegment>
 	private STRTreeCacheManager cache;
 	
 	@Override
-	public synchronized IWaySegment map(Node node) {
+	public IWaySegment map(Node node) {
 		return this.mapWithXInfoTypes(node, null, null);
 	}
 
