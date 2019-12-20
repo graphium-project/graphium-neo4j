@@ -111,16 +111,19 @@ public class AlternativePathMatcher {
 			List<AlternativePath> alternativePaths = new LinkedList<AlternativePath>();
 			List<AlternativePath> skippedPaths = new ArrayList<AlternativePath>();
 			
+			long startTime = System.currentTimeMillis();
 			int newSearchIndex = matchingTask.getRoutingMatcher().routeToNextPoint(
 					searchPath.getBranch(), lastSegment, searchPath.getSearchIndex(),
 					alternativePaths, newBranches, skippedPaths, fallbackRoutes, track);
+			long endTime = System.currentTimeMillis();
 			
 			// store the branch with the next point to process, so that we can try again
 			// if no valid continuation can be found
 			newSearchPaths.add(new SearchPath(newSearchIndex, searchPath.getBranch()));
 		
 			matchingTask.checkCancelStatus();
-			matchingTask.statistics.incrementValue(MapMatcherStatistics.SHORTEST_PATH_SEARCH);
+//			matchingTask.statistics.incrementValue(MapMatcherStatistics.SHORTEST_PATH_SEARCH);
+			matchingTask.statistics.incrementValue(MapMatcherStatistics.SHORTEST_PATH_SEARCH_TOTAL_DURATION, (int)(endTime - startTime));
 			
 			List<IMatchedBranch> possibleBranches = new ArrayList<>();
 
