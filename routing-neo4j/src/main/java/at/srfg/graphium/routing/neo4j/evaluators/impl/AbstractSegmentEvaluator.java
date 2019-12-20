@@ -25,6 +25,8 @@ package at.srfg.graphium.routing.neo4j.evaluators.impl;
 
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
 import at.srfg.graphium.neo4j.model.cache.SegmentCacheEntry;
@@ -34,6 +36,8 @@ import at.srfg.graphium.neo4j.service.impl.STRTreeCacheManager;
  * @author mwimmer
  */
 public abstract class AbstractSegmentEvaluator {
+	
+	private static Logger log = LoggerFactory.getLogger(AbstractSegmentEvaluator.class);
 	
 	protected String graphName;
 	protected String version;
@@ -119,12 +123,14 @@ public abstract class AbstractSegmentEvaluator {
 		if (cache != null) {
 			long nodeId = node.getId();
 			SegmentCacheEntry cacheEntry = cache.getCacheEntryPerNodeId(graphName, version, nodeId);
-			if (propertyName.equals(WayGraphConstants.SEGMENT_MIN_DURATION_BKW)) {
-				value = cacheEntry.getDuration(false);
-			} else if (propertyName.equals(WayGraphConstants.SEGMENT_MIN_DURATION_TOW)) {
-				value = cacheEntry.getDuration(true);
-			} else if (propertyName.equals(WayGraphConstants.SEGMENT_LENGTH)) {
-				value = cacheEntry.getLength();
+			if (cacheEntry != null) {
+				if (propertyName.equals(WayGraphConstants.SEGMENT_MIN_DURATION_BKW)) {
+					value = cacheEntry.getDuration(false);
+				} else if (propertyName.equals(WayGraphConstants.SEGMENT_MIN_DURATION_TOW)) {
+					value = cacheEntry.getDuration(true);
+				} else if (propertyName.equals(WayGraphConstants.SEGMENT_LENGTH)) {
+					value = cacheEntry.getLength();
+				}
 			}
 		}
 		if (value == null) {
