@@ -26,6 +26,7 @@ import org.neo4j.graphdb.RelationshipType;
 public enum WaySegmentRelationshipType implements RelationshipType {
 
 	SEGMENT_CONNECTION_ON_STARTNODE,
-	SEGMENT_CONNECTION_ON_ENDNODE;
+	SEGMENT_CONNECTION_ON_ENDNODE,
+	SEGMENT_CONNECTION_WITHOUT_NODE;
 
 }

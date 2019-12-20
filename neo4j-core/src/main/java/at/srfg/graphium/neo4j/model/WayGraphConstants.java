@@ -127,4 +127,12 @@ public class WayGraphConstants {
 
 	public static final String WAYGRAPH_NAME = "waygraph_name";
 	
+	// HD specific constants
+	
+	public static final String CONNECTION_TYPE = "connectionType";
+	public static final String CONNECTION_TYPE_CONNECTS = "connects";
+	public static final String CONNECTION_TYPE_CONNECTS_FORBIDDEN = "connects_forbidden";
+	public static final String CONNECTION_DIRECTION = "direction";
+	public static final String CONNECTION_DIRECTION_REVERSE = "reverse";
+	
 }

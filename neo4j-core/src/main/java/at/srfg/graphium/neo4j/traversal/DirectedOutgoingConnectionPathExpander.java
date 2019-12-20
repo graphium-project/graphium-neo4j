@@ -18,6 +18,7 @@
 package at.srfg.graphium.neo4j.traversal;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -100,12 +101,41 @@ public class DirectedOutgoingConnectionPathExpander<STATE> implements PathExpand
         	} else {
         		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE);
         		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE);
+        		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE);
         	}
-        } else if (lastRel.getProperty(WayGraphConstants.CONNECTION_NODE_ID).equals
-                (path.endNode().getProperty(WayGraphConstants.SEGMENT_STARTNODE_ID))) {
-    		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE);
+        } else if (lastRel.getProperty(WayGraphConstants.CONNECTION_NODE_ID)
+        		.equals(path.endNode().getProperty(WayGraphConstants.SEGMENT_STARTNODE_ID))) {
+        	addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE);
+    		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE);
+        } else if (lastRel.getProperty(WayGraphConstants.CONNECTION_NODE_ID)
+        		.equals(path.endNode().getProperty(WayGraphConstants.SEGMENT_ENDNODE_ID))) {
+        	addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE);
+    		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE);
         } else {
-    		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE);
+        	// last relationship was a SEGMENT_CONNECTION_WITHOUT_NODE
+        	// make sure the direction does not change
+        	Relationship lastRelationshipViaNodeId = getLastRelationshipViaNodeId(path);
+        	if (lastRelationshipViaNodeId == null) {
+            	if (initialRelationType != null) {
+            		addRelationships(result, path, Direction.OUTGOING, initialRelationType);
+            	} else {
+            		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE);
+            		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE);
+            		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE);
+            	}
+        	} else {
+        		if (lastRelationshipViaNodeId.getProperty(WayGraphConstants.CONNECTION_NODE_ID) != null) {
+	        		if (lastRelationshipViaNodeId.getProperty(WayGraphConstants.CONNECTION_NODE_ID)
+	        				.equals(lastRelationshipViaNodeId.getEndNode().getProperty(WayGraphConstants.SEGMENT_STARTNODE_ID))) {
+		        		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE);
+		        		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE);
+		            } else if (lastRelationshipViaNodeId.getProperty(WayGraphConstants.CONNECTION_NODE_ID)
+		            		.equals(lastRelationshipViaNodeId.getEndNode().getProperty(WayGraphConstants.SEGMENT_ENDNODE_ID))) {
+		        		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE);
+		        		addRelationships(result, path, Direction.OUTGOING, WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE);
+		            }
+        		}
+            } 
         }
         return result;
     }
@@ -121,11 +151,56 @@ public class DirectedOutgoingConnectionPathExpander<STATE> implements PathExpand
     	return lastRel;
     }
     
+    /**
+     * @param path
+     * @return the last relationship where type is SEGMENT_CONNECTION_ON_STARTNODE or SEGMENT_CONNECTION_ON_ENDNODE
+     */
+    private Relationship getLastRelationshipViaNodeId(Path path) {
+    	Relationship lastRel = null;
+    	try {
+    		Iterator<Relationship> iter = path.reverseRelationships().iterator();
+    		while (iter.hasNext()) {
+    			Relationship rel = iter.next();
+    			if (!rel.isType(WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE)) {
+    				lastRel = rel;
+    			}
+    		}
+		} catch (Exception e) {
+			// do nothing
+		}
+    	return lastRel;
+    }
+    
     private void addRelationships(List<Relationship> result, Path path, Direction outgoing,
 			WaySegmentRelationshipType initialRelationType) {
 		Iterable<Relationship> res = path.endNode().getRelationships(Direction.OUTGOING, initialRelationType);
 		if (res != null) {
-			res.forEach(result::add);
+			if (initialRelationType.equals(WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE)) {
+				Iterator<Relationship> iterator = res.iterator();
+				while (iterator.hasNext()) {
+					Relationship rel = iterator.next();
+					if (rel.isType(WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE)) {
+						if (rel.hasProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE))) {
+							if (rel.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE))
+									.equals(WayGraphConstants.CONNECTION_TYPE_CONNECTS_FORBIDDEN)) {
+								// Do not add relationship that represents forbidden connection
+								continue;
+							}
+							if (rel.hasProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_DIRECTION)) 
+									&& rel.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_DIRECTION))
+									.equals(WayGraphConstants.CONNECTION_DIRECTION_REVERSE)) {
+								// Do not add relationship that represents connection to lane with reverse driving direction
+								continue;
+							}
+							result.add(rel);
+						}
+					} else {
+						result.add(rel);
+					}
+				}
+			} else {
+				res.forEach(result::add);
+			}
 		}
 	}
 

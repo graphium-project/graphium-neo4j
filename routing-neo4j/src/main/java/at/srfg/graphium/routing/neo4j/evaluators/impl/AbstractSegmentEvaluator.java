@@ -27,11 +27,15 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
+import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
 
 /**
  * @author mwimmer
  */
 public abstract class AbstractSegmentEvaluator {
+	
+	private float laneChangeCostFactor = 0.1f;
+	private int forbiddenLaneChangeCostValue = Integer.MAX_VALUE;
 	
 	/**
 	 * @param relationship
@@ -39,7 +43,8 @@ public abstract class AbstractSegmentEvaluator {
 	 */
 	protected Object getCurrentDurationCosts(Node node, Relationship relationship) {
 		Integer duration = null;
-		if (((long)relationship.getProperty(WayGraphConstants.CONNECTION_NODE_ID)) == ((long)node.getProperty(WayGraphConstants.SEGMENT_STARTNODE_ID))) {
+		if (((long)relationship.getProperty(WayGraphConstants.CONNECTION_NODE_ID)) ==
+				((long)node.getProperty(WayGraphConstants.SEGMENT_STARTNODE_ID))) {
 			if (relationship.getEndNode().getId() == node.getId()) {
 				// node is end node of relationship
 				if (node.hasProperty(WayGraphConstants.SEGMENT_CURRENT_DURATION_TOW)) {
@@ -47,7 +52,7 @@ public abstract class AbstractSegmentEvaluator {
 				} else {
 					duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_MIN_DURATION_TOW);
 				}
-			} else {
+			} else if (relationship.getStartNode().getId() == node.getId()) {
 				// node is start node of relationship
 				if (node.hasProperty(WayGraphConstants.SEGMENT_CURRENT_DURATION_BKW)) {
 					duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_CURRENT_DURATION_BKW);
@@ -55,7 +60,8 @@ public abstract class AbstractSegmentEvaluator {
 					duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_MIN_DURATION_BKW);
 				}
 			}
-		} else {
+		} else if (((long) relationship.getProperty(WayGraphConstants.CONNECTION_NODE_ID)) == 
+				((long) node.getProperty(WayGraphConstants.SEGMENT_ENDNODE_ID))) {
 			if (relationship.getEndNode().getId() == node.getId()) {
 				// node is end node of relationship
 				if (node.hasProperty(WayGraphConstants.SEGMENT_CURRENT_DURATION_BKW)) {
@@ -63,12 +69,30 @@ public abstract class AbstractSegmentEvaluator {
 				} else {
 					duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_MIN_DURATION_BKW);
 				}
-			} else {
+			} else if (relationship.getStartNode().getId() == node.getId()) {
 				// node is start node of relationship
 				if (node.hasProperty(WayGraphConstants.SEGMENT_CURRENT_DURATION_TOW)) {
 					duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_CURRENT_DURATION_TOW);
 				} else {
 					duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_MIN_DURATION_TOW);
+				}
+			}
+		} else {
+			if (relationship.getType().equals(WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE)) {
+				if (relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE)) == null
+						|| !relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE))
+							.equals(WayGraphConstants.CONNECTION_TYPE_CONNECTS_FORBIDDEN)) {
+					// low duration for lane changes
+					if (node.hasProperty(WayGraphConstants.SEGMENT_CURRENT_DURATION_TOW)) {
+						duration = (int)((double)((Integer) node.getProperty(WayGraphConstants.SEGMENT_CURRENT_DURATION_TOW)) * laneChangeCostFactor);
+					} else {
+						duration = (int)((double)((Integer) node.getProperty(WayGraphConstants.SEGMENT_MIN_DURATION_TOW)) * laneChangeCostFactor);
+					}
+				} else if (relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE)) == null
+						|| relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE))
+							.equals(WayGraphConstants.CONNECTION_TYPE_CONNECTS_FORBIDDEN)) {
+					// high duration for forbidden lane changes
+					duration = forbiddenLaneChangeCostValue;
 				}
 			}
 		}
@@ -81,7 +105,8 @@ public abstract class AbstractSegmentEvaluator {
 	 */
 	protected Object getMinDurationCosts(Node node, Relationship relationship) {
 		Integer duration = null;
-		if (((long)relationship.getProperty(WayGraphConstants.CONNECTION_NODE_ID)) == ((long)node.getProperty(WayGraphConstants.SEGMENT_STARTNODE_ID))) {
+		if (((long)relationship.getProperty(WayGraphConstants.CONNECTION_NODE_ID)) ==
+				((long)node.getProperty(WayGraphConstants.SEGMENT_STARTNODE_ID))) {
 			if (relationship.getEndNode().getId() == node.getId()) {
 				// node is end node of relationship
 				duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_MIN_DURATION_TOW);
@@ -89,16 +114,45 @@ public abstract class AbstractSegmentEvaluator {
 				// node is start node of relationship
 				duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_MIN_DURATION_BKW);
 			}
-		} else {
+		} else if (((long)relationship.getProperty(WayGraphConstants.CONNECTION_NODE_ID)) ==
+				((long)node.getProperty(WayGraphConstants.SEGMENT_ENDNODE_ID))) {
 			if (relationship.getEndNode().getId() == node.getId()) {
 				// node is end node of relationship
 				duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_MIN_DURATION_BKW);
 			} else {
 				// node is start node of relationship
 				duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_MIN_DURATION_TOW);
+			}
+		} else {
+			if (relationship.getType().equals(WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE)) {
+				if (relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE)) == null
+						|| !relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE))
+							.equals(WayGraphConstants.CONNECTION_TYPE_CONNECTS_FORBIDDEN)) {
+					// low duration for lane changes
+					duration = (int)((double)((Integer) node.getProperty(WayGraphConstants.SEGMENT_MIN_DURATION_TOW)) * laneChangeCostFactor);
+				} else if (relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE)) == null
+						|| relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE))
+								.equals(WayGraphConstants.CONNECTION_TYPE_CONNECTS_FORBIDDEN)) {
+					// high duration for forbidden lane changes
+					duration = forbiddenLaneChangeCostValue;
+				}
 			}
 		}
 		return duration;
+	}
+
+	public float getLaneChangeCostFactor() {
+		return laneChangeCostFactor;
+	}
+	public void setLaneChangeCostFactor(float laneChangeCostFactor) {
+		this.laneChangeCostFactor = laneChangeCostFactor;
+	}
+
+	public int getForbiddenLaneChangeCostValue() {
+		return forbiddenLaneChangeCostValue;
+	}
+	public void setForbiddenLaneChangeCostValue(int forbiddenLaneChangeCostValue) {
+		this.forbiddenLaneChangeCostValue = forbiddenLaneChangeCostValue;
 	}
 
 }

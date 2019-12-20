@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
+import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
 import at.srfg.graphium.routing.model.impl.RoutingCriteria;
 
 public class NodeBasedCostEvaluator extends AbstractSegmentEvaluator implements CostEvaluator<Double>{
@@ -67,6 +68,21 @@ public class NodeBasedCostEvaluator extends AbstractSegmentEvaluator implements 
 			}
 		} else {
 			costObject = node.getProperty(propertyName);
+			
+			if (relationship.getType().equals(WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE)) {
+				if (relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE)) == null
+						|| !relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE))
+								.equals(WayGraphConstants.CONNECTION_TYPE_CONNECTS_FORBIDDEN)) {
+					// low duration for lane changes
+					costObject = (((double) node.getProperty(propertyName)) * super.getLaneChangeCostFactor());
+				} else if (relationship.getProperty(
+						WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE)) == null
+						|| relationship .getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE))
+								.equals(WayGraphConstants.CONNECTION_TYPE_CONNECTS_FORBIDDEN)) {
+					// high duration for forbidden lane changes
+					costObject = super.getForbiddenLaneChangeCostValue();
+				}
+			}
 		}
 		
 		Number cost;

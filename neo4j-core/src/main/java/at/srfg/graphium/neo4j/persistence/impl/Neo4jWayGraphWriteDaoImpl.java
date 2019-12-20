@@ -242,7 +242,8 @@ public class Neo4jWayGraphWriteDaoImpl<W extends IWaySegment>
 		if (segmentNode != null && connections != null && !connections.isEmpty()) {
 			Iterable<Relationship> rels = segmentNode.getRelationships(Direction.OUTGOING,
 					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
-					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE);
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE,
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE);
 			rels.forEach(rel -> {
 				connections.forEach(conn -> {
 					if ((long)(rel.getProperty(WayGraphConstants.CONNECTION_NODE_ID)) == conn.getNodeId()
@@ -260,7 +261,8 @@ public class Neo4jWayGraphWriteDaoImpl<W extends IWaySegment>
 		if (segmentNode != null && conn != null) {
 			Iterable<Relationship> rels = segmentNode.getRelationships(Direction.OUTGOING,
 					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
-					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE);
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE,
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE);
 			Iterator<Relationship> relsIt = rels.iterator();
 			boolean found = false;
 			while (relsIt.hasNext() && !found) {
@@ -299,8 +301,10 @@ public class Neo4jWayGraphWriteDaoImpl<W extends IWaySegment>
 						RelationshipType relType;
 						if ((Long) fromSegmentNode.getProperty(WayGraphConstants.SEGMENT_STARTNODE_ID) == connection.getNodeId()) {
 							relType = WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE;
-						} else {
+						} else if ((Long) fromSegmentNode.getProperty(WayGraphConstants.SEGMENT_ENDNODE_ID) == connection.getNodeId()) {
 							relType = WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE;
+						} else {
+							relType = WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE;
 						}
 						Relationship rel = fromSegmentNode.createRelationshipTo(toSegmentNode, relType);
 						rel.setProperty(WayGraphConstants.CONNECTION_ACCESS, Neo4jWaySegmentHelperImpl.createAccessArray(connection.getAccess()));
@@ -412,7 +416,8 @@ public class Neo4jWayGraphWriteDaoImpl<W extends IWaySegment>
 				nodes.forEachRemaining(node -> {
 					Iterable<Relationship> rels = node.getRelationships(Direction.OUTGOING,
 							WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
-							WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE);
+							WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE,
+							WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE);
 					rels.forEach(relationship -> {
 						for (String type : types) {
 							IConnectionXInfoPropertyHandler<? extends IConnectionXInfo> propertyHandler = connectionPropertyHandlerRegistry.get(type);

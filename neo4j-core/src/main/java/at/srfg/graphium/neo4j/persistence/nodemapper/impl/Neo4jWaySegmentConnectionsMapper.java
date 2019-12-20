@@ -72,7 +72,8 @@ public class Neo4jWaySegmentConnectionsMapper implements INeo4jXInfoConnectionMa
 		List<IWaySegmentConnection> connections = new ArrayList<>();
 		Iterable<Relationship> relationships = node.getRelationships(Direction.OUTGOING,
 				WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
-				WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE);
+				WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE,
+				WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE);
 		long fromSegmentId = (long) node.getProperty(WayGraphConstants.SEGMENT_ID);
 		for (Relationship relationship : relationships) {
 			Set<Access> accesses = null;
@@ -108,7 +109,8 @@ public class Neo4jWaySegmentConnectionsMapper implements INeo4jXInfoConnectionMa
 		if (includeIncomings) {
 			Iterable<Relationship> relationships = node.getRelationships(Direction.INCOMING,
 					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
-					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE);
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE,
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE);
 			long toSegmentId = (long) node.getProperty(WayGraphConstants.SEGMENT_ID);
 			for (Relationship relationship : relationships) {
 				Set<Access> accesses = null;

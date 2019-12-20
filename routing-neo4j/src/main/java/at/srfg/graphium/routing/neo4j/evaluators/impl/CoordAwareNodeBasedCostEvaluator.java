@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.linearref.LengthIndexedLine;
 
 import at.srfg.graphium.geomutils.GeometryUtils;
 import at.srfg.graphium.neo4j.persistence.impl.Neo4jWaySegmentHelperImpl;
