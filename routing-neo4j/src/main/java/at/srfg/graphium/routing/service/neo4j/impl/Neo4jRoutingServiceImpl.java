@@ -262,6 +262,10 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 	}
 
 	protected void mapRoute(IRoute<T> route, WeightedPath weightedPath, IRoutingOptions options, Coordinate startCoord, Coordinate endCoord) {
+		long startTime = 0;
+		if (log.isDebugEnabled()) {
+			startTime = System.nanoTime();
+		}
 		float length = 0;
 		int time = 0;
 		List<IPathSegment> path = new ArrayList<IPathSegment>();
@@ -338,6 +342,11 @@ public class Neo4jRoutingServiceImpl<T extends IWaySegment>
 		route.setDuration(time);
 		
 		route.setSegments(segments);
+		
+		if (log.isDebugEnabled()) {
+			long endTime = System.nanoTime();
+			log.info("Route's mapping took " + (endTime - startTime) + "ns");
+		}
 	}
 
 	protected double getDuration(T segment, boolean directionTow, IRoutingOptions options) {
