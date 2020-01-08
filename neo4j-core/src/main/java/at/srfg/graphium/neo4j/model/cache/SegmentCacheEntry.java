@@ -66,7 +66,7 @@ public class SegmentCacheEntry {
 		this.length = length;
 	}
 
-	public float getDuration(boolean directionTow) {
+	public int getDuration(boolean directionTow) {
 		if (directionTow) {
 			return calcDuration(maxSpeedTow);
 		} else {
