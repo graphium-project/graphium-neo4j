@@ -36,6 +36,7 @@ public class Neo4jUtil {
 			.breadthFirst()
 			.relationships(WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE, org.neo4j.graphdb.Direction.OUTGOING)
 			.relationships(WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE, org.neo4j.graphdb.Direction.OUTGOING)
+			.relationships(WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE, org.neo4j.graphdb.Direction.OUTGOING)
 			.evaluator(Evaluators.toDepth(1))
 			.evaluator(Evaluators.excludeStartPosition());
 	}

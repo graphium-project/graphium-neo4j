@@ -590,8 +590,9 @@ public class RoutingMatcher {
 	private boolean validPathExists(Node startNode, Node targetNode,
 			int maxSegmentsForShortestPath) {
 		PathExpander<Object> expander = PathExpanders.forTypesAndDirections(
-												WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE, org.neo4j.graphdb.Direction.OUTGOING, 
-												WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE, org.neo4j.graphdb.Direction.OUTGOING);
+				WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE, org.neo4j.graphdb.Direction.OUTGOING, 
+				WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE, org.neo4j.graphdb.Direction.OUTGOING, 
+				WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE, org.neo4j.graphdb.Direction.OUTGOING);
 		
 		PathFinder<Path> pathFinder = GraphAlgoFactory.shortestPath(expander, maxSegmentsForShortestPath);
 		Path path = pathFinder.findSinglePath(startNode, targetNode);

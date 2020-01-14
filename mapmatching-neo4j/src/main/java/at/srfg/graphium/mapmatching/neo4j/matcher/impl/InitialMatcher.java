@@ -324,8 +324,8 @@ public class InitialMatcher {
 
 	/**
 	 * If no valid connected segment can be found for a start segment,
-	 * create two paths for the start segment. One path for each travel
-	 * direction (START_TO_END and END_TO_START).
+	 * create paths for the start segment. One path for each travel
+	 * direction (START_TO_END, END_TO_START, ...).
 	 */
 	private void addSingleSegmentPaths(IMatchedWaySegment startSegment,
 			List<IMatchedBranch> paths, ITrack track) {
@@ -335,6 +335,21 @@ public class InitialMatcher {
 		
 		if (!startSegment.isOneway().equals(OneWay.ONEWAY_TOW)) {
 			addSingleSegmentPath(startSegment, Direction.END_TO_START, paths, track);
+		}
+		
+		if (startSegment.getCons().stream().filter(c -> c.getNodeId() == -1).count() > 0) {
+			// lane change is possible
+			addSingleSegmentPath(startSegment, Direction.CENTER_TO_START, paths, track);
+			addSingleSegmentPath(startSegment, Direction.CENTER_TO_END, paths, track);
+			addSingleSegmentPath(startSegment, Direction.CENTER_TO_CENTER, paths, track);
+			
+			if (!startSegment.isOneway().equals(OneWay.ONEWAY_BKW)) {
+				addSingleSegmentPath(startSegment, Direction.START_TO_CENTER, paths, track);
+			}
+			
+			if (!startSegment.isOneway().equals(OneWay.ONEWAY_TOW)) {
+				addSingleSegmentPath(startSegment, Direction.END_TO_CENTER, paths, track);
+			}
 		}
 	}
 
