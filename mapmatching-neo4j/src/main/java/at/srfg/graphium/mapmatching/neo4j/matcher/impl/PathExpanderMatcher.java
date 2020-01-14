@@ -121,7 +121,52 @@ public class PathExpanderMatcher {
 			newBranches.addAll(incomingBranchesWithDeadEnd);
 		}
 		
+		setCorrectSegmentDirections(newBranches);
+		
 		return newBranches;
+	}
+
+	/**
+	 * Overrides direction of previous segment
+	 * @param branches
+	 */
+	private void setCorrectSegmentDirections(List<IMatchedBranch> branches) {
+		for (IMatchedBranch branch : branches) {
+			IMatchedWaySegment previousSegment = null;
+			for (IMatchedWaySegment currentSegment : branch.getMatchedWaySegments()) {
+				if (previousSegment != null && !currentSegment.isAfterSkippedPart()) {
+					if (isMatchedSegmentDirectionTow(previousSegment, currentSegment)) {
+						if (previousSegment.getDirection() != null && 
+								previousSegment.getDirection().equals(at.srfg.graphium.mapmatching.model.Direction.CENTER_TO_CENTER)) {
+							if (previousSegment.getEndNodeId() == currentSegment.getStartNodeId()) {
+								previousSegment.setDirection(at.srfg.graphium.mapmatching.model.Direction.CENTER_TO_END);
+							} else if (previousSegment.getStartNodeId() == currentSegment.getStartNodeId()) {
+								previousSegment.setDirection(at.srfg.graphium.mapmatching.model.Direction.CENTER_TO_START);
+							}
+						}
+					} else if (isMatchedSegmentDirectionBkw(previousSegment, currentSegment)) {
+						if (previousSegment.getDirection() != null && 
+								previousSegment.getDirection().equals(at.srfg.graphium.mapmatching.model.Direction.CENTER_TO_CENTER)) {
+							if (previousSegment.getEndNodeId() == currentSegment.getEndNodeId()) {
+								previousSegment.setDirection(at.srfg.graphium.mapmatching.model.Direction.CENTER_TO_END);
+							} else if (previousSegment.getStartNodeId() == currentSegment.getEndNodeId()) {
+								previousSegment.setDirection(at.srfg.graphium.mapmatching.model.Direction.CENTER_TO_START);
+							}
+						}
+					} else {
+						if (previousSegment.getDirection() != null) {
+							if (previousSegment.getDirection().equals(at.srfg.graphium.mapmatching.model.Direction.START_TO_END)) {
+								previousSegment.setDirection(at.srfg.graphium.mapmatching.model.Direction.START_TO_CENTER);
+							} else if (previousSegment.getDirection().equals(at.srfg.graphium.mapmatching.model.Direction.END_TO_START)) {
+								//override direction of previous segment
+								previousSegment.setDirection(at.srfg.graphium.mapmatching.model.Direction.END_TO_CENTER);
+							}
+						}
+					}
+				}
+				previousSegment = currentSegment;
+			}
+		}
 	}
 
 	private void sanitizeMatchedSegments(IMatchedBranch clonedBranch, ITrack track) {
@@ -320,15 +365,15 @@ public class PathExpanderMatcher {
 					
 					if (segmentValid) {						
 						// add current segment to the branch
-						clonedBranch.addMatchedWaySegment(matchedSegment);	
+						clonedBranch.addMatchedWaySegment(matchedSegment);
+						IMatchedWaySegment previousSegment = clonedBranch.getMatchedWaySegments().get(clonedBranch.getMatchedWaySegments().size()-2);
 						// change endPointIndex of previous segment (if needed)
 						if (endPointIndexDiff > 0) {
-							IMatchedWaySegment previousSegment = clonedBranch.getMatchedWaySegments().get(clonedBranch.getMatchedWaySegments().size()-2);
 							previousSegment.setEndPointIndex(matchedSegment.getStartPointIndex());
 							previousSegment.calculateDistances(track);
 						}
 						// set direction
-						setSegmentDirection(connectedPath, matchedSegment);
+						setSegmentDirection(previousSegment, matchedSegment);
 						
 						if (matchingTask.getWeightingStrategy().branchIsValid(clonedBranch)) {
 							branchExtended = true;
@@ -453,7 +498,6 @@ public class PathExpanderMatcher {
 						}
 					}
 				}
-				
 			}
 		}
 			
@@ -604,8 +648,10 @@ public class PathExpanderMatcher {
 	static IMatchedWaySegment setSegmentDirection(IMatchedWaySegment previousSegment, IMatchedWaySegment matchedSegment) {
 		if (isMatchedSegmentDirectionTow(previousSegment, matchedSegment)) {
 			matchedSegment.setDirection(at.srfg.graphium.mapmatching.model.Direction.START_TO_END);
-		} else {
+		} else if (isMatchedSegmentDirectionBkw(previousSegment, matchedSegment)) {
 			matchedSegment.setDirection(at.srfg.graphium.mapmatching.model.Direction.END_TO_START);
+		} else {
+			matchedSegment.setDirection(at.srfg.graphium.mapmatching.model.Direction.CENTER_TO_CENTER);
 		}
 		
 		return matchedSegment;
@@ -629,12 +675,16 @@ public class PathExpanderMatcher {
 		}
 	}
 	
-	static IMatchedWaySegment setSegmentDirection(Path path, at.srfg.graphium.mapmatching.model.IMatchedWaySegment matchedSegment) {
+	@Deprecated
+	private static IMatchedWaySegment setSegmentDirection(Path path, at.srfg.graphium.mapmatching.model.IMatchedWaySegment matchedSegment) {
 		if (((Long)path.lastRelationship().getProperty(WayGraphConstants.CONNECTION_NODE_ID)).equals 
 			((Long)path.endNode().getProperty(WayGraphConstants.SEGMENT_STARTNODE_ID))) {
 			matchedSegment.setDirection(at.srfg.graphium.mapmatching.model.Direction.START_TO_END);
-		} else {
+		} else if (((Long)path.lastRelationship().getProperty(WayGraphConstants.CONNECTION_NODE_ID)).equals 
+				((Long)path.endNode().getProperty(WayGraphConstants.SEGMENT_ENDNODE_ID))) {
 			matchedSegment.setDirection(at.srfg.graphium.mapmatching.model.Direction.END_TO_START);
+		} else {
+			matchedSegment.setDirection(at.srfg.graphium.mapmatching.model.Direction.CENTER_TO_CENTER);
 		}
 		
 		return matchedSegment;
@@ -644,8 +694,10 @@ public class PathExpanderMatcher {
 		WaySegmentRelationshipType direction;
 		if (segment.getDirection().isLeavingThroughStartNode()) {
 			direction = WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE;
-		} else {
+		} else if (segment.getDirection().isLeavingThroughEndNode()) {
 			direction = WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE;
+		} else {
+			direction = WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE;
 		}
 		return direction;
 	}

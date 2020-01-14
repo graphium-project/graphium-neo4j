@@ -375,12 +375,14 @@ public class InitialMatcher {
 			} else {
 				startSegment.setDirection(Direction.END_TO_START);
 			}
-		} else {
+		} else if (nextSegment.getDirection().isEnteringThroughEndNode()) {
 			if (startSegment.getEndNodeId() == nextSegment.getEndNodeId()) {
 				startSegment.setDirection(Direction.START_TO_END);
 			} else {
 				startSegment.setDirection(Direction.END_TO_START);
 			}
+		} else {
+			startSegment.setDirection(Direction.CENTER_TO_CENTER);
 		}
 	}
 
