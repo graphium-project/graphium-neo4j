@@ -35,7 +35,10 @@ public class MatchedWaySegmentDTO {
 	private int endPointIndex;		// exclusive
 	private boolean enteringThroughStartNode;
 	private boolean leavingThroughStartNode;
+	private boolean enteringThroughEndNode;
+	private boolean leavingThroughEndNode;
 	private boolean startSegment = false;
+	private boolean afterSkippedPart = false;
 	private boolean fromPathSearch = false;
 	private boolean uTurnSegment = false;
 	private double weight;
@@ -69,7 +72,8 @@ public class MatchedWaySegmentDTO {
 	public MatchedWaySegmentDTO() {}
 	
 	public MatchedWaySegmentDTO(long segmentId, int startPointIndex, int endPointIndex,
-			boolean enteringThroughStartNode, boolean leavingThroughStartNode, boolean startSegment,
+			boolean enteringThroughStartNode, boolean leavingThroughStartNode,
+			boolean enteringThroughEndNode, boolean leavingThroughEndNode, boolean startSegment,
 			boolean fromPathSearch, boolean uTurnSegment, double weight, double matchedFactor, String geometry,
 			String name, float length, short maxSpeedTow, short maxSpeedBkw, short calcSpeedTow,
 			short calcSpeedBkw, short lanesTow, short lanesBkw, short frc, String formOfWay,
@@ -82,6 +86,8 @@ public class MatchedWaySegmentDTO {
 		this.endPointIndex = endPointIndex;
 		this.enteringThroughStartNode = enteringThroughStartNode;
 		this.leavingThroughStartNode = leavingThroughStartNode;
+		this.enteringThroughEndNode = enteringThroughEndNode;
+		this.leavingThroughEndNode = leavingThroughEndNode;
 		this.startSegment = startSegment;
 		this.fromPathSearch = fromPathSearch;
 		this.uTurnSegment = uTurnSegment;
@@ -152,12 +158,36 @@ public class MatchedWaySegmentDTO {
 		this.leavingThroughStartNode = leavingThroughStartNode;
 	}
 
+	public boolean isEnteringThroughEndNode() {
+		return enteringThroughEndNode;
+	}
+
+	public void setEnteringThroughEndNode(boolean enteringThroughEndNode) {
+		this.enteringThroughEndNode = enteringThroughEndNode;
+	}
+
+	public boolean isLeavingThroughEndNode() {
+		return leavingThroughEndNode;
+	}
+
+	public void setLeavingThroughEndNode(boolean leavingThroughEndNode) {
+		this.leavingThroughEndNode = leavingThroughEndNode;
+	}
+
 	public boolean isStartSegment() {
 		return startSegment;
 	}
 
 	public void setStartSegment(boolean startSegment) {
 		this.startSegment = startSegment;
+	}
+
+	public boolean isAfterSkippedPart() {
+		return afterSkippedPart;
+	}
+
+	public void setAfterSkippedPart(boolean afterSkippedPart) {
+		this.afterSkippedPart = afterSkippedPart;
 	}
 
 	public boolean isFromPathSearch() {
