@@ -195,7 +195,7 @@ public class PathExpanderMatcher {
 			List<IMatchedBranch> unmanipulatedBranches) {
 		
 		IMatchedWaySegment segment = branch.getMatchedWaySegments().get(branch.getMatchedWaySegments().size() - 1);
-		WaySegmentRelationshipType traverserDirection = getTraverserDirection(segment);
+		WaySegmentRelationshipType[] traverserDirection = determineDirection(segment, branch);
 		
 		if (segment.getEndPointIndex() >= track.getTrackPoints().size()) {
 			return false;
@@ -230,7 +230,7 @@ public class PathExpanderMatcher {
 
 	private boolean singleSegmentPathMatching(IMatchedBranch branch, ITrack track,
 			List<IMatchedBranch> newBranches, List<IMatchedBranch> incomingBranchesWithDeadEnd,
-			List<IMatchedBranch> unmanipulatedBranches, IMatchedWaySegment segment, WaySegmentRelationshipType traverserDirection) {
+			List<IMatchedBranch> unmanipulatedBranches, IMatchedWaySegment segment, WaySegmentRelationshipType[] traverserDirection) {
 		boolean oneOrMorePointsMatched = false;
 
 		// get all outgoing connections from the current segment
@@ -311,7 +311,7 @@ public class PathExpanderMatcher {
 						
 						if (numberOfFurtherConnections(connectedSegmentNode, directionTypes) == 1) {
 							// try to match all further connected segments
-							traverserDirection = getTraverserDirection(matchedSegment);
+							traverserDirection = determineDirection(matchedSegment, branch);
 							traverser = getTraverser(
 									matchedSegment, 
 									traverserDirection, 
@@ -406,7 +406,7 @@ public class PathExpanderMatcher {
 	private boolean extendedSegmentPathMatching(IMatchedBranch branch, ITrack track, double distanceTrackPoints,
 			List<IMatchedBranch> newBranches, List<IMatchedBranch> incomingBranchesWithDeadEnd,
 			List<IMatchedBranch> unmanipulatedBranches, IMatchedWaySegment segment,
-			WaySegmentRelationshipType traverserDirection) {
+			WaySegmentRelationshipType[] traverserDirection) {
 		boolean oneOrMorePointsMatched = false;
 
 		// TODO für Routing: nur ausführen, wenn die Geschwindigkeit aufgrund der Distanz und der Timestamps realistisch ist
@@ -436,9 +436,9 @@ public class PathExpanderMatcher {
 
 	}
 	
-	private List<IMatchedBranch> matchSegment(IMatchedWaySegment segment, IMatchedBranch branch, WaySegmentRelationshipType lastRel, 
-			ITrack track, IMapMatchingProperties properties, double distanceTrackPoints, double distanceSoFar,
-			List<IMatchedBranch> resultBranches, int depth) {
+	private List<IMatchedBranch> matchSegment(IMatchedWaySegment segment, IMatchedBranch branch,
+			WaySegmentRelationshipType[] lastRel, ITrack track, IMapMatchingProperties properties,
+			double distanceTrackPoints, double distanceSoFar, List<IMatchedBranch> resultBranches, int depth) {
 		
 		if (branch == null) {
 			return null;
@@ -492,7 +492,7 @@ public class PathExpanderMatcher {
 						if (distanceForBranch < properties.getMaxDistanceForExtendedPathMatching() &&
 							distanceForBranch < distanceTrackPoints * 1.5) {
 							setSegmentDirection(segment, matchedSegment);
-							WaySegmentRelationshipType newLastRel = determineDirection(matchedSegment, clonedBranch);
+							WaySegmentRelationshipType[] newLastRel = determineDirection(matchedSegment, clonedBranch);
 							clonedBranch.addMatchedWaySegment(matchedSegment);
 							matchSegment(matchedSegment, clonedBranch, newLastRel, track, properties, distanceTrackPoints, distanceForBranch, resultBranches, depth++);
 						}
@@ -562,13 +562,19 @@ public class PathExpanderMatcher {
 		return matchedWaySegment;
 	}
 	
-	private WaySegmentRelationshipType determineDirection(IMatchedWaySegment currentSegment, IMatchedBranch branch) {
+	private static WaySegmentRelationshipType[] determineDirection(IMatchedWaySegment currentSegment, IMatchedBranch branch) {
 		if (currentSegment.getDirection().isEnteringThroughStartNode()) {
-			return WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE;
+			return new WaySegmentRelationshipType[] {
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE,
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
 		} else if (currentSegment.getDirection().isEnteringThroughEndNode()) {
-			return WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE;
+			return new WaySegmentRelationshipType[] {
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
 		} else {
-			return determineDirectionViaNode(branch);
+			return new WaySegmentRelationshipType[] {
+					determineDirectionViaNode(branch),
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
 		}
 	}
     
@@ -576,7 +582,7 @@ public class PathExpanderMatcher {
      * @param path
      * @return the last relationship where type is SEGMENT_CONNECTION_ON_STARTNODE or SEGMENT_CONNECTION_ON_ENDNODE
      */
-    private WaySegmentRelationshipType determineDirectionViaNode(IMatchedBranch branch) {
+    private static WaySegmentRelationshipType determineDirectionViaNode(IMatchedBranch branch) {
     	List<IMatchedWaySegment> segments = branch.getMatchedWaySegments();
     	for (int i=segments.size()-1;i>=0;i--) {
 			if (segments.get(i).getDirection().isEnteringThroughStartNode()) {
@@ -637,10 +643,18 @@ public class PathExpanderMatcher {
 		}
 	}
 	
-	private Traverser getTraverser(IMatchedWaySegment segment, WaySegmentRelationshipType relationshipType, INeo4jWayGraphReadDao graphDao, String graphName, String version) {
+	private Traverser getTraverser(IMatchedWaySegment segment, WaySegmentRelationshipType[] relationshipTypes, INeo4jWayGraphReadDao graphDao, String graphName, String version) {
 		Node node = graphDao.getSegmentNodeBySegmentId(graphName, version, segment.getId());
 		
-		TraversalDescription traversalDescription = neo4jUtil.getTraverser(relationshipType, WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE, 1);
+		TraversalDescription traversalDescription;
+		
+		if (relationshipTypes[0] != null && relationshipTypes[1] != null) {
+			traversalDescription = neo4jUtil.getTraverser(relationshipTypes[0], relationshipTypes[1], 1);
+		} else if (relationshipTypes[0] != null) {
+			traversalDescription = neo4jUtil.getTraverser(relationshipTypes[0], 1);
+		} else {
+			traversalDescription = neo4jUtil.getTraverser(relationshipTypes[1], 1);
+		}
 
 		return traversalDescription.traverse(node);
 	}
@@ -690,14 +704,21 @@ public class PathExpanderMatcher {
 		return matchedSegment;
 	}
 	
-	private static WaySegmentRelationshipType getTraverserDirection(IMatchedWaySegment segment) {
-		WaySegmentRelationshipType direction;
+	@Deprecated
+	private static WaySegmentRelationshipType[] getTraverserDirection(IMatchedWaySegment segment, IMatchedBranch branch) {
+		WaySegmentRelationshipType[] direction;
 		if (segment.getDirection().isLeavingThroughStartNode()) {
-			direction = WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE;
+			direction = new WaySegmentRelationshipType[] {
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
 		} else if (segment.getDirection().isLeavingThroughEndNode()) {
-			direction = WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE;
+			direction = new WaySegmentRelationshipType[] {
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE,
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
 		} else {
-			direction = WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE;
+			direction = new WaySegmentRelationshipType[] {
+					determineDirectionViaNode(branch),
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
 		}
 		return direction;
 	}
