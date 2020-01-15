@@ -78,7 +78,7 @@ public abstract class AbstractSegmentEvaluator {
 				}
 			}
 		} else {
-			if (relationship.getType().equals(WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE)) {
+			if (relationship.isType(WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE)) {
 				if (relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE)) == null
 						|| !relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE))
 							.equals(WayGraphConstants.CONNECTION_TYPE_CONNECTS_FORBIDDEN)) {
@@ -124,7 +124,7 @@ public abstract class AbstractSegmentEvaluator {
 				duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_MIN_DURATION_TOW);
 			}
 		} else {
-			if (relationship.getType().equals(WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE)) {
+			if (relationship.isType(WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE)) {
 				if (relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE)) == null
 						|| !relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE))
 							.equals(WayGraphConstants.CONNECTION_TYPE_CONNECTS_FORBIDDEN)) {
