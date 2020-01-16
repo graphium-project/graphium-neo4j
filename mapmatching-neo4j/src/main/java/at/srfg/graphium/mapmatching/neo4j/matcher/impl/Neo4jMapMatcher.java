@@ -18,16 +18,21 @@
 package at.srfg.graphium.mapmatching.neo4j.matcher.impl;
 
 
+import javax.annotation.Resource;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import at.srfg.graphium.core.exception.GraphNotExistsException;
+import at.srfg.graphium.core.helper.GraphMetadataHelper;
 import at.srfg.graphium.core.service.IGraphVersionMetadataService;
+import at.srfg.graphium.io.adapter.exception.NoSegmentAdapterFoundException;
 import at.srfg.graphium.mapmatching.matcher.IMapMatcher;
 import at.srfg.graphium.mapmatching.matcher.IMapMatcherTask;
 import at.srfg.graphium.mapmatching.model.ITrack;
 import at.srfg.graphium.mapmatching.properties.impl.MapMatchingProperties;
 import at.srfg.graphium.mapmatching.statistics.MapMatcherGlobalStatistics;
+import at.srfg.graphium.model.IBaseSegment;
 import at.srfg.graphium.model.IWayGraphVersionMetadata;
 import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
@@ -52,8 +57,8 @@ public class Neo4jMapMatcher implements IMapMatcher {
 	
 	private String defaultGraphName = null;
 	
-	// Neo4j graph metadata
-//	private IWayGraphVersionMetadata graphMetadata = null;
+	@Resource(name="graphMetadataHelper")
+	private GraphMetadataHelper<IBaseSegment> graphMetadataHelper; 
 
 	@Override
 	public IMapMatcherTask getTask(ITrack origTrack, String routingMode) throws GraphNotExistsException {
@@ -87,9 +92,13 @@ public class Neo4jMapMatcher implements IMapMatcher {
 	
 	protected IMapMatcherTask createTask(IWayGraphVersionMetadata graphMetadata, ITrack origTrack, String routingMode) {
 		MapMatchingProperties taskProperties;
-		if (graphMetadata.getType().equals("hdwaysegment")) { //TODO replace string
-			taskProperties = propertiesHd.clone();
-		} else {
+		try {
+			if (graphMetadataHelper.isHDGraph(graphMetadata)) {
+				taskProperties = propertiesHd.clone();
+			} else {
+				taskProperties = properties.clone();
+			}
+		} catch (NoSegmentAdapterFoundException e) {
 			taskProperties = properties.clone();
 		}
 		if (routingMode != null) {
