@@ -654,7 +654,10 @@ public class MatchesFilter {
 			}
 			
 			if (valid) {
-				if (certainSegmentCandidate.getMatchedPoints() > 0) {
+				if (certainSegmentCandidate.getMatchedPoints() > 0
+						&& (certainSegmentCandidate.getDirection().isEnteringThroughStartNode()
+								|| certainSegmentCandidate.getDirection().isEnteringThroughEndNode())) {
+					// matched points > 0 AND entering through start/end node (for determining direction)
 					certainSegment = certainSegmentCandidate;
 				}
 			}
