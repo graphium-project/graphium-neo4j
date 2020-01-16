@@ -42,7 +42,7 @@ public class NodeBasedCostEvaluator extends AbstractSegmentEvaluator implements 
 	}
 	
 	@Override
-	public Double getCost(Relationship relationship, Direction direction) {		
+	public Double getCost(Relationship relationship, Direction direction) {
 		if (log.isDebugEnabled()) {
 			long targetSegmentId = (long) relationship.getEndNode().getProperty(WayGraphConstants.SEGMENT_ID);
 			log.debug("Relationship: " + relationship.getStartNode().getProperty(WayGraphConstants.SEGMENT_ID) + 
@@ -69,7 +69,7 @@ public class NodeBasedCostEvaluator extends AbstractSegmentEvaluator implements 
 		} else {
 			costObject = node.getProperty(propertyName);
 			
-			if (relationship.getType().equals(WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE)) {
+			if (relationship.isType(WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE)) {
 				if (relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE)) == null
 						|| !relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE))
 								.equals(WayGraphConstants.CONNECTION_TYPE_CONNECTS_FORBIDDEN)) {
