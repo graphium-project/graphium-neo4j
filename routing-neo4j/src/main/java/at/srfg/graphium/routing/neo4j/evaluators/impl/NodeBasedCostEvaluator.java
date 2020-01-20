@@ -68,21 +68,6 @@ public class NodeBasedCostEvaluator extends AbstractSegmentEvaluator implements 
 			}
 		} else {
 			costObject = node.getProperty(propertyName);
-			
-			if (relationship.isType(WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE)) {
-				if (relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE)) == null
-						|| !relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE))
-								.equals(WayGraphConstants.CONNECTION_TYPE_CONNECTS_FORBIDDEN)) {
-					// low duration for lane changes
-					costObject = (((double) node.getProperty(propertyName)) * super.getLaneChangeCostFactor());
-				} else if (relationship.getProperty(
-						WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE)) == null
-						|| relationship .getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE))
-								.equals(WayGraphConstants.CONNECTION_TYPE_CONNECTS_FORBIDDEN)) {
-					// high duration for forbidden lane changes
-					costObject = super.getForbiddenLaneChangeCostValue();
-				}
-			}
 		}
 		
 		Number cost;
@@ -93,6 +78,21 @@ public class NodeBasedCostEvaluator extends AbstractSegmentEvaluator implements 
 		}
 		if (cost.doubleValue() < LOWERCOSTTRESH) {
 			return LOWERCOSTTRESH;
+		}
+		
+		if (relationship.isType(WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE)) {
+			// adjust cost value (lane change)
+			if (relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE)) != null
+					&& !relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE))
+							.equals(WayGraphConstants.CONNECTION_TYPE_CONNECTS_FORBIDDEN)) {
+				// low value for allowed lane changes
+				cost = new Double(cost.doubleValue() * super.getLaneChangeCostFactor());
+			} else if (relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE)) != null
+					&& relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE))
+							.equals(WayGraphConstants.CONNECTION_TYPE_CONNECTS_FORBIDDEN)) {
+				// high value for forbidden lane changes
+				costObject = new Double(super.getForbiddenLaneChangeCostValue());
+			}
 		}
 		
 		return cost.doubleValue();
