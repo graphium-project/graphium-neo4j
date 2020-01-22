@@ -44,6 +44,25 @@ public class Neo4jUtil {
 			.evaluator(Evaluators.toDepth(1))
 			.evaluator(Evaluators.excludeStartPosition());
 	}
+	
+	/**
+	 * Builds default traversal description 
+	 * @param allDirections If true, traverses through incoming and outgoing relationships. If false, traverses through outgoing relationships only
+	 * @return Traversal description
+	 */
+	public TraversalDescription getTraverser(boolean allDirections) {
+		if (allDirections) {
+			return graphDatabaseProvider.getGraphDatabase().traversalDescription()
+				.breadthFirst()
+				.relationships(WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE, org.neo4j.graphdb.Direction.BOTH)
+				.relationships(WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE, org.neo4j.graphdb.Direction.BOTH)
+				.relationships(WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE, org.neo4j.graphdb.Direction.BOTH)
+				.evaluator(Evaluators.toDepth(1))
+				.evaluator(Evaluators.excludeStartPosition());
+		} else {
+			return getTraverser();
+		}
+	}
 
 	/**
 	 * Builds traversal description
@@ -89,6 +108,7 @@ public class Neo4jUtil {
 		if (allDirections) {
 			return graphDatabaseProvider.getGraphDatabase().traversalDescription()
 				.breadthFirst()
+				.relationships(relationshipType, org.neo4j.graphdb.Direction.BOTH)
 				.evaluator(Evaluators.excludeStartPosition())
 				.evaluator(Evaluators.toDepth(nrOfHops));
 		} else {
@@ -124,8 +144,8 @@ public class Neo4jUtil {
 		if (allDirections) {
 			return graphDatabaseProvider.getGraphDatabase().traversalDescription()
 				.breadthFirst()
-				.relationships(relationshipType1)
-				.relationships(relationshipType2)
+				.relationships(relationshipType1, org.neo4j.graphdb.Direction.BOTH)
+				.relationships(relationshipType2, org.neo4j.graphdb.Direction.BOTH)
 				.evaluator(Evaluators.excludeStartPosition())
 				.evaluator(Evaluators.toDepth(nrOfHops));
 		} else {
