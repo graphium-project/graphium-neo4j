@@ -42,6 +42,7 @@ import at.srfg.graphium.mapmatching.properties.IMapMatchingProperties;
 import at.srfg.graphium.mapmatching.util.MapMatchingUtil;
 import at.srfg.graphium.model.FuncRoadClass;
 import at.srfg.graphium.model.IWaySegment;
+import at.srfg.graphium.model.IWaySegmentConnection;
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
 import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
@@ -562,6 +563,12 @@ public class PathExpanderMatcher {
 		return matchedWaySegment;
 	}
 	
+	/**
+	 * Determines the relationship types for the upcoming traversal
+	 * @param currentSegment
+	 * @param branch
+	 * @return
+	 */
 	private static WaySegmentRelationshipType[] determineDirection(IMatchedWaySegment currentSegment, IMatchedBranch branch) {
 		if (currentSegment.getDirection().isEnteringThroughStartNode()) {
 			return new WaySegmentRelationshipType[] {
@@ -578,21 +585,55 @@ public class PathExpanderMatcher {
 		}
 	}
     
-    /**
-     * @param path
-     * @return the last relationship where type is SEGMENT_CONNECTION_ON_STARTNODE or SEGMENT_CONNECTION_ON_ENDNODE
-     */
+	/**
+	 * Finds last traversed relationship via a node (no lane change) and returns the
+	 * appropriate relationship types for the next traversal. Minds segments with a
+	 * reversed geometry
+	 * 
+	 * @param path
+	 * @return the last relationship where type is SEGMENT_CONNECTION_ON_STARTNODE or SEGMENT_CONNECTION_ON_ENDNODE
+	 */
     private static WaySegmentRelationshipType determineDirectionViaNode(IMatchedBranch branch) {
     	List<IMatchedWaySegment> segments = branch.getMatchedWaySegments();
-    	for (int i=segments.size()-1;i>=0;i--) {
+    	int reverseCount = 0;
+    	for (int i=segments.size()-2;i>=0;i--) {
+    		// Check geometry directions of segments of parallel lanes
+    		reverseCount += (isReversedDirection(segments.get(i), segments.get(i+1))) ? 1 : 0;
 			if (segments.get(i).getDirection().isEnteringThroughStartNode()) {
-				return WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE;
+				if (reverseCount % 2 == 0) {
+					return WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE;
+				} else {
+					return WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE;
+				}
 			} else if (segments.get(i).getDirection().isEnteringThroughEndNode()) {
-				return WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE;
+				if (reverseCount % 2 == 0) {
+					return WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE;
+				} else {
+					return WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE;
+				}
 			}
     	}
     	return WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE;
     }
+    
+    /**
+     * Determines if the geometry direction is changed between segment and nextSegment
+     * 
+     * @param segment
+     * @param nextSegment
+     * @return
+     */
+	private static boolean isReversedDirection(IMatchedWaySegment segment, IMatchedWaySegment nextSegment) {
+		for (IWaySegmentConnection conn : segment.getCons()) {
+			if (conn.getToSegmentId() == nextSegment.getId()) {
+				if (conn.getTags().get(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_DIRECTION))
+						.equals(WayGraphConstants.CONNECTION_DIRECTION_REVERSE)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
 	private List<IMatchedBranch> filterEmptyBranches(List<IMatchedBranch> branches) {
 		return MapMatchingUtil.filterEmptyBranches(branches);
@@ -643,13 +684,18 @@ public class PathExpanderMatcher {
 		}
 	}
 	
-	private Traverser getTraverser(IMatchedWaySegment segment, WaySegmentRelationshipType[] relationshipTypes, INeo4jWayGraphReadDao graphDao, String graphName, String version) {
+	private Traverser getTraverser(IMatchedWaySegment segment, WaySegmentRelationshipType[] relationshipTypes,
+			INeo4jWayGraphReadDao graphDao, String graphName, String version) {
 		Node node = graphDao.getSegmentNodeBySegmentId(graphName, version, segment.getId());
 		
 		TraversalDescription traversalDescription;
 		
 		if (relationshipTypes[0] != null && relationshipTypes[1] != null) {
-			traversalDescription = neo4jUtil.getTraverser(relationshipTypes[0], relationshipTypes[1], 1);
+			if (relationshipTypes[1] != null) { //TODO allDirections=true only if direction=reversed
+				traversalDescription = neo4jUtil.getTraverser(relationshipTypes[0], relationshipTypes[1], 1, true);
+			} else {
+				traversalDescription = neo4jUtil.getTraverser(relationshipTypes[0], relationshipTypes[1], 1);
+			}
 		} else if (relationshipTypes[0] != null) {
 			traversalDescription = neo4jUtil.getTraverser(relationshipTypes[0], 1);
 		} else {
