@@ -240,10 +240,7 @@ public class PathExpanderMatcher {
 		// get all outgoing connections from the current segment
 		Traverser traverser = getTraverser(
 								segment, 
-								traversalDescription, 
-								matchingTask.getGraphDao(),
-								matchingTask.getGraphName(),
-								matchingTask.getGraphVersion());
+								traversalDescription);
 			
 		if (traverser != null) {
 			Iterator<Path> connectedPaths = traverser.iterator();
@@ -318,10 +315,7 @@ public class PathExpanderMatcher {
 							traversalDescription = buildTraveralDescription(matchedSegment, branch);
 							traverser = getTraverser(
 									matchedSegment, 
-									traversalDescription,
-									matchingTask.getGraphDao(),
-									matchingTask.getGraphName(),
-									matchingTask.getGraphVersion());
+									traversalDescription);
 								
 							if (traverser != null) {
 								connectedPaths = traverser.iterator();
@@ -455,10 +449,7 @@ public class PathExpanderMatcher {
 		// get all outgoing connections from the current segment
 		Traverser traverser = getTraverser(
 								segment, 
-								traversalDescription,
-								matchingTask.getGraphDao(),
-								matchingTask.getGraphName(),
-								matchingTask.getGraphVersion());
+								traversalDescription);
 			
 		if (traverser != null) {
 			Iterator<Path> connectedPaths = traverser.iterator();
@@ -588,8 +579,7 @@ public class PathExpanderMatcher {
 					WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
 		} else {
 			relationshipTypes = new WaySegmentRelationshipType[] {
-					determineDirectionViaNode(branch, reversed,
-							matchingTask.getGraphDao(), matchingTask.getGraphName(), matchingTask.getGraphVersion()),
+					determineDirectionViaNode(branch, reversed),
 					WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
 		}
 		
@@ -613,13 +603,12 @@ public class PathExpanderMatcher {
 	 * @param version
 	 * @return the last relationship where type is SEGMENT_CONNECTION_ON_STARTNODE or SEGMENT_CONNECTION_ON_ENDNODE
 	 */
-    private static WaySegmentRelationshipType determineDirectionViaNode(IMatchedBranch branch, MutableBoolean reversed,
-			INeo4jWayGraphReadDao graphDao, String graphName, String version) {
+    private WaySegmentRelationshipType determineDirectionViaNode(IMatchedBranch branch, MutableBoolean reversed) {
     	List<IMatchedWaySegment> segments = branch.getMatchedWaySegments();
     	int reverseCount = 0;
     	for (int i=segments.size()-2;i>=0;i--) {
     		// Check geometry directions of segments of parallel lanes
-    		reverseCount += (isReversedDirection(segments.get(i), segments.get(i+1), graphDao, graphName, version)) ? 1 : 0;
+    		reverseCount += (isReversedDirection(segments.get(i), segments.get(i+1))) ? 1 : 0;
 			if (segments.get(i).getDirection().isEnteringThroughStartNode()) {
 				if (reverseCount % 2 == 0) {
 					return WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE;
@@ -649,11 +638,11 @@ public class PathExpanderMatcher {
 	 * @param version
      * @return True if the geometry direction is changed, otherwise false
      */
-	private static boolean isReversedDirection(IMatchedWaySegment segment, IMatchedWaySegment nextSegment,
-			INeo4jWayGraphReadDao graphDao, String graphName, String version) {
+	private boolean isReversedDirection(IMatchedWaySegment segment, IMatchedWaySegment nextSegment) {
 		IBaseSegment segmentWithCons = null;
 		try {
-			segmentWithCons = graphDao.getSegmentById(graphName, version, segment.getId(), true);
+			segmentWithCons = matchingTask.getGraphDao().getSegmentById(matchingTask.getGraphName(),
+					matchingTask.getGraphVersion(), segment.getId(), true);
 		} catch (GraphNotExistsException e) {
 			log.warn("Cannot find segment to determine reversed direction!");
 		}
@@ -720,9 +709,9 @@ public class PathExpanderMatcher {
 		}
 	}
 	
-	private Traverser getTraverser(IMatchedWaySegment segment, TraversalDescription traversalDescription,
-			INeo4jWayGraphReadDao graphDao, String graphName, String version) {
-		Node node = graphDao.getSegmentNodeBySegmentId(graphName, version, segment.getId());
+	private Traverser getTraverser(IMatchedWaySegment segment, TraversalDescription traversalDescription) {
+		Node node = matchingTask.getGraphDao().getSegmentNodeBySegmentId(matchingTask.getGraphName(),
+				matchingTask.getGraphVersion(), segment.getId());
 
 		return traversalDescription.traverse(node);
 	}
