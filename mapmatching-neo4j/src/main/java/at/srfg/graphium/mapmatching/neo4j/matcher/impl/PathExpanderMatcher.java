@@ -46,9 +46,9 @@ import at.srfg.graphium.model.FuncRoadClass;
 import at.srfg.graphium.model.IBaseSegment;
 import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.model.IWaySegmentConnection;
+import at.srfg.graphium.model.OneWay;
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
 import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
-import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
 
 public class PathExpanderMatcher {
 	
@@ -573,10 +573,18 @@ public class PathExpanderMatcher {
 			relationshipTypes = new WaySegmentRelationshipType[] {
 					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE,
 					WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
+			if (currentSegment.isOneway().equals(OneWay.ONEWAY_BKW)) {
+				// traversing against oneway (only possible in hd-matching)
+				reversed.setTrue();
+			}
 		} else if (currentSegment.getDirection().isEnteringThroughEndNode()) {
 			relationshipTypes = new WaySegmentRelationshipType[] {
 					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
 					WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
+			if (currentSegment.isOneway().equals(OneWay.ONEWAY_TOW)) {
+				// traversing against oneway (only possible in hd-matching)
+				reversed.setTrue();
+			}
 		} else {
 			relationshipTypes = new WaySegmentRelationshipType[] {
 					determineDirectionViaNode(branch, reversed),
