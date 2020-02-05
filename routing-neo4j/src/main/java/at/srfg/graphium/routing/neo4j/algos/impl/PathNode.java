@@ -27,6 +27,7 @@ import org.neo4j.graphdb.Relationship;
 public class PathNode implements Comparable<PathNode> {
 
 	private Long id;
+	private Long segmentId; // used for debugging
 	private Boolean startToEnd;
 	private Node neo4jNode;
 	private Relationship lastRelationship;
@@ -89,6 +90,14 @@ public class PathNode implements Comparable<PathNode> {
 
 	public void setLastRelationship(Relationship lastRelationship) {
 		this.lastRelationship = lastRelationship;
+	}
+
+	public Long getSegmentId() {
+		return segmentId;
+	}
+
+	public void setSegmentId(Long segmentId) {
+		this.segmentId = segmentId;
 	}
 
 	@Override

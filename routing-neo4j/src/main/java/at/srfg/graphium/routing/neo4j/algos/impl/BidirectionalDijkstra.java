@@ -119,10 +119,10 @@ public class BidirectionalDijkstra<W extends IBaseWaySegment> implements IRoutin
 		while (!cancelled &&
 			   !prioQueueF.isEmpty() && !prioQueueB.isEmpty()) {
 			
-			List<PathNode> neighboursF = BFS(prioQueueF, visitedF, true);
-			List<PathNode> neighboursB = BFS(prioQueueB, visitedB, false);
+			BFS(prioQueueF, visitedF, true);
+			BFS(prioQueueB, visitedB, false);
 			
-			tmpIntersectingNodes = getIntersectingNode(neighboursF, neighboursB, visitedF, visitedB);
+			tmpIntersectingNodes = getIntersectingNode(visitedF, visitedB);
 			
 			if (tmpIntersectingNodes != null) {
 				// We found an intersecting node v.
@@ -160,24 +160,24 @@ public class BidirectionalDijkstra<W extends IBaseWaySegment> implements IRoutin
 		return null;
 	}
 
-	private PathNode[] getIntersectingNode(List<PathNode> neighboursF, List<PathNode> neighboursB,
-			Map<Long, PathNode> visitedF, Map<Long, PathNode> visitedB) {
-		if (neighboursF != null) {
-			for (PathNode neighbourF : neighboursF) {
-				if (visitedB.containsKey(neighbourF.getId())) {
+	private PathNode[] getIntersectingNode(Map<Long, PathNode> visitedF, Map<Long, PathNode> visitedB) {
+		// TODO: performance issue: we have to go through the whole map's collection of visitedF and visitedB => is there a better solution? 
+		if (visitedF != null) {
+			for (PathNode vF : visitedF.values()) {
+				if (visitedB.containsKey(vF.getId())) {
 					PathNode[] intersectingNodes = new PathNode[2];
-					intersectingNodes[0] = neighbourF;
-					intersectingNodes[1] = visitedB.get(neighbourF.getId());
+					intersectingNodes[0] = vF;
+					intersectingNodes[1] = visitedB.get(vF.getId());
 					return intersectingNodes;
 				}
 			}
 		}
-		if (neighboursB != null) {
-			for (PathNode neighbourB : neighboursB) {
-				if (visitedF.containsKey(neighbourB.getId())) {
+		if (visitedB != null) {
+			for (PathNode vB : visitedB.values()) {
+				if (visitedF.containsKey(vB.getId())) {
 					PathNode[] intersectingNodes = new PathNode[2];
-					intersectingNodes[0] = visitedF.get(neighbourB.getId());
-					intersectingNodes[1] = neighbourB;
+					intersectingNodes[0] = visitedF.get(vB.getId());
+					intersectingNodes[1] = vB;
 					return intersectingNodes;
 				}
 			}
@@ -185,7 +185,7 @@ public class BidirectionalDijkstra<W extends IBaseWaySegment> implements IRoutin
 		return null;
 	}
 
-	private List<PathNode> BFS(PriorityQueue<PathNode> prioQueue, Map<Long, PathNode> visited, boolean front) {
+	private void BFS(PriorityQueue<PathNode> prioQueue, Map<Long, PathNode> visited, boolean front) {
 		List<PathNode> neighbours = null;
 		PathNode currentNode = prioQueue.dequeue();
 		if (!visited.containsKey(currentNode.getId())) {
@@ -203,7 +203,6 @@ public class BidirectionalDijkstra<W extends IBaseWaySegment> implements IRoutin
         		prioQueue.enqueue(neighbour);
 	        }
 		}
-		return neighbours;
 	}
 
 	// read connected segments regarding their direction!
@@ -213,7 +212,7 @@ public class BidirectionalDijkstra<W extends IBaseWaySegment> implements IRoutin
 		Node endNode = null;
 		
 		if (log.isDebugEnabled()) {
-			log.debug("getting neighbours from Neo4j node with ID " + currentNode.getNeo4jNode().getId() + " and segment ID " + currentNode.getId());
+			log.debug("getting neighbours from Neo4j node with ID " + currentNode.getNeo4jNode().getId()); // + " and segment ID " + currentNode.getId());
 			if (currentNode.getLastRelationship() != null) {
 				log.debug("last relationship's connection ID = " + currentNode.getLastRelationship().getProperty(WayGraphConstants.CONNECTION_NODE_ID));
 				log.debug("current segment's startNodeId = " + currentNode.getNeo4jNode().getProperty(WayGraphConstants.SEGMENT_STARTNODE_ID) + 
@@ -249,9 +248,14 @@ public class BidirectionalDijkstra<W extends IBaseWaySegment> implements IRoutin
 		Node endNode;
 		for (Relationship rel : relationships) {
 			endNode = rel.getEndNode();
-			nodes.add(new PathNode(getId(endNode), null, endNode, rel, 
-					costEvaluator.getCost(rel, Direction.OUTGOING), 
-					currentNode));
+			PathNode node = new PathNode(getId(endNode), null, endNode, rel, 
+					costEvaluator.getCost(rel, Direction.OUTGOING), currentNode);
+			
+			if (log.isDebugEnabled()) {
+				node.setSegmentId((long) endNode.getProperty(WayGraphConstants.SEGMENT_ID));
+			}
+
+			nodes.add(node);
 		}
 		
 		return nodes;
@@ -264,9 +268,14 @@ public class BidirectionalDijkstra<W extends IBaseWaySegment> implements IRoutin
 		Node startNode;
 		for (Relationship rel : relationships) {
 			startNode = rel.getStartNode();
-			nodes.add(new PathNode(getId(startNode), null, startNode, rel, 
-					costEvaluator.getCost(rel, Direction.OUTGOING), 
-					currentNode));
+			PathNode node = new PathNode(getId(startNode), null, startNode, rel, 
+					costEvaluator.getCost(rel, Direction.OUTGOING), currentNode);
+			
+			if (log.isDebugEnabled()) {
+				node.setSegmentId((long) startNode.getProperty(WayGraphConstants.SEGMENT_ID));
+			}
+
+			nodes.add(node);
 		}
 		
 		return nodes;
@@ -360,12 +369,18 @@ public class BidirectionalDijkstra<W extends IBaseWaySegment> implements IRoutin
 		if (startNode == null) {
 			return null;
 		} else {
-			return new PathNode(startNode.getId(),
+			PathNode start = new PathNode(startNode.getId(),
 							null,
 							startNode, 
 							null, 
 							0, 
 							null);
+
+			if (log.isDebugEnabled()) {
+				start.setSegmentId((long) startNode.getProperty(WayGraphConstants.SEGMENT_ID));
+			}
+			
+			return start;
 		}
 	}
 
