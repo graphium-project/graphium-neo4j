@@ -122,7 +122,10 @@ public class BidirectionalDijkstra<W extends IBaseWaySegment> implements IRoutin
 			List<PathNode> neighboursF = BFS(prioQueueF, visitedF, true);
 			List<PathNode> neighboursB = BFS(prioQueueB, visitedB, false);
 			
-			tmpIntersectingNodes = getIntersectingNode(neighboursF, neighboursB, visitedF, visitedB);
+			Map<Long, PathNode> allFoundNodesF = createPathNodeMap(visitedF, neighboursF);
+			Map<Long, PathNode> allFoundNodesB = createPathNodeMap(visitedB, neighboursB);
+			
+			tmpIntersectingNodes = getIntersectingNode(neighboursF, neighboursB, allFoundNodesF, allFoundNodesB);
 			
 			if (tmpIntersectingNodes != null) {
 				// We found an intersecting node v.
@@ -160,25 +163,49 @@ public class BidirectionalDijkstra<W extends IBaseWaySegment> implements IRoutin
 		return null;
 	}
 
+	private Map<Long, PathNode> createPathNodeMap(Map<Long, PathNode> visited, List<PathNode> neighbours) {
+		Map<Long, PathNode> allFoundNodes = new Long2ObjectOpenHashMap<>(visited);
+		if (neighbours != null) {
+			for (PathNode neighbour : neighbours) {
+				allFoundNodes.put(neighbour.getId(), neighbour);
+			}
+		}
+		return allFoundNodes;
+	}
+
 	private PathNode[] getIntersectingNode(List<PathNode> neighboursF, List<PathNode> neighboursB,
 			Map<Long, PathNode> visitedF, Map<Long, PathNode> visitedB) {
 		if (neighboursF != null) {
 			for (PathNode neighbourF : neighboursF) {
 				if (visitedB.containsKey(neighbourF.getId())) {
-					PathNode[] intersectingNodes = new PathNode[2];
-					intersectingNodes[0] = neighbourF;
-					intersectingNodes[1] = visitedB.get(neighbourF.getId());
-					return intersectingNodes;
+					PathNode intersectingCandidateB = visitedB.get(neighbourF.getId());
+					if (intersectingCandidateB.getLastRelationship() == null ||
+						neighbourF.getLastRelationship() == null ||
+						!((Long)intersectingCandidateB.getLastRelationship().getProperty(WayGraphConstants.CONNECTION_NODE_ID)).equals(
+						  (Long)neighbourF.getLastRelationship().getProperty(WayGraphConstants.CONNECTION_NODE_ID))) {
+						// only valid if paths hit segment/node from diffent directions
+						PathNode[] intersectingNodes = new PathNode[2];
+						intersectingNodes[0] = neighbourF;
+						intersectingNodes[1] = intersectingCandidateB;
+						return intersectingNodes;
+					}
 				}
 			}
 		}
 		if (neighboursB != null) {
 			for (PathNode neighbourB : neighboursB) {
 				if (visitedF.containsKey(neighbourB.getId())) {
-					PathNode[] intersectingNodes = new PathNode[2];
-					intersectingNodes[0] = visitedF.get(neighbourB.getId());
-					intersectingNodes[1] = neighbourB;
-					return intersectingNodes;
+					PathNode intersectingCandidateF = visitedF.get(neighbourB.getId());
+					if (intersectingCandidateF.getLastRelationship() == null ||
+						neighbourB.getLastRelationship() == null ||
+						!((Long)intersectingCandidateF.getLastRelationship().getProperty(WayGraphConstants.CONNECTION_NODE_ID)).equals(
+						  (Long)neighbourB.getLastRelationship().getProperty(WayGraphConstants.CONNECTION_NODE_ID))) {
+							// only valid if paths hit segment/node from diffent directions
+							PathNode[] intersectingNodes = new PathNode[2];
+							intersectingNodes[0] = intersectingCandidateF;
+							intersectingNodes[1] = neighbourB;
+							return intersectingNodes;
+						}
 				}
 			}
 		}			
@@ -213,7 +240,7 @@ public class BidirectionalDijkstra<W extends IBaseWaySegment> implements IRoutin
 		Node endNode = null;
 		
 		if (log.isDebugEnabled()) {
-			log.debug("getting neighbours from Neo4j node with ID " + currentNode.getNeo4jNode().getId() + " and segment ID " + currentNode.getId());
+			log.debug("getting neighbours from Neo4j node with ID " + currentNode.getNeo4jNode().getId()); // + " and segment ID " + currentNode.getId());
 			if (currentNode.getLastRelationship() != null) {
 				log.debug("last relationship's connection ID = " + currentNode.getLastRelationship().getProperty(WayGraphConstants.CONNECTION_NODE_ID));
 				log.debug("current segment's startNodeId = " + currentNode.getNeo4jNode().getProperty(WayGraphConstants.SEGMENT_STARTNODE_ID) + 
@@ -249,9 +276,14 @@ public class BidirectionalDijkstra<W extends IBaseWaySegment> implements IRoutin
 		Node endNode;
 		for (Relationship rel : relationships) {
 			endNode = rel.getEndNode();
-			nodes.add(new PathNode(getId(endNode), null, endNode, rel, 
-					costEvaluator.getCost(rel, Direction.OUTGOING), 
-					currentNode));
+			PathNode node = new PathNode(getId(endNode), null, endNode, rel, 
+					costEvaluator.getCost(rel, Direction.OUTGOING), currentNode);
+			
+			if (log.isDebugEnabled()) {
+				node.setSegmentId((long) endNode.getProperty(WayGraphConstants.SEGMENT_ID));
+			}
+
+			nodes.add(node);
 		}
 		
 		return nodes;
@@ -264,9 +296,14 @@ public class BidirectionalDijkstra<W extends IBaseWaySegment> implements IRoutin
 		Node startNode;
 		for (Relationship rel : relationships) {
 			startNode = rel.getStartNode();
-			nodes.add(new PathNode(getId(startNode), null, startNode, rel, 
-					costEvaluator.getCost(rel, Direction.OUTGOING), 
-					currentNode));
+			PathNode node = new PathNode(getId(startNode), null, startNode, rel, 
+					costEvaluator.getCost(rel, Direction.OUTGOING), currentNode);
+			
+			if (log.isDebugEnabled()) {
+				node.setSegmentId((long) startNode.getProperty(WayGraphConstants.SEGMENT_ID));
+			}
+
+			nodes.add(node);
 		}
 		
 		return nodes;
@@ -360,12 +397,18 @@ public class BidirectionalDijkstra<W extends IBaseWaySegment> implements IRoutin
 		if (startNode == null) {
 			return null;
 		} else {
-			return new PathNode(startNode.getId(),
+			PathNode start = new PathNode(startNode.getId(),
 							null,
 							startNode, 
 							null, 
 							0, 
 							null);
+
+			if (log.isDebugEnabled()) {
+				start.setSegmentId((long) startNode.getProperty(WayGraphConstants.SEGMENT_ID));
+			}
+			
+			return start;
 		}
 	}
 
