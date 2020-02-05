@@ -18,6 +18,7 @@
 package at.srfg.graphium.mapmatching.neo4j.matcher.impl;
 
 
+import org.neo4j.graphdb.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +33,8 @@ import at.srfg.graphium.model.IWayGraphVersionMetadata;
 import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
 import at.srfg.graphium.neo4j.persistence.Neo4jUtil;
+import at.srfg.graphium.routing.exception.RoutingParameterException;
+import at.srfg.graphium.routing.model.IRoutingOptions;
 import at.srfg.graphium.routing.service.IRoutingService;
 
 public class Neo4jMapMatcher implements IMapMatcher {
@@ -44,7 +47,7 @@ public class Neo4jMapMatcher implements IMapMatcher {
 
 	private IGraphVersionMetadataService metadataService;
 	
-	private IRoutingService<IWaySegment> routingService;
+	private IRoutingService<IWaySegment, Node, IRoutingOptions> routingService;
 
 	private MapMatcherGlobalStatistics globalStatistics;
 	
@@ -58,7 +61,7 @@ public class Neo4jMapMatcher implements IMapMatcher {
 	private String csvLoggerName = null;
 
 	@Override
-	public IMapMatcherTask getTask(ITrack origTrack, String routingMode) throws GraphNotExistsException {
+	public IMapMatcherTask getTask(ITrack origTrack, String routingMode) throws GraphNotExistsException, RoutingParameterException {
 		IWayGraphVersionMetadata graphMetadata = metadataService.getCurrentWayGraphVersionMetadata(defaultGraphName);
 		if (graphMetadata == null) {
 			throw new GraphNotExistsException("Default Graph not found", defaultGraphName);
@@ -68,7 +71,7 @@ public class Neo4jMapMatcher implements IMapMatcher {
 	}
 	
 	@Override
-	public IMapMatcherTask getTask(String graphName, ITrack origTrack, String routingMode) throws GraphNotExistsException {
+	public IMapMatcherTask getTask(String graphName, ITrack origTrack, String routingMode) throws GraphNotExistsException, RoutingParameterException {
 		IWayGraphVersionMetadata graphMetadata = metadataService.getCurrentWayGraphVersionMetadata(graphName);
 		if (graphMetadata == null) {
 			throw new GraphNotExistsException("Graph " + graphName + " not found", graphName);
@@ -78,7 +81,7 @@ public class Neo4jMapMatcher implements IMapMatcher {
 	}
 	
 	@Override
-	public IMapMatcherTask getTask(String graphName, String graphVersion, ITrack origTrack, String routingMode) throws GraphNotExistsException {
+	public IMapMatcherTask getTask(String graphName, String graphVersion, ITrack origTrack, String routingMode) throws GraphNotExistsException, RoutingParameterException {
 		IWayGraphVersionMetadata graphMetadata = metadataService.getWayGraphVersionMetadata(graphName, graphVersion);
 		if (graphMetadata == null) {
 			throw new GraphNotExistsException("Graph not found", graphName);
@@ -87,7 +90,7 @@ public class Neo4jMapMatcher implements IMapMatcher {
 		return createTask(graphMetadata, origTrack, routingMode);
 	}
 	
-	protected IMapMatcherTask createTask(IWayGraphVersionMetadata graphMetadata, ITrack origTrack, String routingMode) {
+	protected IMapMatcherTask createTask(IWayGraphVersionMetadata graphMetadata, ITrack origTrack, String routingMode) throws RoutingParameterException {
 		MapMatchingProperties taskProperties = properties.clone();
 		if (routingMode != null) {
 			taskProperties.setRoutingMode(routingMode);
@@ -108,7 +111,7 @@ public class Neo4jMapMatcher implements IMapMatcher {
 		return graphDao;
 	}
 
-	public IRoutingService<IWaySegment> getRoutingService() {
+	public IRoutingService<IWaySegment, Node, IRoutingOptions> getRoutingService() {
 		return routingService;
 	}
 	
@@ -136,7 +139,7 @@ public class Neo4jMapMatcher implements IMapMatcher {
 		this.graphDao = graphDao;
 	}
 
-	public void setRoutingService(IRoutingService<IWaySegment> routingService) {
+	public void setRoutingService(IRoutingService<IWaySegment, Node, IRoutingOptions> routingService) {
 		this.routingService = routingService;
 	}
 

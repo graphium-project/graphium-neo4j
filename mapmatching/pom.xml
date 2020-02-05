@@ -23,6 +23,11 @@
 		
 		<dependency>
 			<groupId>at.srfg.graphium</groupId>
+			<artifactId>graphium-routing</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>at.srfg.graphium</groupId>
 			<artifactId>graphium-mapmatching-client</artifactId>
 			<version>${graphium-neo4j.version}</version>
 		</dependency>

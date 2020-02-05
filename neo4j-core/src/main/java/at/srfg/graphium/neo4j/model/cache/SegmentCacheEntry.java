@@ -78,6 +78,22 @@ public class SegmentCacheEntry {
 		return (int) Math.round(length / (speed / 3.6));
 	}
 
+	public short getMaxSpeedTow() {
+		return maxSpeedTow;
+	}
+
+	public void setMaxSpeedTow(short maxSpeedTow) {
+		this.maxSpeedTow = maxSpeedTow;
+	}
+
+	public short getMaxSpeedBkw() {
+		return maxSpeedBkw;
+	}
+
+	public void setMaxSpeedBkw(short maxSpeedBkw) {
+		this.maxSpeedBkw = maxSpeedBkw;
+	}
+
 	public short getFrc() {
 		return frc;
 	}

@@ -34,6 +34,7 @@ import at.srfg.graphium.mapmatching.model.ITrack;
 import at.srfg.graphium.mapmatching.timer.MapMatcherTimerService;
 import at.srfg.graphium.mapmatching.timer.TimedMapMatcherTask;
 import at.srfg.graphium.mapmatching.timer.TimedMapMatcherTaskFactory;
+import at.srfg.graphium.routing.exception.RoutingParameterException;
 
 /**
  * @author mwimmer
@@ -45,7 +46,7 @@ public class MapMatchingServiceImpl implements IMapMatchingService {
 
 	@Override
 	public List<IMatchedBranch> matchTrack(String graphName, String graphVersion, ITrack track, Long startSegmentId, List<IMatchedBranch> previousBranches, 
-			int timeoutInMs, boolean onlyBestResult, String routingMode) throws GraphNotExistsException, CancellationException {
+			int timeoutInMs, boolean onlyBestResult, String routingMode) throws GraphNotExistsException, RoutingParameterException, CancellationException {
 		
 		TimedMapMatcherTask task = mapMatcherTaskFactory.getTask(graphName, graphVersion, track, startSegmentId, previousBranches, timeoutInMs, mapMatcherTimerService, routingMode);
 		

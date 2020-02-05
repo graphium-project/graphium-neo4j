@@ -45,6 +45,7 @@ import at.srfg.graphium.mapmatching.model.IMatchedBranch;
 import at.srfg.graphium.mapmatching.model.ITrack;
 import at.srfg.graphium.model.IWayGraphVersionMetadata;
 import at.srfg.graphium.model.State;
+import at.srfg.graphium.routing.exception.RoutingParameterException;
 
 /**
  * @author mwimmer
@@ -68,7 +69,7 @@ public class MapMatchingController {
     		@RequestParam(name = "timeoutMs", required = false, defaultValue = "10000") int timeout, // timeout in milliseconds
     		@RequestParam(name = "outputVerbose", required = false, defaultValue = "false") boolean outputVerbose, // if true return additionally waysegments 
     		@RequestParam(name = "routingMode", required = false, defaultValue = "car") String routingMode, // optional routingMode
-    		@RequestBody TrackDTO trackDto) throws GraphNotExistsException, CancellationException {
+    		@RequestBody TrackDTO trackDto) throws GraphNotExistsException, RoutingParameterException, CancellationException {
 
 		ITrack track = trackAdapter.adapt(trackDto);
 		
@@ -96,7 +97,7 @@ public class MapMatchingController {
     		@RequestParam(name = "timeoutMs", required = false, defaultValue = "10000") int timeout, // timeout in milliseconds
     		@RequestParam(name = "outputVerbose", required = false, defaultValue = "false") boolean outputVerbose, // if true return additionally waysegments 
     		@RequestParam(name = "routingMode", required = false, defaultValue = "car") String routingMode, // optional routingMode
-    		@RequestBody TrackDTO trackDto) throws GraphNotExistsException, CancellationException {
+    		@RequestBody TrackDTO trackDto) throws GraphNotExistsException, RoutingParameterException, CancellationException {
 
 		ITrack track = trackAdapter.adapt(trackDto);
 		return match(graphName, null, track, startSegmentId, timeout, outputVerbose, routingMode);
@@ -104,7 +105,7 @@ public class MapMatchingController {
 	}
 
 	private MatchedBranchDTO match(String graphName, String graphVersion, ITrack track, Long startSegmentId, int timeout, boolean outputVerbose, String routingMode) 
-		throws GraphNotExistsException {
+		throws GraphNotExistsException, RoutingParameterException {
 		
 		List<IMatchedBranch> branches = mapMatchingService.matchTrack(graphName, graphVersion, track, startSegmentId, null, timeout, true, routingMode);
 		
@@ -132,6 +133,12 @@ public class MapMatchingController {
 	@ExceptionHandler(GraphNotExistsException.class)
 	public void handleGraphNotExistsException(
 			GraphNotExistsException ex, HttpServletRequest request) {
+	}
+
+	@ResponseStatus(value = HttpStatus.BAD_REQUEST, reason = "routing parameter not valid")
+	@ExceptionHandler(RoutingParameterException.class)
+	public void handleRoutingParameterException(
+			RoutingParameterException ex, HttpServletRequest request) {
 	}
 
 	public IAdapter<ITrack, TrackDTO> getTrackAdapter() {

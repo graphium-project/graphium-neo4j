@@ -54,6 +54,7 @@ import at.srfg.graphium.mapmatching.weighting.impl.RouteDistanceWeightingStrateg
 import at.srfg.graphium.model.IWayGraphVersionMetadata;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
 import at.srfg.graphium.neo4j.persistence.Neo4jUtil;
+import at.srfg.graphium.routing.exception.RoutingParameterException;
 
 public class MapMatchingTask implements IMapMatcherTask {
 
@@ -85,14 +86,14 @@ public class MapMatchingTask implements IMapMatcherTask {
 	private static Logger csvLogger = null;
 
 	public MapMatchingTask(Neo4jMapMatcher mapMatcher, MapMatchingProperties properties, IWayGraphVersionMetadata graphMetadata, Neo4jUtil neo4jUtil, 
-			ITrack origTrack, String csvLoggerName, MapMatcherGlobalStatistics globalStatistics) {
+			ITrack origTrack, String csvLoggerName, MapMatcherGlobalStatistics globalStatistics) throws RoutingParameterException {
 		this(mapMatcher, properties, graphMetadata, neo4jUtil, origTrack, new RouteDistanceWeightingStrategyFactory(), 
 				csvLoggerName, globalStatistics);
 	}
 
 	public MapMatchingTask(Neo4jMapMatcher mapMatcher, MapMatchingProperties properties, IWayGraphVersionMetadata graphMetadata, 
 			Neo4jUtil neo4jUtil, ITrack origTrack, IWeightingStrategyFactory weightingStrategyFactory, String csvLoggerName,
-			MapMatcherGlobalStatistics globalStatistics) {
+			MapMatcherGlobalStatistics globalStatistics) throws RoutingParameterException {
 		this.mapMatcher = mapMatcher;
 		this.graphMetadata = graphMetadata;
 		this.track = origTrack;
@@ -770,8 +771,8 @@ public class MapMatchingTask implements IMapMatcherTask {
 	
 	public void cancel() throws InterruptedException {
 		log.info("Cancel requested for track " + track.getId());
+		cancelRequested = true;
 		throw new InterruptedException();
-//		cancelRequested = true;
 	}
 	
 	private void logCsv() {

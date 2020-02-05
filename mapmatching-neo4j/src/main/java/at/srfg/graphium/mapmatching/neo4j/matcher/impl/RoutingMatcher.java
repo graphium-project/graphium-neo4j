@@ -50,6 +50,8 @@ import at.srfg.graphium.mapmatching.statistics.MapMatcherStatistics;
 import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
+import at.srfg.graphium.routing.exception.RoutingParameterException;
+import at.srfg.graphium.routing.exception.UnkownRoutingAlgoException;
 import at.srfg.graphium.routing.model.IRoute;
 import at.srfg.graphium.routing.model.IRoutingOptions;
 import at.srfg.graphium.routing.model.impl.RoutingAlgorithms;
@@ -65,7 +67,7 @@ public class RoutingMatcher {
 	private MapMatchingTask matchingTask;
 	private IMapMatchingProperties properties;
 	
-	private IRoutingService<IWaySegment> routingClient;
+	private IRoutingService<IWaySegment, Node, IRoutingOptions> routingClient;
 	private IRoutingOptions routingOptions;
 	private TrackSanitizer trackSanitizer;
 	
@@ -81,7 +83,7 @@ public class RoutingMatcher {
 	private int skippedPointsThresholdToCreateNewPath = 3;
 	
 	public RoutingMatcher(MapMatchingTask mapMatchingTask,
-			IRoutingService<IWaySegment> routingClient, IMapMatchingProperties properties, TrackSanitizer trackSanitizer) {
+			IRoutingService<IWaySegment, Node, IRoutingOptions> routingClient, IMapMatchingProperties properties, TrackSanitizer trackSanitizer) throws RoutingParameterException {
 		this.matchingTask = mapMatchingTask;
 		this.routingClient = routingClient;
 		this.properties = properties;
@@ -93,7 +95,7 @@ public class RoutingMatcher {
 		} else {
 			routingMode = RoutingMode.CAR;
 		}
-		RoutingCriteria routingCriteria = RoutingCriteria.fromValue(properties.getRoutingCriteria());
+		RoutingCriteria routingCriteria = (RoutingCriteria) RoutingCriteria.fromValue(properties.getRoutingCriteria());
 		RoutingAlgorithms routingAlgorithm;
 		if (properties.getRoutingAlgorithm() != null && properties.getRoutingAlgorithm().length() > 0) {
 			routingAlgorithm = RoutingAlgorithms.valueOf(properties.getRoutingAlgorithm());
@@ -101,8 +103,10 @@ public class RoutingMatcher {
 			routingAlgorithm = RoutingAlgorithms.DIJKSTRA;
 		}
 		
-		routingOptions = new RoutingOptionsImpl(matchingTask.getGraphName(), mapMatchingTask.getGraphVersion(),
-				routingAlgorithm, routingCriteria, routingMode);
+		routingOptions = new RoutingOptionsImpl(matchingTask.getGraphName(), mapMatchingTask.getGraphVersion());
+		routingOptions.setAlgorithm(routingAlgorithm);
+		routingOptions.setCriteria(routingCriteria);
+		routingOptions.setMode(routingMode);
 		
 		cachedRoutes = CacheBuilder.newBuilder()
 								   .maximumSize(cacheSize)
@@ -537,10 +541,17 @@ public class RoutingMatcher {
 		
 		if (validPathExists(startNode, targetNode, maxSegmentsForShortestPath)) {
 		
+			List<Long> segmentIds = new ArrayList<>();
+			segmentIds.add(fromSegment.getId());
+			segmentIds.add(toSegment.getId());
+			
 			// if a path can be found with at most 'maxSegmentsForShortestPath' segments, run exact routing 
-			IRoute<IWaySegment> route = routingClient.route(routingOptions, 
-					Collections.singletonList(startNode), 
-					Collections.singletonList(targetNode));
+			IRoute<IWaySegment, Node> route = null;
+			try {
+				route = routingClient.routePerSegmentIds(routingOptions, segmentIds);
+			} catch (UnkownRoutingAlgoException e) {
+				log.error("Could not route!", e);
+			}
 			
 			if (route != null && route.getSegments() != null && route.getSegments().size() > 1) {
 				List<IWaySegment> routeSegments = route.getSegments();

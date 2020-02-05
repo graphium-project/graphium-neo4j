@@ -1,6 +1,6 @@
 /**
  * Graphium Neo4j - Module of Graphium for routing services via Neo4j
- * Copyright © 2018 Salzburg Research Forschungsgesellschaft (graphium@salzburgresearch.at)
+ * Copyright © 2020 Salzburg Research Forschungsgesellschaft (graphium@salzburgresearch.at)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,29 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package at.srfg.graphium.routing.model.impl;
+package at.srfg.graphium.routing.neo4j.evaluators;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+import org.neo4j.graphalgo.CostEvaluator;
+import org.neo4j.graphalgo.WeightedPath;
+import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.Relationship;
 
-import at.srfg.graphium.routing.model.IPathSegment;
+public interface IPathAwareCostEvalutator<T> extends CostEvaluator<T> {
 
-public class PathSegmentImpl implements IPathSegment{
-	@JsonProperty(value="segment")
-	private long segmentId;
-	@JsonProperty(value="direction")
-	private boolean direction;
-	
-	
-	public long getSegmentId() {
-		return segmentId;
-	}
-	public void setSegmentId(long segmentId) {
-		this.segmentId = segmentId;
-	}
-	public boolean isDirection() {
-		return direction;
-	}
-	public void setDirection(boolean direction) {
-		this.direction = direction;
-	}
+    T getCost( Relationship relationship, Direction direction, WeightedPath path);
+
+	Double getCost(Relationship relationship, Direction direction, Double weight);
+    
 }
