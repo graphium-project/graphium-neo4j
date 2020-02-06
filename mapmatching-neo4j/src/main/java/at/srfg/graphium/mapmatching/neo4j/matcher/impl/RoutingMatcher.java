@@ -529,8 +529,12 @@ public class RoutingMatcher {
 							previousSegment.getEndNodeId() == currentSegment.getEndNodeId()) {
 							// the first segment was left through the end node
 							direction = Direction.START_TO_END;
-						} else {
+						} else if (previousSegment.getStartNodeId() == currentSegment.getStartNodeId() ||
+								previousSegment.getStartNodeId() == currentSegment.getEndNodeId()) {
+							// the first segment was left through the start node
 							direction = Direction.END_TO_START;
+						} else {
+							direction = Direction.CENTER_TO_CENTER;
 						}
 						
 						addSegment(segments, previousSegment, direction);
@@ -547,30 +551,52 @@ public class RoutingMatcher {
 							if (currentSegment.getStartNodeId() == nextSegment.getStartNodeId() ||
 								currentSegment.getStartNodeId() == nextSegment.getEndNodeId()) {
 								direction = Direction.START_TO_START;
-							} else {
+							} else if (currentSegment.getEndNodeId() == nextSegment.getStartNodeId() ||
+									currentSegment.getEndNodeId() == nextSegment.getEndNodeId()) {
 								direction = Direction.START_TO_END;
+							} else {
+								direction = Direction.START_TO_CENTER;
 							}
-						} else {						
+						} else {
 							direction = Direction.START_TO_END;
 						}
-					} else {
+					} else if (currentSegment.getEndNodeId() == previousSegment.getEndNodeId() ||
+							currentSegment.getEndNodeId() == previousSegment.getStartNodeId()) {
 						// the current segment was entered through the end node
 						if (i < routeSegments.size() - 1) {
 							IWaySegment nextSegment = routeSegments.get(i + 1);
 							if (currentSegment.getEndNodeId() == nextSegment.getStartNodeId() ||
 								currentSegment.getEndNodeId() == nextSegment.getEndNodeId()) {
 								direction = Direction.END_TO_END;
-							} else {
+							} else if (currentSegment.getStartNodeId() == nextSegment.getStartNodeId() ||
+									currentSegment.getStartNodeId() == nextSegment.getEndNodeId()) {
 								direction = Direction.END_TO_START;
+							} else {
+								direction = Direction.END_TO_CENTER;
 							}
-						} else {						
+						} else {
 							direction = Direction.END_TO_START;
+						}
+					} else {
+						// the current segment was entered through the center
+						if (i < routeSegments.size() - 1) {
+							IWaySegment nextSegment = routeSegments.get(i + 1);
+							if (currentSegment.getEndNodeId() == nextSegment.getStartNodeId() ||
+								currentSegment.getEndNodeId() == nextSegment.getEndNodeId()) {
+								direction = Direction.CENTER_TO_END;
+							} else if (currentSegment.getStartNodeId() == nextSegment.getStartNodeId() ||
+									currentSegment.getStartNodeId() == nextSegment.getEndNodeId()) {
+								direction = Direction.CENTER_TO_START;
+							} else {
+								direction = Direction.CENTER_TO_CENTER;
+							}
+						} else {
+							direction = Direction.CENTER_TO_CENTER;
 						}
 					}
 					
 					addSegment(segments, currentSegment, direction);
 				}
-				
 			}
 		} else {
 			log.debug("routing not possible");
@@ -590,8 +616,9 @@ public class RoutingMatcher {
 	private boolean validPathExists(Node startNode, Node targetNode,
 			int maxSegmentsForShortestPath) {
 		PathExpander<Object> expander = PathExpanders.forTypesAndDirections(
-												WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE, org.neo4j.graphdb.Direction.OUTGOING, 
-												WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE, org.neo4j.graphdb.Direction.OUTGOING);
+				WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE, org.neo4j.graphdb.Direction.OUTGOING, 
+				WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE, org.neo4j.graphdb.Direction.OUTGOING, 
+				WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE, org.neo4j.graphdb.Direction.OUTGOING);
 		
 		PathFinder<Path> pathFinder = GraphAlgoFactory.shortestPath(expander, maxSegmentsForShortestPath);
 		Path path = pathFinder.findSinglePath(startNode, targetNode);

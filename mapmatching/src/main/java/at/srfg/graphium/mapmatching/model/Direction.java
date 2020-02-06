@@ -25,30 +25,61 @@ public enum Direction {
 	/**
 	 * The way was entered at the start node and left at the end node.
 	 */
-	START_TO_END(true, false),
+	START_TO_END(true, false, false, true),
 
 	/**
 	 * The way was entered at the end node and left at the start node.
 	 */
-	END_TO_START(false, true),
+	END_TO_START(false, true, true, false),
 	
 	/**
 	 * The way was entered at the start node and left again at the start node (u-turn).
 	 */
-	START_TO_START(true, true),
+	START_TO_START(true, true, false, false),
 	
 	/**
 	 * The way was entered at the end node and left again at the end node (u-turn).
 	 */
-	END_TO_END(false, false);
+	END_TO_END(false, false, true, true),
+	
+	/**
+	 * The way was entered without a node and left at the start node (lane change)
+	 */
+	CENTER_TO_START(false, true, false, false),
+	
+	/**
+	 * The way was entered without a node and left at the end node (lane change)
+	 */
+	CENTER_TO_END(false, false, false, true),
+	
+	/**
+	 * The way was entered at the start node and left without a node (lane change)
+	 */
+	START_TO_CENTER(true, false, false, false),
+	
+	/**
+	 * The way was entered at the end node and left without a node (lane change)
+	 */
+	END_TO_CENTER(false, false, true, false),
+	
+	/**
+	 * The way was entered and left without a node (lane change).
+	 */
+	CENTER_TO_CENTER(false, false, false, false);
 
 	private boolean enteringThroughStartNode;
 	private boolean leavingThroughStartNode;
+	private boolean enteringThroughEndNode;
+	private boolean leavingThroughEndNode;
 	
 	private Direction(boolean enteringThroughStartNode,
-			boolean leavingThroughStartNode) {
+			boolean leavingThroughStartNode,
+			boolean enteringThroughEndNode,
+			boolean leavingThroughEndNode) {
 		this.enteringThroughStartNode = enteringThroughStartNode;
 		this.leavingThroughStartNode = leavingThroughStartNode;
+		this.enteringThroughEndNode = enteringThroughEndNode;
+		this.leavingThroughEndNode = leavingThroughEndNode;
 	}
 	
 	public boolean isEnteringThroughStartNode() {
@@ -56,7 +87,7 @@ public enum Direction {
 	}
 	
 	public boolean isEnteringThroughEndNode() {
-		return !enteringThroughStartNode;
+		return enteringThroughEndNode;
 	}
 	
 	public boolean isLeavingThroughStartNode() {
@@ -64,6 +95,6 @@ public enum Direction {
 	}
 	
 	public boolean isLeavingThroughEndNode() {
-		return !leavingThroughStartNode;
+		return leavingThroughEndNode;
 	}
 }

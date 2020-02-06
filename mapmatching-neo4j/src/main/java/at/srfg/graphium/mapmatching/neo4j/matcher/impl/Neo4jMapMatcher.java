@@ -18,16 +18,21 @@
 package at.srfg.graphium.mapmatching.neo4j.matcher.impl;
 
 
+import javax.annotation.Resource;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import at.srfg.graphium.core.exception.GraphNotExistsException;
+import at.srfg.graphium.core.helper.GraphMetadataHelper;
 import at.srfg.graphium.core.service.IGraphVersionMetadataService;
+import at.srfg.graphium.io.adapter.exception.NoSegmentAdapterFoundException;
 import at.srfg.graphium.mapmatching.matcher.IMapMatcher;
 import at.srfg.graphium.mapmatching.matcher.IMapMatcherTask;
 import at.srfg.graphium.mapmatching.model.ITrack;
 import at.srfg.graphium.mapmatching.properties.impl.MapMatchingProperties;
 import at.srfg.graphium.mapmatching.statistics.MapMatcherGlobalStatistics;
+import at.srfg.graphium.model.IBaseSegment;
 import at.srfg.graphium.model.IWayGraphVersionMetadata;
 import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
@@ -38,8 +43,9 @@ public class Neo4jMapMatcher implements IMapMatcher {
 	
 	private static Logger log = LoggerFactory.getLogger(Neo4jMapMatcher.class);
 	
-	private MapMatchingProperties properties = new MapMatchingProperties();
-		
+	private MapMatchingProperties properties;
+	private MapMatchingProperties propertiesHd;
+	
 	private INeo4jWayGraphReadDao graphDao;
 
 	private IGraphVersionMetadataService metadataService;
@@ -52,10 +58,8 @@ public class Neo4jMapMatcher implements IMapMatcher {
 	
 	private String defaultGraphName = null;
 	
-	// Neo4j graph metadata
-//	private IWayGraphVersionMetadata graphMetadata = null;
-	
-	private String csvLoggerName = null;
+	@Resource(name="graphMetadataHelper")
+	private GraphMetadataHelper<IBaseSegment> graphMetadataHelper; 
 
 	@Override
 	public IMapMatcherTask getTask(ITrack origTrack, String routingMode) throws GraphNotExistsException {
@@ -88,20 +92,35 @@ public class Neo4jMapMatcher implements IMapMatcher {
 	}
 	
 	protected IMapMatcherTask createTask(IWayGraphVersionMetadata graphMetadata, ITrack origTrack, String routingMode) {
-		MapMatchingProperties taskProperties = properties.clone();
+		MapMatchingProperties taskProperties;
+		try {
+			if (graphMetadataHelper.isHDGraph(graphMetadata)) {
+				taskProperties = propertiesHd.clone();
+			} else {
+				taskProperties = properties.clone();
+			}
+		} catch (NoSegmentAdapterFoundException e) {
+			taskProperties = properties.clone();
+		}
 		if (routingMode != null) {
 			taskProperties.setRoutingMode(routingMode);
 		}
 		
 		MapMatchingTask matchingTask = new MapMatchingTask(this, taskProperties, graphMetadata, neo4jUtil, origTrack, 
-				csvLoggerName, globalStatistics);
+				properties.getCsvLoggerName(), globalStatistics);
 		return matchingTask;
 	}
 
 	// === GETTERS AND SETTERS ===
 	
+	@Override
 	public MapMatchingProperties getProperties() {
 		return properties;
+	}
+	
+	@Override
+	public MapMatchingProperties getPropertiesHd() {
+		return propertiesHd;
 	}
 	
 	public INeo4jWayGraphReadDao getGraphDao() {
@@ -128,8 +147,14 @@ public class Neo4jMapMatcher implements IMapMatcher {
 		this.metadataService = metadataService;
 	}
 
+	@Override
 	public void setProperties(MapMatchingProperties properties) {
 		this.properties = properties;
+	}
+
+	@Override
+	public void setPropertiesHd(MapMatchingProperties propertiesHd) {
+		this.propertiesHd = propertiesHd;
 	}
 
 	public void setGraphDao(INeo4jWayGraphReadDao graphDao) {
@@ -138,76 +163,6 @@ public class Neo4jMapMatcher implements IMapMatcher {
 
 	public void setRoutingService(IRoutingService<IWaySegment> routingService) {
 		this.routingService = routingService;
-	}
-
-	@Override
-	public int getMaxMatchingRadiusMeter() {
-		return properties.getMaxMatchingRadiusMeter();
-	}
-
-	@Override
-	public void setMaxMatchingRadiusMeter(int maxMatchingRadiusMeter) {
-		properties.setMaxMatchingRadiusMeter(maxMatchingRadiusMeter);
-	}
-
-	@Override
-	public int getSrid() {
-		return properties.getSrid();
-	}
-
-	@Override
-	public void setSrid(int srid) {
-		properties.setSrid(srid);
-	}
-
-	@Override
-	public int getIntialRadiusMeter() {
-		return properties.getIntialRadiusMeter();
-	}
-
-	@Override
-	public void setIntialRadiusMeter(int intialRadiusMeter) {
-		properties.setIntialRadiusMeter(intialRadiusMeter);
-	}
-
-	@Override
-	public int getNrOfPointsForInitialMatch() {
-		return properties.getNrOfPointsForInitialMatch();
-	}
-
-	@Override
-	public void setNrOfPointsForInitialMatch(int nrOfPointsForInitialMatch) {
-		properties.setNrOfPointsForInitialMatch(nrOfPointsForInitialMatch);
-	}
-
-	@Override
-	public int getMaxSegmentsForShortestPath() {
-		return properties.getMaxSegmentsForShortestPath();
-	}
-
-	@Override
-	public void setMaxSegmentsForShortestPath(int maxSegmentsForShortestPath) {
-		properties.setMaxSegmentsForShortestPath(maxSegmentsForShortestPath);
-	}
-
-	@Override
-	public boolean isOnlyBestResult() {
-		return properties.isOnlyBestResult();
-	}
-
-	@Override
-	public void setOnlyBestResult(boolean onlyBestResult) {
-		properties.setOnlyBestResult(onlyBestResult);
-	}
-
-	@Override
-	public int getMaxNrOfBestPaths() {
-		return properties.getMaxNrOfBestPaths();
-	}
-
-	@Override
-	public void setMaxNrOfBestPaths(int minNrOfBestPaths) {
-		properties.setMaxNrOfBestPaths(minNrOfBestPaths);
 	}
 
 	@Override
@@ -220,83 +175,6 @@ public class Neo4jMapMatcher implements IMapMatcher {
 		this.defaultGraphName = defaultGraphName;
 	}
 
-	@Override
-	public int getMinNrOfPoints() {
-		return properties.getMinNrOfPoints();
-	}
-
-	@Override
-	public void setMinNrOfPoints(int minNrOfPoints) {
-		this.properties.setMinNrOfPoints(minNrOfPoints);
-	}
-	
-	@Override
-	public int getMinLength() {
-		return properties.getMinLength();
-	}
-	
-	@Override
-	public void setMinLength(int length) {
-		properties.setMinLength(length);
-	}
-	
-	@Override
-	public int getMinSegmentsPerSection() {
-		return properties.getMinSegmentsPerSection();
-	}
-	
-	@Override
-	public void setMinSegmentsPerSection(int minSegmentsPerSection) {
-		properties.setMinSegmentsPerSection(minSegmentsPerSection);
-	}
-	
-	@Override
-	public int getMaxCountLoopsWithoutPathExtension() {
-		return properties.getMaxCountLoopsWithoutPathExtension();
-	}
-
-	@Override
-	public void setMaxCountLoopsWithoutPathExtension(
-			int maxCountLoopsWithoutPathExtension) {
-		properties.setMaxCountLoopsWithoutPathExtension(maxCountLoopsWithoutPathExtension);
-	}
-	
-	@Override
-	public int getEnvelopeSideLength() {
-		return properties.getEnvelopeSideLength();
-	}
-
-	@Override
-	public void setEnvelopeSideLength(int envelopeSideLength) {
-		properties.setEnvelopeSideLength(envelopeSideLength);
-	}
-
-	@Override
-	public int getNrOfHops() {
-		return properties.getNrOfHops();
-	}
-	@Override
-	public void setNrOfHops(int nrOfHops) {
-		properties.setNrOfHops(nrOfHops);
-	}
-
-	@Override
-	public int getThresholdForLowSamplingsInSecs() {
-		return properties.getThresholdForLowSamplingsInSecs();
-	}
-	@Override
-	public void setThresholdForLowSamplingsInSecs(int thresholdForLowSamplingsInSecs) {
-		properties.setThresholdForLowSamplingsInSecs(thresholdForLowSamplingsInSecs);;
-	}
-
-	public String getCsvLoggerName() {
-		return csvLoggerName;
-	}
-
-	public void setCsvLoggerName(String csvLoggerName) {
-		this.csvLoggerName = csvLoggerName;
-	}
-
 	public MapMatcherGlobalStatistics getGlobalStatistics() {
 		return globalStatistics;
 	}
@@ -304,77 +182,5 @@ public class Neo4jMapMatcher implements IMapMatcher {
 	public void setGlobalStatistics(MapMatcherGlobalStatistics globalStatistics) {
 		this.globalStatistics = globalStatistics;
 	}
-
-	@Override
-	public int getRouteCacheSize() {
-		return properties.getRouteCacheSize();
-	}
-
-	@Override
-	public void setRouteCacheSize(int routeCacheSize) {
-		properties.setRouteCacheSize(routeCacheSize);
-	}
-
-	@Override
-	public int getThresholdSamplingIntervalForTryingFurtherPathSearches() {
-		return properties.getThresholdSamplingIntervalForTryingFurtherPathSearches();
-	}
-
-	@Override
-	public void setThresholdSamplingIntervalForTryingFurtherPathSearches(
-			int thresholdSamplingIntervalForTryingFurtherPathSearches) {
-		properties.setThresholdSamplingIntervalForTryingFurtherPathSearches(thresholdSamplingIntervalForTryingFurtherPathSearches);
-	}
-
-	@Override
-	public int getPointsDiffThresholdForSkipRouting() {
-		return properties.getPointsDiffThresholdForSkipRouting();
-	}
-
-	@Override
-	public void setPointsDiffThresholdForSkipRouting(int pointsDiffThresholdForSkipRouting) {
-		properties.setPointsDiffThresholdForSkipRouting(pointsDiffThresholdForSkipRouting);
-	}
-
-	public String getRoutingMode() {
-		return properties.getRoutingMode();
-	}
-
-	public void setRoutingMode(String routingMode) {
-		properties.setRoutingMode(routingMode);
-	}
-
-	public String getRoutingCriteria() {
-		return properties.getRoutingCriteria();
-	}
-
-	public void setRoutingCriteria(String routingCriteria) {
-		properties.setRoutingCriteria(routingCriteria);;
-	}
 	
-	public String getRoutingAlgorithm() {
-		return properties.getRoutingAlgorithm();
-	}
-
-	public void setRoutingAlgorithm(String routingAlgorithm) {
-		properties.setRoutingAlgorithm(routingAlgorithm);
-	}
-	
-	public boolean isActivateExtendedPathMatching() {
-		return properties.isActivateExtendedPathMatching();
-	}
-	
-	public void setActivateExtendedPathMatching(boolean activateExtendedPathMatching) {
-		properties.setActivateExtendedPathMatching(activateExtendedPathMatching);;
-	}
-
-	public int getMaxDistanceForExtendedPathMatching() {
-		return properties.getMaxDistanceForExtendedPathMatching();
-	}
-
-	public void setMaxDistanceForExtendedPathMatching(int maxDistanceForExtendedPathMatching) {
-		properties.setMaxDistanceForExtendedPathMatching(maxDistanceForExtendedPathMatching);
-		
-	}
-
 }

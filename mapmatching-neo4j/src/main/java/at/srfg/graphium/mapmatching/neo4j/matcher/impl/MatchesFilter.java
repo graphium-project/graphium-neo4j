@@ -536,7 +536,9 @@ public class MatchesFilter {
 							removeSegmentsAfterIndex(pathB, indexOfSegment);
 							if (pathA.getMatchedWaySegments().get(pathA.getMatchedWaySegments().size() - 2).getId() !=
 									pathB.getMatchedWaySegments().get(indexOfSegment - 1).getId()) {
-								log.warn("Different segments before equal segments in paths");
+								log.warn("Different segments (" + pathA.getMatchedWaySegments().get(pathA.getMatchedWaySegments().size() - 2).getId()
+										+ " and " + pathB.getMatchedWaySegments().get(indexOfSegment - 1).getId()
+										+ ") before equal segment (" + lastSegmentOfPathA.getId() + ") in paths");
 							}
 						}
 					}
@@ -570,7 +572,7 @@ public class MatchesFilter {
 		
 		return singleSegmentbranches;
 	}
-	
+
 	/**
 	 * Determine index of segment within the path
 	 * @param path
@@ -644,7 +646,10 @@ public class MatchesFilter {
 			}
 			
 			if (valid) {
-				if (certainSegmentCandidate.getMatchedPoints() > 0) {
+				if (certainSegmentCandidate.getMatchedPoints() > 0
+						&& (certainSegmentCandidate.getDirection().isEnteringThroughStartNode()
+								|| certainSegmentCandidate.getDirection().isEnteringThroughEndNode())) {
+					// matched points > 0 AND entering through start/end node (for determining direction)
 					certainSegment = certainSegmentCandidate;
 				}
 			}

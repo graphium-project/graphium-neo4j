@@ -593,8 +593,8 @@ public class AlternativePathMatcher {
 			}
 		}
 		
-		if (newStartIndex > previousSegment.getEndPointIndex() &&
-			matchedWaySegment.getId() == previousSegment.getId()) {
+		if (newStartIndex > previousSegment.getEndPointIndex()
+				&& matchedWaySegment.getId() == previousSegment.getId()) {
 			// same segment identified, but new start index is greater than old end index => some points in between could have not been matched
 			// => update previous segment and ignore matched segment
 			previousSegment.setEndPointIndex(endPointIndex);
@@ -607,16 +607,28 @@ public class AlternativePathMatcher {
 					previousSegment.setDirection(Direction.START_TO_START);
 				} else if (matchedWaySegment.getDirection().isLeavingThroughEndNode()) {
 					previousSegment.setDirection(Direction.START_TO_END);
+				} else {
+					previousSegment.setDirection(Direction.START_TO_CENTER);
 				}
 			} else if (previousSegment.getDirection().isEnteringThroughEndNode()) {
 				if (matchedWaySegment.getDirection().isLeavingThroughStartNode()) {
 					previousSegment.setDirection(Direction.END_TO_START);
 				} else if (matchedWaySegment.getDirection().isLeavingThroughEndNode()) {
 					previousSegment.setDirection(Direction.END_TO_END);
+				} else {
+					previousSegment.setDirection(Direction.END_TO_CENTER);
+				}
+			} else {
+				if (matchedWaySegment.getDirection().isLeavingThroughStartNode()) {
+					previousSegment.setDirection(Direction.CENTER_TO_START);
+				} else if (matchedWaySegment.getDirection().isLeavingThroughEndNode()) {
+					previousSegment.setDirection(Direction.CENTER_TO_END);
+				} else {
+					previousSegment.setDirection(Direction.CENTER_TO_CENTER);
 				}
 			}
-		} else {
 			
+		} else {
 			matchedWaySegment.setEndPointIndex(endPointIndex);
 			
 			// calculate distances for matched points
