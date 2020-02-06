@@ -536,7 +536,9 @@ public class MatchesFilter {
 							removeSegmentsAfterIndex(pathB, indexOfSegment);
 							if (pathA.getMatchedWaySegments().get(pathA.getMatchedWaySegments().size() - 2).getId() !=
 									pathB.getMatchedWaySegments().get(indexOfSegment - 1).getId()) {
-								log.warn("Different segments before equal segments in paths");
+								log.warn("Different segments (" + pathA.getMatchedWaySegments().get(pathA.getMatchedWaySegments().size() - 2).getId()
+										+ " and " + pathB.getMatchedWaySegments().get(indexOfSegment - 1).getId()
+										+ ") before equal segment (" + lastSegmentOfPathA.getId() + ") in paths");
 							}
 						}
 					}
