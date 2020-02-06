@@ -281,15 +281,4 @@ public class Dijkstra<W extends IBaseWaySegment> implements IRoutingAlgo<IRoutin
 		cancelled = true;
 	}
 	
-	private class MinCost {
-		
-		double cost;
-		
-		public MinCost(double cost) {
-			super();
-			this.cost = cost;
-		}
-		
-	}
-	
 }
