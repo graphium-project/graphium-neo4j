@@ -43,7 +43,7 @@ import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
  *
  * @author shennebe, anwagner
  */
-public class DirectedOutgoingConnectionPathExpander<STATE> implements PathExpander<STATE> {
+public class DirectedOutgoingConnectionPathExpander<STATE> implements IDirectedConnectionPathExpander<STATE> {
 
     protected Logger log = Logger.getLogger(this.getClass().getName());
 
@@ -170,10 +170,10 @@ public class DirectedOutgoingConnectionPathExpander<STATE> implements PathExpand
 		}
     	return lastRel;
     }
-    
-    private void addRelationships(List<Relationship> result, Path path, Direction outgoing,
+
+    private void addRelationships(List<Relationship> result, Path path, Direction direction,
 			WaySegmentRelationshipType initialRelationType) {
-		Iterable<Relationship> res = path.endNode().getRelationships(Direction.OUTGOING, initialRelationType);
+		Iterable<Relationship> res = path.endNode().getRelationships(direction, initialRelationType);
 		if (res != null) {
 			if (initialRelationType.equals(WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE)) {
 				Iterator<Relationship> iterator = res.iterator();
@@ -199,7 +199,9 @@ public class DirectedOutgoingConnectionPathExpander<STATE> implements PathExpand
 					}
 				}
 			} else {
-				res.forEach(result::add);
+				for (Relationship r : res) {
+					result.add(r);
+				}
 			}
 		}
 	}

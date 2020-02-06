@@ -191,11 +191,15 @@ implements IGraphVersionStateModifiedObserver {
 				IWayGraphVersionMetadata metadata = (IWayGraphVersionMetadata) metadataObj;
 				if (((IWayGraphVersionMetadata) metadata).getState().equals(State.ACTIVE)) {
 					// if a new graph version has been activated STRTree has to be built and cached
-					if (activeIndexCache != null && !activeIndexCache.containsKey(metadata.getGraphName()) ||
+					if (activeIndexCache == null ||
+						(activeIndexCache != null && (!activeIndexCache.containsKey(metadata.getGraphName()) ||
 						(activeIndexCache.containsKey(metadata.getGraphName()) && 
-						 activeIndexCache.get(metadata.getGraphName()).getMetadata().getValidFrom().before(metadata.getValidFrom()))) {
+						 activeIndexCache.get(metadata.getGraphName()).getMetadata().getValidFrom().before(metadata.getValidFrom()))))) {
 						log.info("Got update to rebuild STR-Tree");
 						String graphVersionName = GraphVersionHelper.createGraphVersionName(metadata.getGraphName(), metadata.getVersion());
+						if (activeIndexCache == null) {
+							activeIndexCache = new HashMap<>();
+						}
 						activeIndexCache.put(metadata.getGraphName(), new STRTreeCacheEntry(metadata, buildTree(graphVersionName)));
 					}
 				} else if (metadata.getState().equals(State.DELETED)) {

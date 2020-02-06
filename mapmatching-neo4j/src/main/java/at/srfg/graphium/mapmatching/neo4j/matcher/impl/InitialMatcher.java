@@ -45,6 +45,7 @@ import at.srfg.graphium.mapmatching.properties.IMapMatchingProperties;
 import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.model.OneWay;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
+import at.srfg.graphium.neo4j.persistence.Neo4jUtil;
 
 /**
  * This class takes care of the initial matching: It searches segments
