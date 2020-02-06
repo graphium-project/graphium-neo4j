@@ -199,7 +199,7 @@ public class PathExpanderMatcher {
 			List<IMatchedBranch> unmanipulatedBranches) {
 		
 		IMatchedWaySegment segment = branch.getMatchedWaySegments().get(branch.getMatchedWaySegments().size() - 1);
-		TraversalDescription traversalDescription = buildTraveralDescription(segment, branch);
+		TraversalDescription traversalDescription = buildTraveralDescription(segment, branch, true);
 		
 		if (segment.getEndPointIndex() >= track.getTrackPoints().size()) {
 			return false;
@@ -312,7 +312,7 @@ public class PathExpanderMatcher {
 						
 						if (numberOfFurtherConnections(connectedSegmentNode, directionTypes) == 1) {
 							// try to match all further connected segments
-							traversalDescription = buildTraveralDescription(matchedSegment, branch);
+							traversalDescription = buildTraveralDescription(matchedSegment, branch, false);
 							traverser = getTraverser(
 									matchedSegment, 
 									traversalDescription);
@@ -487,7 +487,7 @@ public class PathExpanderMatcher {
 						if (distanceForBranch < properties.getMaxDistanceForExtendedPathMatching() &&
 							distanceForBranch < distanceTrackPoints * 1.5) {
 							setSegmentDirection(segment, matchedSegment);
-							TraversalDescription newTraversalDescription = buildTraveralDescription(matchedSegment, clonedBranch);
+							TraversalDescription newTraversalDescription = buildTraveralDescription(matchedSegment, clonedBranch, false);
 							clonedBranch.addMatchedWaySegment(matchedSegment);
 							matchSegment(matchedSegment, clonedBranch, newTraversalDescription, track, properties, distanceTrackPoints, distanceForBranch, resultBranches, depth++);
 						}
@@ -565,30 +565,56 @@ public class PathExpanderMatcher {
 	 * @param branch
 	 * @return traversal description
 	 */
-	private TraversalDescription buildTraveralDescription(IMatchedWaySegment currentSegment, IMatchedBranch branch) {
+	private TraversalDescription buildTraveralDescription(IMatchedWaySegment currentSegment, IMatchedBranch branch, boolean firstSegment) {
 		// Determine next driving directions
 		WaySegmentRelationshipType[] relationshipTypes;
 		MutableBoolean reversed = new MutableBoolean(Boolean.FALSE);
-		if (currentSegment.getDirection().isEnteringThroughStartNode()) {
-			relationshipTypes = new WaySegmentRelationshipType[] {
-					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE,
-					WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
-			if (currentSegment.isOneway().equals(OneWay.ONEWAY_BKW)) {
-				// traversing against oneway (only possible in hd-matching)
-				reversed.setTrue();
-			}
-		} else if (currentSegment.getDirection().isEnteringThroughEndNode()) {
-			relationshipTypes = new WaySegmentRelationshipType[] {
-					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
-					WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
-			if (currentSegment.isOneway().equals(OneWay.ONEWAY_TOW)) {
-				// traversing against oneway (only possible in hd-matching)
-				reversed.setTrue();
+		if (firstSegment) {
+			// u-turn is possible -> consider end node
+			if (currentSegment.getDirection().isLeavingThroughStartNode()) {
+				relationshipTypes = new WaySegmentRelationshipType[] {
+						WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
+						WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
+				if (currentSegment.isOneway().equals(OneWay.ONEWAY_BKW)) {
+					// traversing against oneway (only possible in hd-matching)
+					reversed.setTrue();
+				}
+			} else if (currentSegment.getDirection().isLeavingThroughEndNode()) {
+				relationshipTypes = new WaySegmentRelationshipType[] {
+						WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE,
+						WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
+				if (currentSegment.isOneway().equals(OneWay.ONEWAY_TOW)) {
+					// traversing against oneway (only possible in hd-matching)
+					reversed.setTrue();
+				}
+			} else {
+				relationshipTypes = new WaySegmentRelationshipType[] {
+						determineDirectionViaNode(branch, reversed),
+						WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
 			}
 		} else {
-			relationshipTypes = new WaySegmentRelationshipType[] {
-					determineDirectionViaNode(branch, reversed),
-					WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
+			// leaving end node can be unknown -> consider start node
+			if (currentSegment.getDirection().isEnteringThroughStartNode()) {
+				relationshipTypes = new WaySegmentRelationshipType[] {
+						WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE,
+						WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
+				if (currentSegment.isOneway().equals(OneWay.ONEWAY_BKW)) {
+					// traversing against oneway (only possible in hd-matching)
+					reversed.setTrue();
+				}
+			} else if (currentSegment.getDirection().isEnteringThroughEndNode()) {
+				relationshipTypes = new WaySegmentRelationshipType[] {
+						WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
+						WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
+				if (currentSegment.isOneway().equals(OneWay.ONEWAY_TOW)) {
+					// traversing against oneway (only possible in hd-matching)
+					reversed.setTrue();
+				}
+			} else {
+				relationshipTypes = new WaySegmentRelationshipType[] {
+						determineDirectionViaNode(branch, reversed),
+						WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
+			}
 		}
 		
 		// Build traversal description
