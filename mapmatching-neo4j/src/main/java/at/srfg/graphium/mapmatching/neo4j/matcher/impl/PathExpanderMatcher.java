@@ -154,6 +154,7 @@ public class PathExpanderMatcher {
 		WaySegmentRelationshipType traverserDirection = getTraverserDirection(segment);
 		
 		if (segment.getEndPointIndex() >= track.getTrackPoints().size()) {
+			storeNotExtendedPath(segment, branch, track, incomingBranchesWithDeadEnd, unmanipulatedBranches);
 			return false;
 		}
 		
