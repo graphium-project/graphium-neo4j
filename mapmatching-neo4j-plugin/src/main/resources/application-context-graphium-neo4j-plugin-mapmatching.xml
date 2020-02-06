@@ -24,7 +24,7 @@
 		<property name="ignoreResourceNotFound" value="true" />		
 	</bean>
 
-	<bean id="neo4jUtil" class="at.srfg.graphium.mapmatching.neo4j.matcher.impl.Neo4jUtil" lazy-init="true" >
+	<bean id="neo4jUtil" class="at.srfg.graphium.neo4j.persistence.Neo4jUtil" lazy-init="true" >
 		<property name="graphDatabaseProvider" ref="graphDatabaseProvider"/>
 	</bean>
 	

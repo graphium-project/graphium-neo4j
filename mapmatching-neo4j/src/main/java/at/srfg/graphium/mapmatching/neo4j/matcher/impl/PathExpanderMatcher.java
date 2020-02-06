@@ -49,6 +49,7 @@ import at.srfg.graphium.model.IWaySegmentConnection;
 import at.srfg.graphium.model.OneWay;
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
 import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
+import at.srfg.graphium.neo4j.persistence.Neo4jUtil;
 
 public class PathExpanderMatcher {
 	
@@ -202,6 +203,7 @@ public class PathExpanderMatcher {
 		TraversalDescription traversalDescription = buildTraveralDescription(segment, branch, true);
 		
 		if (segment.getEndPointIndex() >= track.getTrackPoints().size()) {
+			storeNotExtendedPath(segment, branch, track, incomingBranchesWithDeadEnd, unmanipulatedBranches);
 			return false;
 		}
 		
