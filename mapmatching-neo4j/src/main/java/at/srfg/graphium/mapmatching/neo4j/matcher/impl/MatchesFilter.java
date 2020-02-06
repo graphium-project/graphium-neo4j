@@ -65,8 +65,7 @@ public class MatchesFilter {
 	 */
 	public List<IMatchedBranch> filterMatches(List<IMatchedBranch> paths, ITrack track,
 			List<IMatchedBranch> finishedPaths,
-			IMapMatchingProperties properties,
-			boolean hasCertainPath) {
+			IMapMatchingProperties properties) {
 		
 		updateStepInfo(paths);
 
@@ -74,7 +73,7 @@ public class MatchesFilter {
 		paths = filterOnlyExtendedPaths(paths);
 		
 		// keep only one path per end segment
-		paths = filterPaths(paths, hasCertainPath);
+		paths = filterPaths(paths);
 		
 		// add finished tracks to the list of potential solutions for the current start segment (possiblePathsForStartSegment)
 		if (paths != null && !paths.isEmpty()) {
@@ -90,8 +89,7 @@ public class MatchesFilter {
 			paths = expandSlowPaths(
 					paths,
 					finishedPaths,
-					track,
-					hasCertainPath);
+					track);
 		}
 		
 		return paths;
@@ -217,7 +215,7 @@ public class MatchesFilter {
 	 */
 	@VisibleForTesting
 	protected List<IMatchedBranch> expandSlowPaths(List<IMatchedBranch> paths,
-			List<IMatchedBranch> finishedPaths, ITrack track, boolean hasCertainPath) {
+			List<IMatchedBranch> finishedPaths, ITrack track) {
 		if (paths.isEmpty()) {
 			return Collections.emptyList();
 		}
@@ -255,7 +253,7 @@ public class MatchesFilter {
 //			}	
 //		}
 
-		newBranches = filterPaths(newBranches, hasCertainPath);
+		newBranches = filterPaths(newBranches);
 		
 		return filterBestPaths(
 				newBranches, 
@@ -509,41 +507,7 @@ public class MatchesFilter {
 	 * Filters the list of potential solutions by keeping only the best path for each end segment of the paths.
 	 * 
 	 */
-	List<IMatchedBranch> filterPaths(List<IMatchedBranch> paths, boolean hasCertainPath) {
-		int maxStep = 0;
-		
-		for (IMatchedBranch path : paths) {
-			maxStep = Math.max(maxStep, path.getStep());
-		}
-		
-		// find parts with same segments and remove following segments,
-		// only applicable at beginning of track when more than one initial segment can occur
-		if (!hasCertainPath && paths.size() > 1) {
-			for (IMatchedBranch pathA : paths) {
-				
-				if (pathA.getStep() == maxStep) {
-					
-					IMatchedWaySegment lastSegmentOfPathA = pathA.getMatchedWaySegments().get(pathA.getMatchedWaySegments().size() - 1);
-					
-					for (IMatchedBranch pathB : paths) {
-						int indexOfSegment = findIndexOfSegment(pathB, lastSegmentOfPathA);
-						if (pathA != pathB
-								&& pathB.getStep() == maxStep //paths should have equal number of steps
-								&& pathB.getMatchedPoints() > pathA.getMatchedPoints() //other path should have more matched points
-								&& pathA.getMatchedWaySegments().get(0).getId() != pathB.getMatchedWaySegments().get(0).getId() //different first segments
-								&& indexOfSegment > 0 // exists in path and not the first element
-								&& indexOfSegment < pathB.getMatchedWaySegments().size() - 1) { // not the last element
-							removeSegmentsAfterIndex(pathB, indexOfSegment);
-							if (pathA.getMatchedWaySegments().get(pathA.getMatchedWaySegments().size() - 2).getId() !=
-									pathB.getMatchedWaySegments().get(indexOfSegment - 1).getId()) {
-								log.warn("Different segments before equal segments in paths");
-							}
-						}
-					}
-				}
-			}
-		}
-		
+	List<IMatchedBranch> filterPaths(List<IMatchedBranch> paths) {
 		// first get the best path for each last segment of the paths	
  		Map<IMatchedWaySegment, IMatchedBranch> pathsPerEndSegment = new HashMap<IMatchedWaySegment, IMatchedBranch>();
 		for (IMatchedBranch path : paths) {
@@ -573,7 +537,7 @@ public class MatchesFilter {
 			}
 		}
 		
-		// convert map values to list
+		// then only remember the best path for each last segment
 		List<IMatchedBranch> singleSegmentbranches = new ArrayList<IMatchedBranch>();
 		for (Map.Entry<IMatchedWaySegment, IMatchedBranch> entry : pathsPerEndSegment.entrySet()) {
 			IMatchedBranch bestPathForEndSegment = entry.getValue();
@@ -581,38 +545,6 @@ public class MatchesFilter {
 		}
 		
 		return singleSegmentbranches;
-	}
-
-	/**
-	 * Determine index of segment within the path
-	 * @param path
-	 * @param matchedWaySegment
-	 * @return
-	 */
-	private int findIndexOfSegment(IMatchedBranch path, IMatchedWaySegment matchedWaySegment) {
-		for (int i=path.getMatchedWaySegments().size()-1; i>=0; i--) {
-			if (path.getMatchedWaySegments().get(i).getId() == matchedWaySegment.getId() &&
-					path.getMatchedWaySegments().get(i).getDirection().equals(matchedWaySegment.getDirection())) {
-				return i;
-			}
-		}
-		return -1;
-	}
-	
-	/**
-	 * Removes all matched way segments after index from the path
-	 * @param path
-	 * @param index
-	 */
-	private void removeSegmentsAfterIndex(IMatchedBranch path, int index) {
-		// Select last segment first
-		int indexToRemove = path.getMatchedWaySegments().size() - 1;
-		// Delete segments until index is reached
-		while (indexToRemove > index) {
-			IMatchedWaySegment seg = path.getMatchedWaySegments().remove(indexToRemove);
-			log.info("Remove index " + indexToRemove + " - segmentId " + seg.getId());
-			indexToRemove--;
-		}
 	}
 
 	public IMatchedWaySegment identifyCertainSegment(List<IMatchedBranch> nonEmptyPaths) {	

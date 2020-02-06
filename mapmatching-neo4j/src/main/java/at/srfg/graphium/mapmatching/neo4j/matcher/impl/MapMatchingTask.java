@@ -277,8 +277,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 							paths, 
 							track, 
 							possiblePathsForStartSegments,
-							properties,
-							certainPath.size() > 0);
+							properties);
 					
 					////
 //					if (log.isDebugEnabled()) {
