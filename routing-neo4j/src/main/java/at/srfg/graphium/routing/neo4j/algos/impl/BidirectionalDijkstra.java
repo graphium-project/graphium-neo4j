@@ -200,12 +200,12 @@ public class BidirectionalDijkstra<W extends IBaseWaySegment> implements IRoutin
 						neighbourB.getLastRelationship() == null ||
 						!((Long)intersectingCandidateF.getLastRelationship().getProperty(WayGraphConstants.CONNECTION_NODE_ID)).equals(
 						  (Long)neighbourB.getLastRelationship().getProperty(WayGraphConstants.CONNECTION_NODE_ID))) {
-							// only valid if paths hit segment/node from diffent directions
-							PathNode[] intersectingNodes = new PathNode[2];
-							intersectingNodes[0] = intersectingCandidateF;
-							intersectingNodes[1] = neighbourB;
-							return intersectingNodes;
-						}
+						// only valid if paths hit segment/node from diffent directions
+						PathNode[] intersectingNodes = new PathNode[2];
+						intersectingNodes[0] = intersectingCandidateF;
+						intersectingNodes[1] = neighbourB;
+						return intersectingNodes;
+					}
 				}
 			}
 		}			
