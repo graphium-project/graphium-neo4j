@@ -279,6 +279,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 							paths, 
 							track, 
 							possiblePathsForStartSegments,
+							certainPath.size() > 0,
 							properties);
 					
 					////

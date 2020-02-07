@@ -207,7 +207,7 @@ public class SegmentMatcher {
 		return this.getPossibleLowerStartIndex(previousSegment, currentSegment, track, startIndex, matchingRadius, true);
 	}
 
-	private enum CompareMode {Normal, Equal, Skip};
+	private enum CompareMode {Normal, Equal, TowardsCurrentSegment, Skip};
 	
 	/**
 	 * This function checks if points matched to the previous segment better fit to the current segment.
@@ -238,22 +238,23 @@ public class SegmentMatcher {
 			CompareMode mode = CompareMode.Normal;
 			while (trackPointIndex >= previousSegment.getStartPointIndex() &&
 					distancesIndex >= 0) {
-				List<Double> distances = this.getValidPointDistances(currentSegment, trackPointIndex, track, matchingRadius);
-				
-				if (!distances.isEmpty() && (
-						(uturnMode && previousSegment.isUTurnSegment()) ||
-						(distances.get(0) < previousSegment.getDistances().get(distancesIndex)))) {
+				double distance = GeometryUtils.distanceMeters(currentSegment.getGeometry(),
+						track.getTrackPoints().get(trackPointIndex).getPoint());
+
+				if (distance < matchingRadius && (
+						(uturnMode && previousSegment.isUTurnSegment())
+						|| (distance < previousSegment.getDistances().get(distancesIndex)))) {
 					newStartIndex = trackPointIndex;
 					mode = CompareMode.Normal;
 				} else {
-					if (!distances.isEmpty() && 
-							DoubleMath.fuzzyEquals(
-									distances.get(0), 
-									previousSegment.getDistances().get(distancesIndex), 
-									TOLERANCE_IN_METER)) {
+					if (DoubleMath.fuzzyEquals(distance, previousSegment.getDistances().get(distancesIndex),
+							TOLERANCE_IN_METER)) {
 						// the distance to the new segment is equal to the distance to the previous segment,
 						// also check the previous points
 						mode = CompareMode.Equal;
+					} else if (newStartIndex == startIndex) {
+						// do not skip until newStartIndex has changed at least once
+						mode = CompareMode.TowardsCurrentSegment;
 					} else if (mode != CompareMode.Skip) {
 						// the distance to the new segment is larger than the distance to the previous segment,
 						// also check the very previous point
@@ -261,7 +262,7 @@ public class SegmentMatcher {
 					} else {
 						// the distance is larger and the next point was already skipped, stop
 						break;
-					} 
+					}
 				}
 				
 				trackPointIndex--;
@@ -270,7 +271,7 @@ public class SegmentMatcher {
 		}
 		
 		return newStartIndex;
-	}	
+	}
 	
 	/**
 	 * Decides if a segment can be treated as short segment. Whether a segment is
@@ -754,7 +755,7 @@ public class SegmentMatcher {
 	}
 
 	/**
-	 * reacalculation of start and end point indexes of routed segments
+	 * Recalculation of start and end point indexes of routed segments
 	 * @param track
 	 * @param endPointIndex
 	 * @param matchedWaySegments

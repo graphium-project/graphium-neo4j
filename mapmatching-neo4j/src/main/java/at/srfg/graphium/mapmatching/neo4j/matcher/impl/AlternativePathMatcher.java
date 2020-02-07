@@ -519,6 +519,7 @@ public class AlternativePathMatcher {
 					// calculate possible start index again because the previous segment has been removed
 					if (!clonedBranch.getMatchedWaySegments().isEmpty()) {
 						previousSegment = clonedBranch.getMatchedWaySegments().get(clonedBranch.getMatchedWaySegments().size() - 1);
+						// previousSegment.setFromPathSearch(true); // TODO ???
 						newStartIndex = matchingTask.getSegmentMatcher().getPossibleLowerStartIndex(previousSegment, 
 								matchedWaySegment, track, startPointIndex, 
 								properties.getMaxMatchingRadiusMeter(), uturnMode);
@@ -601,6 +602,22 @@ public class AlternativePathMatcher {
 			// => update previous segment and ignore matched segment
 			previousSegment.setEndPointIndex(endPointIndex);
 			previousSegment.calculateDistances(track);
+			previousSegment.setUTurnSegment(previousSegment.isUTurnSegment() || matchedWaySegment.isUTurnSegment());
+			previousSegment.setFromPathSearch(previousSegment.isFromPathSearch() || matchedWaySegment.isFromPathSearch());
+			// modify direction after merging previousSegment and matchedWaySegment
+			if (previousSegment.getDirection().isEnteringThroughStartNode()) {
+				if (matchedWaySegment.getDirection().isLeavingThroughStartNode()) {
+					previousSegment.setDirection(Direction.START_TO_START);
+				} else if (matchedWaySegment.getDirection().isLeavingThroughEndNode()) {
+					previousSegment.setDirection(Direction.START_TO_END);
+				}
+			} else if (previousSegment.getDirection().isEnteringThroughEndNode()) {
+				if (matchedWaySegment.getDirection().isLeavingThroughStartNode()) {
+					previousSegment.setDirection(Direction.END_TO_START);
+				} else if (matchedWaySegment.getDirection().isLeavingThroughEndNode()) {
+					previousSegment.setDirection(Direction.END_TO_END);
+				}
+			}
 		} else {
 			
 			matchedWaySegment.setEndPointIndex(endPointIndex);
