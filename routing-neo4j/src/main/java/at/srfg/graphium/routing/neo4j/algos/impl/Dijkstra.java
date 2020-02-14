@@ -56,7 +56,6 @@ public class Dijkstra<W extends IBaseWaySegment> implements IRoutingAlgo<IRoutin
 	protected PathExpander<Object> expander;
 	protected CostEvaluator<Double> costEvaluator;
 	protected IRoutingOptions options;
-	protected boolean cancelled = false;
 	
 	public Dijkstra(PathExpander<Object> expander, CostEvaluator<Double> costEvaluator, IRoutingOptions options) {
 		super();
@@ -104,7 +103,7 @@ public class Dijkstra<W extends IBaseWaySegment> implements IRoutingAlgo<IRoutin
 	    PathNode start = getStartNode(sourceNode);
 	    prioQueue.enqueue(start);
 	    
-		while (!cancelled &&
+		while (!options.isCancelled() &&
 			   prioQueue.size() > 0) {
 			
 			
@@ -274,11 +273,6 @@ public class Dijkstra<W extends IBaseWaySegment> implements IRoutingAlgo<IRoutin
 							0, 
 							null);
 		}
-	}
-
-	@Override
-	public void cancel() {
-		cancelled = true;
 	}
 	
 }

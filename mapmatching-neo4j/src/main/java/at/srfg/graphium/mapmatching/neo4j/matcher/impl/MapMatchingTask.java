@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.TransactionTerminatedException;
 import org.slf4j.Logger;
@@ -66,7 +67,8 @@ public class MapMatchingTask implements IMapMatcherTask {
 	private Neo4jUtil neo4jUtil;
 
 	// cancel request flag in case of processes taking too much time
-	private volatile boolean cancelRequested = false;
+//	private volatile boolean cancelRequested = false;
+	private MutableBoolean cancellationObject;
 	
 	// collect some statistical data
 	MapMatcherStatistics statistics = new MapMatcherStatistics();
@@ -94,6 +96,8 @@ public class MapMatchingTask implements IMapMatcherTask {
 	public MapMatchingTask(Neo4jMapMatcher mapMatcher, MapMatchingProperties properties, IWayGraphVersionMetadata graphMetadata, 
 			Neo4jUtil neo4jUtil, ITrack origTrack, IWeightingStrategyFactory weightingStrategyFactory, String csvLoggerName,
 			MapMatcherGlobalStatistics globalStatistics) throws RoutingParameterException {
+		cancellationObject = new MutableBoolean(false);
+		
 		this.mapMatcher = mapMatcher;
 		this.graphMetadata = graphMetadata;
 		this.track = origTrack;
@@ -104,7 +108,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 		this.initialMatcher = new InitialMatcher(this, this.properties, neo4jUtil);
 		this.segmentMatcher = new SegmentMatcher(this.properties);
 		this.pathExpanderMatcher = new PathExpanderMatcher(this, this.properties, neo4jUtil);
-		this.routingMatcher = new RoutingMatcher(this, mapMatcher.getRoutingService(), this.properties, this.trackSanitizer);
+		this.routingMatcher = new RoutingMatcher(this, mapMatcher.getRoutingService(), this.properties, this.trackSanitizer, cancellationObject);
 		this.alternativePathMatcher = new AlternativePathMatcher(this, this.properties);
 		this.matchesFilter = new MatchesFilter(this, alternativePathMatcher, this.properties);
 		this.weightingStrategyFactory = weightingStrategyFactory;
@@ -148,7 +152,6 @@ public class MapMatchingTask implements IMapMatcherTask {
 			return Collections.emptyList();
 		}
 
-		cancelRequested = false;
 		statistics.reset();
 		Date startTimestamp = new Date();
 		statistics.setValue(MapMatcherStatistics.START_TIMESTAMP, startTimestamp);
@@ -579,7 +582,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 	 * @throws CancellationException
 	 */
 	void checkCancelStatus() throws CancellationException {
-		if (cancelRequested) {
+		if (cancellationObject.booleanValue()) {
 			throw new CancellationException();
 		}
 	}
@@ -772,7 +775,8 @@ public class MapMatchingTask implements IMapMatcherTask {
 	
 	public void cancel() throws InterruptedException {
 		log.info("Cancel requested for track " + track.getId());
-		cancelRequested = true;
+//		cancelRequested = true;
+		cancellationObject.setTrue();
 		throw new InterruptedException();
 	}
 	

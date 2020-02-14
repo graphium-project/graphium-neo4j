@@ -58,7 +58,6 @@ public class BidirectionalDijkstra<W extends IBaseWaySegment> implements IRoutin
 	protected PathExpander<Object> expanderIncoming;
 	protected CostEvaluator<Double> costEvaluator;
 	protected IRoutingOptions options;
-	protected boolean cancelled = false;
 	
 	public BidirectionalDijkstra(PathExpander<Object> expanderOutgoing, PathExpander<Object> expanderIncoming, CostEvaluator<Double> costEvaluator, IRoutingOptions options) {
 		super();
@@ -116,7 +115,7 @@ public class BidirectionalDijkstra<W extends IBaseWaySegment> implements IRoutin
 	    PathNode[] intersectingNodes = null;
 	    PathNode[] tmpIntersectingNodes = null;
 	    
-		while (!cancelled &&
+		while (!options.isCancelled() &&
 			   !prioQueueF.isEmpty() && !prioQueueB.isEmpty()) {
 			
 			List<PathNode> neighboursF = BFS(prioQueueF, visitedF, true);
@@ -410,11 +409,6 @@ public class BidirectionalDijkstra<W extends IBaseWaySegment> implements IRoutin
 			
 			return start;
 		}
-	}
-
-	@Override
-	public void cancel() {
-		cancelled = true;
 	}
 	
 }

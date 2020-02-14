@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphalgo.GraphAlgoFactory;
@@ -82,8 +83,9 @@ public class RoutingMatcher {
 	private int MAXSPEED_PEDESTRIAN = 20; // km/h
 	private int skippedPointsThresholdToCreateNewPath = 3;
 	
-	public RoutingMatcher(MapMatchingTask mapMatchingTask,
-			IRoutingService<IWaySegment, Node, IRoutingOptions> routingClient, IMapMatchingProperties properties, TrackSanitizer trackSanitizer) throws RoutingParameterException {
+	public RoutingMatcher(MapMatchingTask mapMatchingTask, IRoutingService<IWaySegment, Node, IRoutingOptions> routingClient, 
+			IMapMatchingProperties properties, TrackSanitizer trackSanitizer, MutableBoolean cancellationObject) 
+					throws RoutingParameterException {
 		this.matchingTask = mapMatchingTask;
 		this.routingClient = routingClient;
 		this.properties = properties;
@@ -107,6 +109,7 @@ public class RoutingMatcher {
 		routingOptions.setAlgorithm(routingAlgorithm);
 		routingOptions.setCriteria(routingCriteria);
 		routingOptions.setMode(routingMode);
+		routingOptions.setCancellationObject(cancellationObject);
 		
 		cachedRoutes = CacheBuilder.newBuilder()
 								   .maximumSize(cacheSize)
