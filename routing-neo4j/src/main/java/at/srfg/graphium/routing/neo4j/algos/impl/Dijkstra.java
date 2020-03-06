@@ -91,11 +91,7 @@ public class Dijkstra<W extends IBaseWaySegment> implements IRoutingAlgo<IRoutin
 	}
 
 	public Path calculateShortestPath(Node sourceNode, Node targetNode) {
-		// LongOpenHashSet is about 10-20% faster than TLongHashSet!!!
 		Set<Long> visited = new LongOpenHashSet(60000);
-		//TLongHashSet visited = new TLongHashSet();
-		// LongOpenHashSet is about 10% faster and needs less memory than Map-trick!!!
-//		Map<Long, MinCost> visited = new Long2ObjectOpenHashMap<>();
 		
 		PriorityQueue<PathNode> prioQueue = new ObjectHeapPriorityQueue<PathNode>();
 		long targetId = targetNode.getId();
@@ -105,41 +101,6 @@ public class Dijkstra<W extends IBaseWaySegment> implements IRoutingAlgo<IRoutin
 	    
 		while (!options.isCancelled() &&
 			   prioQueue.size() > 0) {
-			
-			
-			//////// MAP TRICK ////////
-//			PathNode currentNode = prioQueue.dequeue();
-//			
-//			if (currentNode.getId() == targetId) {
-//				// target found
-//				// probably there will be several path to the target, but priority queue ensures that we get the shortest path
-//				log.info("visited: " + visited.size() + " nodes to reach target");
-//				return createPath(currentNode);
-//			}
-//			
-//			// read neighbours
-//			List<PathNode> neighbours = getNeighbours(currentNode);
-//	        for (PathNode neighbour : neighbours) {
-//
-//	        	// calculate costs of neighbours and add them to the priority queue
-//	        	calcCosts(neighbour, currentNode);
-//
-//	        	MinCost minCost = visited.get(neighbour.getId());
-//	        	
-//	        	if (minCost == null) {
-//	        		visited.put(neighbour.getId(), new MinCost(neighbour.getCost()));
-//	        		prioQueue.enqueue(neighbour);
-//	        	} else if (minCost.cost > neighbour.getCost()) {
-//	        		minCost.cost = neighbour.getCost();
-//	        		prioQueue.enqueue(neighbour);
-//	        	} else {
-//	        		// do nothing
-//	        	}
-//	        	
-//	        }
-	        ////////////////////////////
-
-			//////// LongOpenHashSet TRICK ////////
 			PathNode currentNode = prioQueue.dequeue();
 			if (!visited.contains(currentNode.getId())) {
 				// to each node there could be several paths
@@ -162,7 +123,6 @@ public class Dijkstra<W extends IBaseWaySegment> implements IRoutingAlgo<IRoutin
 		        }
 				
 			}
-			////////////////////////////////////////
 		}
 
 		// no path found

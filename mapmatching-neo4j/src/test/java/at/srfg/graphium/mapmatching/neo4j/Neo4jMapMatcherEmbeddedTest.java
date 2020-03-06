@@ -99,8 +99,8 @@ public class Neo4jMapMatcherEmbeddedTest {
 	@Test
 	public void testMatchTrack() {
 //		String graphName = "osm_at";
-//		String graphName = "gip_at_miv";
-		String graphName = "osm_at_with_lower_level_streets";
+		String graphName = "gip_at_miv";
+//		String graphName = "osm_at_with_lower_level_streets";
 //		String graphName = "gip_at_frc_0_4";
 //		String graphName = "osm_biobs";
 //		String graphName = "gip_at_frc_0_8";
@@ -108,9 +108,10 @@ public class Neo4jMapMatcherEmbeddedTest {
 //		long trackId = 19991780;
 //		long trackId = 18241517;
 		
-		String trackId = "300022883329";
-//		String trackId = "62880610";
-//		String trackId = "63541687";
+		String trackId = "97488203";
+//		String trackId = "98921998";
+//		String trackId = "89412876";
+//		String trackId = "105868664";
 		
 //		long trackId = 4893166;
 		
@@ -186,11 +187,12 @@ public class Neo4jMapMatcherEmbeddedTest {
 	public void testMatchTrackWithTimeoutGuard() {
 //		String graphName = "osm_at";
 //		String graphName = "osm_at_with_lower_level_streets";
-		String graphName = "gip_at_frc_0_4";
+//		String graphName = "gip_at_frc_0_4";
+		String graphName = "gip_at_miv";
 //		String graphName = "osm_biobs";
 //		String graphName = "gip_at_frc_0_8";
-
-		String trackId = "62880610";
+		
+		String trackId = "97488203";
 		
 		matchTrack(trackId, graphName, true);
 		
@@ -308,7 +310,7 @@ public class Neo4jMapMatcherEmbeddedTest {
 			log.info("Matching Track " + trackId);
 			
 			if (considerTimeout) {
-				int timeoutInMs = 300;
+				int timeoutInMs = 1000;
 				branches = matchTrackWithTimeoutGuard(track, graphName, timeoutInMs);
 			} else {
 				branches = matchTrack(track, graphName);

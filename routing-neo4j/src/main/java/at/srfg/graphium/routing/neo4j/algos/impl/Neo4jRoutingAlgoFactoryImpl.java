@@ -131,12 +131,6 @@ public class Neo4jRoutingAlgoFactoryImpl<T extends IWaySegment> implements IRout
 														 options.getGraphName(),
 														 options.getGraphVersion(),
 														 cache);
-//			return new OffsetAwareNodeBasedCostEvaluator(options.getCriteria().getValue(), 
-//														 startNode.getId(),		// id of Neo4j node!
-//														 endNode.getId(), 		// id of Neo4j node!
-//														 percentageStartWeight, 
-//														 percentageEndWeight,
-//														 segmentLengthCache);
 		}
 	}
 
@@ -150,13 +144,6 @@ public class Neo4jRoutingAlgoFactoryImpl<T extends IWaySegment> implements IRout
 				(byte[]) n.getProperty(WayGraphConstants.SEGMENT_ACCESS_TOW)
 				).contains(mode));
 	}
-
-//	protected Predicate<? super Relationship> getRelationshipPredicate(Access mode) {
-//		return r -> r.hasProperty(WayGraphConstants.CONNECTION_ACCESS) &&
-//				Neo4jWaySegmentHelperImpl.parseAccessTypes(
-//				(byte[]) r.getProperty(WayGraphConstants.CONNECTION_ACCESS)
-//				).contains(mode);
-//	}
 
 	protected Predicate<? super Relationship> getRelationshipPredicate(Access mode) {
 		// see: https://www.javahabit.com/2016/06/16/understanding-java-8-lambda-final-finally-variable/

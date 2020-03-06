@@ -70,7 +70,6 @@ public class Path {
 			for(PathNode n : this.nodes) {
 				clonedNodes.add(n);
 			}
-//			this.nodes.forEach(n -> clonedNodes.add(n));
 			newPath.setNodes(clonedNodes);
 		}
 		newPath.addNode(node);

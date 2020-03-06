@@ -112,36 +112,7 @@ public abstract class AbstractCostEvaluator implements IPathAwareCostEvalutator<
 		}
 
 		return cost * offset + addSegCost;
-		
-
-//		// TODO: offener UseCase: Route besitzt nur 2 Segmente, dann wird vom Startsegment ein Offset berechnet und vom Endsegment die gesamten Kosten verwendet
-//		if (coordinateBased && this.startNodeId == startNodeId) {
-//			offset = calculateOffset(relationship.getStartNode(), relationship.getEndNode(), startCoord, true);
-//			cost = getCost(startNode, relationship, weightSoFar);
-//			
-//			// FIXME: die Kosten repräsentieren hier die Geschwindigkeit auf dem Segment; addSegCost soll allerdings die Reisezeit auf dem Segment
-//			// sein (inkl. Offset-Berücksichtigung in obigem Sonderfall)
-//			addSegCost = getCost(endNode, relationship, weightSoFar);
-//			
-//			log.debug("startNodeId found");
-//		}
-//		else if (coordinateBased && this.endNodeId == endNodeId) {
-//			offset = calculateOffset(relationship.getStartNode(), relationship.getEndNode(), endCoord, false);
-//			cost = getCost(endNode, relationship, weightSoFar);
-//			addSegCost = 0;
-//
-//			log.debug("endNodeId found");
-//		}
-//		else {
-//			offset = 1.0d;
-//			addSegCost = 0.0;
-//			cost = getCost(startNode, relationship, weightSoFar);
-//		}
-//		
-//		return calculateTotalCost(cost, offset, addSegCost, relationship, direction);
 	}
-
-//	protected abstract double calculateTotalCost(double cost, double offset, double addSegCost, Relationship relationship, Direction direction);
 
 	protected abstract double getCost(Node node, Relationship relationship, Double weightSoFar) ;
 
