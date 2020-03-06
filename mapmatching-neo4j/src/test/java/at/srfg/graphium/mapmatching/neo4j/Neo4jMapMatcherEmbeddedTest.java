@@ -55,6 +55,7 @@ import at.srfg.graphium.mapmatching.model.ITrackPoint;
 import at.srfg.graphium.mapmatching.model.impl.TrackImpl;
 import at.srfg.graphium.mapmatching.model.impl.TrackMetadataImpl;
 import at.srfg.graphium.mapmatching.model.impl.TrackPointImpl;
+import at.srfg.graphium.mapmatching.neo4j.async.AsyncMapMatchingTask;
 import at.srfg.graphium.mapmatching.neo4j.matcher.impl.MapMatchingTask;
 import at.srfg.graphium.mapmatching.neo4j.matcher.impl.Neo4jMapMatcher;
 import at.srfg.graphium.model.IWaySegment;
@@ -62,6 +63,7 @@ import at.srfg.graphium.neo4j.model.WayGraphConstants;
 import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
 import at.srfg.graphium.neo4j.persistence.Neo4jUtil;
+import at.srfg.graphium.routing.exception.RoutingParameterException;
 
 /**
  * @author mwimmer
@@ -97,7 +99,8 @@ public class Neo4jMapMatcherEmbeddedTest {
 	@Test
 	public void testMatchTrack() {
 //		String graphName = "osm_at";
-		String graphName = "osm_at_with_lower_level_streets";
+		String graphName = "gip_at_miv";
+//		String graphName = "osm_at_with_lower_level_streets";
 //		String graphName = "gip_at_frc_0_4";
 //		String graphName = "osm_biobs";
 //		String graphName = "gip_at_frc_0_8";
@@ -105,9 +108,10 @@ public class Neo4jMapMatcherEmbeddedTest {
 //		long trackId = 19991780;
 //		long trackId = 18241517;
 		
-//		String trackId = "12_0028_prepr_loc";
-//		String trackId = "62880610";
-		String trackId = "200021380678";
+		String trackId = "97488203";
+//		String trackId = "98921998";
+//		String trackId = "89412876";
+//		String trackId = "105868664";
 		
 //		long trackId = 4893166;
 		
@@ -121,14 +125,74 @@ public class Neo4jMapMatcherEmbeddedTest {
 	}		
 	
 	@Test
+	public void testMatchTrackAsync() {
+		String graphName = "gip_at_miv";
+		String trackId = "63541687";
+		String fileName = "C:/development/project_data/mapmatcher/testsuite/tracks_json/" + trackId + ".json";
+		int nrOfThreads = 8;
+		int nrOfRuns = 100;
+
+		ObjectMapper mapper = new ObjectMapper();
+		TrackDTO trackDto;
+		try {
+			log.info("Matching Track " + trackId);
+
+			trackDto = mapper.readValue(new File(fileName), TrackDTO.class);
+			ITrack track = adapter.adapt(trackDto);
+			
+			for (int i=0; i<nrOfRuns; i++) {
+				runAsync(track, graphName, nrOfThreads);
+			}
+			
+		} catch (IOException e) {
+			log.error(e.getMessage(), e);
+		}
+		
+		log.info("Matching Track " + trackId + " finished");
+
+	}		
+	
+	private void runAsync(ITrack track, String graphName, int nrOfThreads) {
+		List<Thread> threads = new ArrayList<>(nrOfThreads);
+		
+		for (int i=0; i<nrOfThreads; i++) {
+			AsyncMapMatchingTask mapMatchingTask = new AsyncMapMatchingTask(mapMatcher, track, graphName);
+		
+			Thread thread = new Thread(mapMatchingTask);
+			threads.add(thread);
+			thread.start();
+		}
+		
+		while (!checkThreadsFinished(threads)) {
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+	}
+
+	private boolean checkThreadsFinished(List<Thread> threads) {
+		for (Thread thread : threads) {
+			if (thread.isAlive()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	@Test
 	public void testMatchTrackWithTimeoutGuard() {
 //		String graphName = "osm_at";
 //		String graphName = "osm_at_with_lower_level_streets";
-		String graphName = "gip_at_frc_0_4";
+//		String graphName = "gip_at_frc_0_4";
+		String graphName = "gip_at_miv";
 //		String graphName = "osm_biobs";
 //		String graphName = "gip_at_frc_0_8";
-
-		String trackId = "62880610";
+		
+		String trackId = "97488203";
 		
 		matchTrack(trackId, graphName, true);
 		
@@ -156,6 +220,8 @@ public class Neo4jMapMatcherEmbeddedTest {
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
 		} catch (GraphNotExistsException e) {
+			log.error(e.getMessage(), e);
+		} catch (RoutingParameterException e) {
 			log.error(e.getMessage(), e);
 		}
 		
@@ -244,7 +310,7 @@ public class Neo4jMapMatcherEmbeddedTest {
 			log.info("Matching Track " + trackId);
 			
 			if (considerTimeout) {
-				int timeoutInMs = 300;
+				int timeoutInMs = 1000;
 				branches = matchTrackWithTimeoutGuard(track, graphName, timeoutInMs);
 			} else {
 				branches = matchTrack(track, graphName);
@@ -255,13 +321,15 @@ public class Neo4jMapMatcherEmbeddedTest {
 			log.error(e.getMessage(), e);
 		} catch (GraphNotExistsException e) {
 			log.error(e.getMessage(), e);
+		} catch (RoutingParameterException e) {
+			log.error(e.getMessage(), e);
 		}
 		
 		return branches;
 	}
 	
 	@Test
-	public void testMatchTrackInLoop() {
+	public void testMatchTrackInLoop() throws RoutingParameterException {
 		
 //		try {
 //			System.in.read();
@@ -322,7 +390,7 @@ public class Neo4jMapMatcherEmbeddedTest {
 	 * @return
 	 * @throws GraphNotExistsException 
 	 */
-	private List<IMatchedBranch> matchTrack(ITrack track, String graphName) throws GraphNotExistsException {
+	private List<IMatchedBranch> matchTrack(ITrack track, String graphName) throws GraphNotExistsException, RoutingParameterException {
 		long startTime = System.nanoTime();
 		IMapMatcherTask task = mapMatcher.getTask(graphName, track, routingMode);
 		List<IMatchedBranch> branches = task.matchTrack();
@@ -335,7 +403,20 @@ public class Neo4jMapMatcherEmbeddedTest {
 	 * @return
 	 * @throws GraphNotExistsException 
 	 */
-	private List<IMatchedBranch> matchTrackWithTimeoutGuard(ITrack track, String graphName, int timeoutInMs) throws GraphNotExistsException {
+	private List<IMatchedBranch> matchTrackAysnc(ITrack track, String graphName) throws GraphNotExistsException, RoutingParameterException {
+		long startTime = System.nanoTime();
+		IMapMatcherTask task = mapMatcher.getTask(graphName, track, routingMode);
+		List<IMatchedBranch> branches = task.matchTrack();
+		log.info("Map matching took " +  + (System.nanoTime() - startTime) + "ns = " + ((System.nanoTime() - startTime) / 1000000) + "ms");
+		return branches;
+	}
+
+	/**
+	 * @param track
+	 * @return
+	 * @throws GraphNotExistsException 
+	 */
+	private List<IMatchedBranch> matchTrackWithTimeoutGuard(ITrack track, String graphName, int timeoutInMs) throws GraphNotExistsException, RoutingParameterException {
 		long startTime = System.nanoTime();
 		List<IMatchedBranch> branches = mapMatchingService.matchTrack(graphName, null, track, null, null, timeoutInMs, true, routingMode);
 		log.info("Map matching took " +  + (System.nanoTime() - startTime) + "ns = " + ((System.nanoTime() - startTime) / 1000000) + "ms");
@@ -359,7 +440,7 @@ public class Neo4jMapMatcherEmbeddedTest {
 	}
 	
 	@Test
-	public void testTraverser() {
+	public void testTraverser() throws RoutingParameterException {
 		
 		String graphName = "gip_at_frc_0_8";
 		String version = "16_04_161103_2";
@@ -429,7 +510,7 @@ public class Neo4jMapMatcherEmbeddedTest {
 	}
 	
 	@Test
-	public void testExtendedPathFinding() {
+	public void testExtendedPathFinding() throws RoutingParameterException {
 		String graphName = "osm_dk";
 		
 		try {

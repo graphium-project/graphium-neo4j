@@ -28,6 +28,7 @@ import com.vividsolutions.jts.io.ParseException;
 
 import at.srfg.graphium.geomutils.GeometryUtils;
 import at.srfg.graphium.neo4j.persistence.impl.Neo4jWaySegmentHelperImpl;
+import at.srfg.graphium.neo4j.service.impl.STRTreeCacheManager;
 
 public class CoordAwareNodeBasedCostEvaluator extends NodeBasedCostEvaluator {
 	
@@ -38,14 +39,14 @@ public class CoordAwareNodeBasedCostEvaluator extends NodeBasedCostEvaluator {
 	protected Coordinate startCoord;
 	protected Coordinate endCoord;
 	
-	public CoordAwareNodeBasedCostEvaluator(String costProperty) {
-		super(costProperty);
+	public CoordAwareNodeBasedCostEvaluator(String graphName, String version, STRTreeCacheManager cache, String costProperty) {
+		super(graphName, version, cache, costProperty);
 	}
 			
-	public CoordAwareNodeBasedCostEvaluator(String costProperty,
+	public CoordAwareNodeBasedCostEvaluator(String graphName, String version, STRTreeCacheManager cache, String costProperty,
 			long startNodeId, long endNodeId,
 			Coordinate startCoord, Coordinate endCoord) {
-		this(costProperty);
+		this(graphName, version, cache, costProperty);
 		this.startNodeId = startNodeId;
 		this.endNodeId = endNodeId;
 		this.startCoord = startCoord;

@@ -15,12 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-/**
- * (C) 2017 Salzburg Research Forschungsgesellschaft m.b.H.
- *
- * All rights reserved.
- *
- */
 package at.srfg.graphium.neo4j.service.impl;
 
 import java.util.HashMap;
@@ -50,6 +44,10 @@ import at.srfg.graphium.core.observer.impl.AbstractGraphVersionStateModifiedObse
 import at.srfg.graphium.core.service.IGraphVersionMetadataService;
 import at.srfg.graphium.model.IWayGraphVersionMetadata;
 import at.srfg.graphium.model.State;
+import at.srfg.graphium.neo4j.model.WayGraphConstants;
+import at.srfg.graphium.neo4j.model.cache.GraphSegmentsCacheEntry;
+import at.srfg.graphium.neo4j.model.cache.STRTreeCacheEntry;
+import at.srfg.graphium.neo4j.model.cache.SegmentCacheEntry;
 import at.srfg.graphium.neo4j.model.index.STRTreeEntity;
 import at.srfg.graphium.neo4j.persistence.configuration.IGraphDatabaseProvider;
 import at.srfg.graphium.neo4j.persistence.impl.Neo4jWaySegmentHelperImpl;
@@ -68,6 +66,11 @@ implements IGraphVersionStateModifiedObserver {
 	private Map<String, STRTreeCacheEntry> activeIndexCache = null;
 	// the last n requested historic (active) graph versions
 	private Cache<String, STRtree> historicIndexCache = null;
+	// segment's cache, key segmentId
+	private Cache<String, GraphSegmentsCacheEntry> graphsSegmentIdCache = null;
+	// segment's cache, key nodeId
+	private Cache<String, GraphSegmentsCacheEntry> graphsNodeIdCache = null;
+	
 	private long expirationTime = 60;
 	private int maximumHistoricCachSize = 3;
 	private Map<String, STRtree> lastBuiltTree = new HashMap<>(1);
@@ -79,6 +82,14 @@ implements IGraphVersionStateModifiedObserver {
 										 .maximumSize(maximumHistoricCachSize)
 										 .build();
 		
+		graphsSegmentIdCache = CacheBuilder.newBuilder()
+										 .expireAfterAccess(expirationTime, TimeUnit.SECONDS)
+										 .build();
+		
+		graphsNodeIdCache = CacheBuilder.newBuilder()
+										 .expireAfterAccess(expirationTime, TimeUnit.SECONDS)
+										 .build();
+
 		List<String> graphNamesToIndex = metadataService.getGraphs();
 		
 		if (graphNamesToIndex != null && !graphNamesToIndex.isEmpty()) {
@@ -88,8 +99,8 @@ implements IGraphVersionStateModifiedObserver {
 			for (String graphName : graphNamesToIndex) {
 				IWayGraphVersionMetadata metadata = metadataService.getCurrentWayGraphVersionMetadata(graphName);
 				if (metadata != null) {
-					String graphVersionName = GraphVersionHelper.createGraphVersionName(metadata.getGraphName(), metadata.getVersion());
-					activeIndexCache.put(graphName, new STRTreeCacheEntry(metadata, buildTree(graphVersionName)));
+//					String graphVersionName = GraphVersionHelper.createGraphVersionName(metadata.getGraphName(), metadata.getVersion());
+					activeIndexCache.put(graphName, new STRTreeCacheEntry(metadata, buildTree(metadata)));
 				} else {
 					log.warn("No current version found for graph " + graphName);
 				}
@@ -97,7 +108,8 @@ implements IGraphVersionStateModifiedObserver {
 		}
 	}
 	
-	private synchronized STRtree buildTree(String graphVersionName) {
+	private synchronized STRtree buildTree(IWayGraphVersionMetadata metadata) {
+		String graphVersionName = GraphVersionHelper.createGraphVersionName(metadata.getGraphName(), metadata.getVersion());
 		if (lastBuiltTree.containsKey(graphVersionName)) {
 			log.info("Already built STR-Tree found for graph version " + graphVersionName);
 			return lastBuiltTree.get(graphVersionName);
@@ -106,6 +118,8 @@ implements IGraphVersionStateModifiedObserver {
 		log.info("Building STR-Tree for graph version " + graphVersionName + " ...");
 		lastBuiltTree.clear();
 		STRtree tree = new STRtree();
+		GraphSegmentsCacheEntry segmentIdCache = new GraphSegmentsCacheEntry(metadata);
+		GraphSegmentsCacheEntry nodeIdCache = new GraphSegmentsCacheEntry(metadata);
 		
 		printMemoryUsage();
 
@@ -115,12 +129,43 @@ implements IGraphVersionStateModifiedObserver {
 			
 			int i=0;
 			Node segmentNode = null;
+			Long segmentId = null;
+			Float length = null;
+			Short maxSpeedTow = null;
+			Short maxSpeedBkw = null;
+			Short frc = null;
+			
 			while (segmentNodes.hasNext()) {
 				segmentNode = segmentNodes.next();
 				LineString geom;
 				try {
 					geom = Neo4jWaySegmentHelperImpl.encodeLineString(segmentNode);
 					
+					// TODO: currently only max speed attributes considered - no current speeds!
+					segmentId = (Long)segmentNode.getProperty(WayGraphConstants.SEGMENT_ID);
+					length = (Float)segmentNode.getProperty(WayGraphConstants.SEGMENT_LENGTH);
+					maxSpeedTow = (Short)segmentNode.getProperty(WayGraphConstants.SEGMENT_MAXSPEED_TOW);
+					maxSpeedBkw = (Short)segmentNode.getProperty(WayGraphConstants.SEGMENT_MAXSPEED_BKW);
+					frc = (Short)segmentNode.getProperty(WayGraphConstants.SEGMENT_FRC);
+					
+					// fill segmentIDs cache
+					segmentIdCache.addSegmentsCacheEntry(segmentId, new SegmentCacheEntry(
+																				segmentId,
+																				geom,
+																				length,
+																				maxSpeedTow,
+																				maxSpeedBkw,
+																				frc));
+					
+					// fill nodeIDs cache
+					nodeIdCache.addSegmentsCacheEntry(segmentNode.getId(), new SegmentCacheEntry(
+							segmentNode.getId(),
+							geom,
+							length,
+							maxSpeedTow,
+							maxSpeedBkw,
+							frc));
+
 					// CAUTION: node IDs are only valid if nodes will not be deleted!
 					STRTreeEntity entity = new STRTreeEntity(geom.getCoordinateSequence(), geom.getFactory(), segmentNode.getId());
 					tree.insert(geom.getEnvelopeInternal(), entity);
@@ -130,18 +175,17 @@ implements IGraphVersionStateModifiedObserver {
 				i++;
 			}
 
+			graphsSegmentIdCache.put(graphVersionName, segmentIdCache);
+			graphsNodeIdCache.put(graphVersionName, nodeIdCache);
+			
 			log.info(i + " segments indexed");
 			
 			tx.success();
 		}
 		
 		tree.build();
-
-		
 		
 		// TODO: count object bytes and log memory usage
-		
-		
 		printMemoryUsage();
 		
 		lastBuiltTree.put(graphVersionName, tree);
@@ -175,13 +219,31 @@ implements IGraphVersionStateModifiedObserver {
 						activeIndexCache.get(graphName).getMetadata().getVersion().equals(metadata.getVersion())) {
 						index = activeIndexCache.get(graphName).getTree();
 					} else {
-						historicIndexCache.put(graphVersionName, buildTree(graphVersionName));
+						historicIndexCache.put(graphVersionName, buildTree(metadata));
 						index = historicIndexCache.getIfPresent(graphVersionName);
 					}
 				}
 			}
 		}
 		return index;
+	}
+	
+	public SegmentCacheEntry getCacheEntryPerSegmentId(String graphName, String version, long segmentId) {
+		return getCacheEntry(graphsSegmentIdCache, graphName, version, segmentId);
+	}
+	
+	public SegmentCacheEntry getCacheEntryPerNodeId(String graphName, String version, long segmentId) {
+		return getCacheEntry(graphsNodeIdCache, graphName, version, segmentId);
+	}
+
+	public SegmentCacheEntry getCacheEntry(Cache<String, GraphSegmentsCacheEntry> cache, String graphName, String version, long segmentId) {
+		SegmentCacheEntry entry = null;
+		String graphVersionName = GraphVersionHelper.createGraphVersionName(graphName, version);
+		GraphSegmentsCacheEntry graphSegmentsCacheEntry = cache.getIfPresent(graphVersionName);
+		if (graphSegmentsCacheEntry != null) {
+			entry = graphSegmentsCacheEntry.getSegmentsCacheEntry(segmentId);
+		}
+		return entry;
 	}
 
 	@Override
@@ -196,11 +258,11 @@ implements IGraphVersionStateModifiedObserver {
 						(activeIndexCache.containsKey(metadata.getGraphName()) && 
 						 activeIndexCache.get(metadata.getGraphName()).getMetadata().getValidFrom().before(metadata.getValidFrom()))))) {
 						log.info("Got update to rebuild STR-Tree");
-						String graphVersionName = GraphVersionHelper.createGraphVersionName(metadata.getGraphName(), metadata.getVersion());
+//						String graphVersionName = GraphVersionHelper.createGraphVersionName(metadata.getGraphName(), metadata.getVersion());
 						if (activeIndexCache == null) {
 							activeIndexCache = new HashMap<>();
 						}
-						activeIndexCache.put(metadata.getGraphName(), new STRTreeCacheEntry(metadata, buildTree(graphVersionName)));
+						activeIndexCache.put(metadata.getGraphName(), new STRTreeCacheEntry(metadata, buildTree(metadata)));
 					}
 				} else if (metadata.getState().equals(State.DELETED)) {
 					log.info("Got update to remove graph version " + metadata.getGraphName() + "_" + 
@@ -216,13 +278,16 @@ implements IGraphVersionStateModifiedObserver {
 	}
 
 	private void removeFromTree(String graphName, String version) {
+		String graphVersionName = GraphVersionHelper.createGraphVersionName(graphName, version);
 		if (activeIndexCache != null && activeIndexCache.containsKey(graphName) && 
 			activeIndexCache.get(graphName).getMetadata().getVersion().equals(version)) {
 			activeIndexCache.remove(graphName);
 		} else {
-			String graphVersionName = GraphVersionHelper.createGraphVersionName(graphName, version);
 			historicIndexCache.invalidate(graphVersionName);
 		}
+		
+		graphsSegmentIdCache.invalidate(graphVersionName);
+		graphsNodeIdCache.invalidate(graphVersionName);
 	}
 
 	private void printMemoryUsage() {
@@ -260,31 +325,6 @@ implements IGraphVersionStateModifiedObserver {
 
 	public void setMaximumHistoricCachSize(int maximumHistoricCachSize) {
 		this.maximumHistoricCachSize = maximumHistoricCachSize;
-	}
-
-	public class STRTreeCacheEntry {
-		private IWayGraphVersionMetadata metadata;
-		private STRtree tree;
-		
-		public STRTreeCacheEntry(IWayGraphVersionMetadata metadata, STRtree tree) {
-			super();
-			this.metadata = metadata;
-			this.tree = tree;
-		}
-		
-		public IWayGraphVersionMetadata getMetadata() {
-			return metadata;
-		}
-		public void setMetadata(IWayGraphVersionMetadata metadata) {
-			this.metadata = metadata;
-		}
-		public STRtree getTree() {
-			return tree;
-		}
-		public void setTree(STRtree tree) {
-			this.tree = tree;
-		}
-		
 	}
 	
 }
