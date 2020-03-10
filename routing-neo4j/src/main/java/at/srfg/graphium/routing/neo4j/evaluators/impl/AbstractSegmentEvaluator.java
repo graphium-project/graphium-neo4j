@@ -25,18 +25,35 @@ package at.srfg.graphium.routing.neo4j.evaluators.impl;
 
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
 import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
+import at.srfg.graphium.neo4j.model.cache.SegmentCacheEntry;
+import at.srfg.graphium.neo4j.service.impl.STRTreeCacheManager;
 
 /**
  * @author mwimmer
  */
 public abstract class AbstractSegmentEvaluator {
 	
-	private float laneChangeCostFactor = 0.1f;
-	private int forbiddenLaneChangeCostValue = Integer.MAX_VALUE;
+	private static Logger log = LoggerFactory.getLogger(AbstractSegmentEvaluator.class);
 	
+	protected float laneChangeCostFactor = 0.1f;
+	protected int forbiddenLaneChangeCostValue = Integer.MAX_VALUE;
+	
+	protected String graphName;
+	protected String version;
+	protected STRTreeCacheManager cache;
+
+	public AbstractSegmentEvaluator(String graphName, String version, STRTreeCacheManager cache) {
+		super();
+		this.graphName = graphName;
+		this.version = version;
+		this.cache = cache;
+	}
+
 	/**
 	 * @param relationship
 	 * @return
@@ -50,14 +67,14 @@ public abstract class AbstractSegmentEvaluator {
 				if (node.hasProperty(WayGraphConstants.SEGMENT_CURRENT_DURATION_TOW)) {
 					duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_CURRENT_DURATION_TOW);
 				} else {
-					duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_MIN_DURATION_TOW);
+					duration = (Integer) getNodeProperty(node, WayGraphConstants.SEGMENT_MIN_DURATION_TOW);
 				}
 			} else if (relationship.getStartNode().getId() == node.getId()) {
 				// node is start node of relationship
 				if (node.hasProperty(WayGraphConstants.SEGMENT_CURRENT_DURATION_BKW)) {
 					duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_CURRENT_DURATION_BKW);
 				} else {
-					duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_MIN_DURATION_BKW);
+					duration = (Integer) getNodeProperty(node, WayGraphConstants.SEGMENT_MIN_DURATION_BKW);
 				}
 			}
 		} else if (((long) relationship.getProperty(WayGraphConstants.CONNECTION_NODE_ID)) == 
@@ -67,14 +84,14 @@ public abstract class AbstractSegmentEvaluator {
 				if (node.hasProperty(WayGraphConstants.SEGMENT_CURRENT_DURATION_BKW)) {
 					duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_CURRENT_DURATION_BKW);
 				} else {
-					duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_MIN_DURATION_BKW);
+					duration = (Integer) getNodeProperty(node, WayGraphConstants.SEGMENT_MIN_DURATION_BKW);
 				}
 			} else if (relationship.getStartNode().getId() == node.getId()) {
 				// node is start node of relationship
 				if (node.hasProperty(WayGraphConstants.SEGMENT_CURRENT_DURATION_TOW)) {
 					duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_CURRENT_DURATION_TOW);
 				} else {
-					duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_MIN_DURATION_TOW);
+					duration = (Integer) getNodeProperty(node, WayGraphConstants.SEGMENT_MIN_DURATION_TOW);
 				}
 			}
 		} else {
@@ -109,19 +126,19 @@ public abstract class AbstractSegmentEvaluator {
 				((long)node.getProperty(WayGraphConstants.SEGMENT_STARTNODE_ID))) {
 			if (relationship.getEndNode().getId() == node.getId()) {
 				// node is end node of relationship
-				duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_MIN_DURATION_TOW);
+				duration = (Integer) getNodeProperty(node, WayGraphConstants.SEGMENT_MIN_DURATION_TOW);
 			} else {
 				// node is start node of relationship
-				duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_MIN_DURATION_BKW);
+				duration = (Integer) getNodeProperty(node, WayGraphConstants.SEGMENT_MIN_DURATION_BKW);
 			}
 		} else if (((long)relationship.getProperty(WayGraphConstants.CONNECTION_NODE_ID)) ==
 				((long)node.getProperty(WayGraphConstants.SEGMENT_ENDNODE_ID))) {
 			if (relationship.getEndNode().getId() == node.getId()) {
 				// node is end node of relationship
-				duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_MIN_DURATION_BKW);
+				duration = (Integer) getNodeProperty(node, WayGraphConstants.SEGMENT_MIN_DURATION_BKW);
 			} else {
 				// node is start node of relationship
-				duration = (Integer) node.getProperty(WayGraphConstants.SEGMENT_MIN_DURATION_TOW);
+				duration = (Integer) getNodeProperty(node, WayGraphConstants.SEGMENT_MIN_DURATION_TOW);
 			}
 		} else {
 			if (relationship.isType(WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE)) {
@@ -139,6 +156,27 @@ public abstract class AbstractSegmentEvaluator {
 			}
 		}
 		return duration;
+	}
+	
+	protected Object getNodeProperty(Node node, String propertyName) {
+		Object value = null;
+		if (cache != null) {
+			long nodeId = node.getId();
+			SegmentCacheEntry cacheEntry = cache.getCacheEntryPerNodeId(graphName, version, nodeId);
+			if (cacheEntry != null) {
+				if (propertyName.equals(WayGraphConstants.SEGMENT_MIN_DURATION_BKW)) {
+					value = cacheEntry.getDuration(false);
+				} else if (propertyName.equals(WayGraphConstants.SEGMENT_MIN_DURATION_TOW)) {
+					value = cacheEntry.getDuration(true);
+				} else if (propertyName.equals(WayGraphConstants.SEGMENT_LENGTH)) {
+					value = cacheEntry.getLength();
+				}
+			}
+		}
+		if (value == null) {
+			value = node.getProperty(propertyName);
+		}
+		return value;
 	}
 
 	public float getLaneChangeCostFactor() {

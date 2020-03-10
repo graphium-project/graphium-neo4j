@@ -24,6 +24,7 @@ import at.srfg.graphium.mapmatching.matcher.IMapMatcher;
 import at.srfg.graphium.mapmatching.matcher.IMapMatcherTask;
 import at.srfg.graphium.mapmatching.model.IMatchedBranch;
 import at.srfg.graphium.mapmatching.model.ITrack;
+import at.srfg.graphium.routing.exception.RoutingParameterException;
 
 /**
  * @author mwimmer
@@ -47,9 +48,10 @@ public class TimedMapMatcherTaskFactory {
 	 * @param routingMode optional; possible values are "car" / "bike" / "pedestrian"
 	 * @return TimedMapMatcherTask
 	 * @throws GraphNotExistsException
+	 * @throws RoutingParameterException 
 	 */
 	public TimedMapMatcherTask getTask(String graphName, String graphVersion, ITrack track, Long startSegmentId, List<IMatchedBranch> previousBranches, 
-			int timeoutInMs, MapMatcherTimerService service, String routingMode) throws GraphNotExistsException {
+			int timeoutInMs, MapMatcherTimerService service, String routingMode) throws GraphNotExistsException, RoutingParameterException {
 		IMapMatcherTask mapMatcherTask;
 		if (graphName != null) {
 			if (graphVersion != null) {

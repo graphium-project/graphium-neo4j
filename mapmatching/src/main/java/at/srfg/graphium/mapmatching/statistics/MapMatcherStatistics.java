@@ -35,6 +35,7 @@ public class MapMatcherStatistics {
 	public static final String MATCHED_FACTORS = "matchedFactors";
 	public static final String AVG_SAMPLING_RATE = "avgSamplingRate";
 	public static final String TRACK_LENGTH = "trackLength";
+	public static final String SHORTEST_PATH_SEARCH_TOTAL_DURATION = "shortestPathSearchTotalDuration";
 	
 	private static final String DELIMITER = ";";
 	
@@ -49,6 +50,14 @@ public class MapMatcherStatistics {
 			statisticsMap.put(key, (Integer)statisticsMap.get(key) + 1);
 		} else {
 			statisticsMap.put(key, new Integer(1));
+		}
+	}
+	
+	public void incrementValue(String key, int increment) {
+		if (statisticsMap.containsKey(key) && statisticsMap.get(key) instanceof Integer) {
+			statisticsMap.put(key, (Integer)statisticsMap.get(key) + increment);
+		} else {
+			statisticsMap.put(key, new Integer(increment));
 		}
 	}
 	
@@ -95,6 +104,7 @@ public class MapMatcherStatistics {
 			   (statisticsMap.containsKey(START_TIMESTAMP) ? df.format(statisticsMap.get(START_TIMESTAMP)) : "") + DELIMITER +
 			   (statisticsMap.containsKey(END_TIMESTAMP) ? df.format(statisticsMap.get(END_TIMESTAMP)) : "") + DELIMITER +
 			   statisticsMap.get(SHORTEST_PATH_SEARCH) + DELIMITER +
+			   statisticsMap.get(SHORTEST_PATH_SEARCH_TOTAL_DURATION) + DELIMITER +
 			   statisticsMap.get(UTURN_DETECTED);
 	}
 	

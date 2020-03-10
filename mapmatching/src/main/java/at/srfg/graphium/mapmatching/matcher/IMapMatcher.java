@@ -20,14 +20,15 @@ package at.srfg.graphium.mapmatching.matcher;
 import at.srfg.graphium.core.exception.GraphNotExistsException;
 import at.srfg.graphium.mapmatching.model.ITrack;
 import at.srfg.graphium.mapmatching.properties.impl.MapMatchingProperties;
+import at.srfg.graphium.routing.exception.RoutingParameterException;
 
 public interface IMapMatcher {
 
-	public IMapMatcherTask getTask(ITrack origTrack, String routingMode) throws GraphNotExistsException;
+	public IMapMatcherTask getTask(ITrack origTrack, String routingMode) throws GraphNotExistsException, RoutingParameterException;
 	
-	public IMapMatcherTask getTask(String graphName, ITrack origTrack, String routingMode) throws GraphNotExistsException;
+	public IMapMatcherTask getTask(String graphName, ITrack origTrack, String routingMode) throws GraphNotExistsException, RoutingParameterException;
 	
-	public IMapMatcherTask getTask(String graphName, String graphVersion, ITrack origTrack, String routingMode) throws GraphNotExistsException;
+	public IMapMatcherTask getTask(String graphName, String graphVersion, ITrack origTrack, String routingMode) throws GraphNotExistsException, RoutingParameterException;
 	
 	public String getDefaultGraphName();
 	public void setDefaultGraphName(String defaultGraphName);

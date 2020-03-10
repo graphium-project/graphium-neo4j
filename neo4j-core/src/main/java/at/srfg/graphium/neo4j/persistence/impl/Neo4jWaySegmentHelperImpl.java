@@ -42,7 +42,6 @@ import at.srfg.graphium.neo4j.persistence.nodemapper.utils.Neo4jTagMappingUtils;
 public class Neo4jWaySegmentHelperImpl<W extends IWaySegment> implements INeo4jWaySegmentHelper<W> {
 	
 	protected WKBWriter wkbWriter = new WKBWriter();
-	protected static WKBReader wkbReader = new WKBReader();
 	
 	@Override
 	public Node createNode(GraphDatabaseService graphDb, W segment, String graphVersionName) {
@@ -167,10 +166,12 @@ public class Neo4jWaySegmentHelperImpl<W extends IWaySegment> implements INeo4jW
 	}
 	
 	public static LineString encodeLineString(Node node) throws ParseException {
+		WKBReader wkbReader = new WKBReader();
 		return (LineString) wkbReader.read((byte[]) node.getProperty(WayGraphConstants.SEGMENT_GEOM));
 	}
 	
 	public static LineString encodeLineString(Node node, String propertyName) throws ParseException {
+		WKBReader wkbReader = new WKBReader();
 		return (LineString) wkbReader.read((byte[]) node.getProperty(propertyName));
 	}
 	

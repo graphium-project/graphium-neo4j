@@ -28,13 +28,14 @@ import org.neo4j.graphalgo.CostEvaluator;
 
 import com.vividsolutions.jts.geom.Coordinate;
 
+import at.srfg.graphium.neo4j.service.impl.STRTreeCacheManager;
 import at.srfg.graphium.routing.model.IRoutingOptions;
 
 public interface INeo4jCostEvaluatorFactory {
 
-	CostEvaluator<Double> createCostEvaluator(IRoutingOptions options);
+	CostEvaluator<Double> createCostEvaluator(STRTreeCacheManager cache, IRoutingOptions options);
 
-	CostEvaluator<Double> createCoordAwareCostEvaluator(
+	CostEvaluator<Double> createCoordAwareCostEvaluator(STRTreeCacheManager cache, 
 			IRoutingOptions options, long startNodeId, long endNodeId,
 			Coordinate startCoord, Coordinate endCoord);
 

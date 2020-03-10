@@ -19,6 +19,13 @@
 		<dependency>
 			<groupId>at.srfg.graphium</groupId>
 			<artifactId>graphium-core</artifactId>
+			<version>${graphium-neo4j.version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>at.srfg.graphium</groupId>
+			<artifactId>graphium-routing</artifactId>
+			<version>${graphium-neo4j.version}</version>
 		</dependency>
 		
 		<dependency>

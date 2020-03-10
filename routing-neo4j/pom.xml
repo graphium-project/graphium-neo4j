@@ -23,6 +23,12 @@
 		</dependency>
 
 		<dependency>
+			<groupId>at.srfg.graphium</groupId>
+			<artifactId>graphium-routing-api</artifactId>
+			<version>${graphium-neo4j.version}</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-test</artifactId>
 			<scope>test</scope>

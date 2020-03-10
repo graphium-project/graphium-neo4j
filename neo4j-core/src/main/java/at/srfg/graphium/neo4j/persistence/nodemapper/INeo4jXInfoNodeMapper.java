@@ -24,5 +24,5 @@ import org.neo4j.graphdb.Node;
  */
 public interface INeo4jXInfoNodeMapper<T> extends INeo4jNodeMapper<T> {
 
-    T mapWithXInfoTypes(Node node, String... types);
+    T mapWithXInfoTypes(Node node, String graphName, String version, String... types);
 }

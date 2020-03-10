@@ -31,6 +31,11 @@
 			<name>Andreas Wagner</name>
 			<email>andreas.wagner@salzburgresearch.at</email>
 		</developer>
+		<developer>
+			<id>SGroe</id>
+			<name>Simon Gröchenig</name>
+			<email>simon.groechenig@salzburgresearch.at</email>
+		</developer>
 	</developers>
  	
 	<properties>
@@ -112,6 +117,22 @@
 			</plugin>
 			
 		</plugins>
+
+		<pluginManagement>
+	      <plugins>
+	        <plugin>
+	          <groupId>org.codehaus.mojo</groupId>
+	          <artifactId>license-maven-plugin</artifactId>
+	          <version>1.20</version>
+	          <executions>
+	            <execution>
+	              <id>add-third-party</id>
+	            </execution>
+	          </executions>
+	        </plugin>
+	      </plugins>
+	    </pluginManagement>
+
 	</build>
 
 	<dependencyManagement>
@@ -205,5 +226,15 @@
 		<module>routing-neo4j</module>
 	 	<module>routing-neo4j-plugin</module>
 	</modules>
-  
+ 
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>license-maven-plugin</artifactId>
+				<version>1.20</version>
+			</plugin>
+		</plugins>
+	</reporting>
+ 
 </project>

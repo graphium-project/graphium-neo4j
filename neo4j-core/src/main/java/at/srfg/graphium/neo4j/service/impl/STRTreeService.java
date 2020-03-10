@@ -15,12 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-/**
- * (C) 2017 Salzburg Research Forschungsgesellschaft m.b.H.
- *
- * All rights reserved.
- *
- */
 package at.srfg.graphium.neo4j.service.impl;
 
 import java.util.ArrayList;

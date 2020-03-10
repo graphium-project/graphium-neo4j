@@ -43,6 +43,23 @@
 		</dependency>
 	</dependencies>
 	
+	<build>
+		<pluginManagement>
+	      <plugins>
+	        <plugin>
+	          <groupId>org.codehaus.mojo</groupId>
+	          <artifactId>license-maven-plugin</artifactId>
+	          <version>1.20</version>
+	          <executions>
+	            <execution>
+	              <id>add-third-party</id>
+	            </execution>
+	          </executions>
+	        </plugin>
+	      </plugins>
+	    </pluginManagement>
+	</build>
+	
 	<reporting>
 		<plugins>
 			<plugin>

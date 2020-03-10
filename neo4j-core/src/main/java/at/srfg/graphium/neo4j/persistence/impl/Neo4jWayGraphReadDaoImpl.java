@@ -169,7 +169,7 @@ public class Neo4jWayGraphReadDaoImpl<W extends IWaySegment> extends AbstractNeo
 			// Der Name der Default-View entspricht dem Graphnamen. Daher kann mit dem View-Namen direkt auf den entsprechenden Graphversions-Layer
 			// abgefragt werden.
 			super.iterateSegmentNodes(this.getNodeIterator(viewName,version),
-					queue,segmentMapper,neo4jWaySegmentConnectionsNodeMapper);
+					queue, segmentMapper, neo4jWaySegmentConnectionsNodeMapper, viewName, version);
 			
 			tx.success();
 		}
@@ -195,7 +195,7 @@ public class Neo4jWayGraphReadDaoImpl<W extends IWaySegment> extends AbstractNeo
 			
 			if (segmentNodes.hasNext()) {
 				segments = new ArrayList<>();
-				super.iterateSegmentNodes(segmentNodes,segments,segmentMapper,neo4jWaySegmentConnectionsNodeMapper);
+				super.iterateSegmentNodes(segmentNodes, segments, segmentMapper, neo4jWaySegmentConnectionsNodeMapper, viewName, version);
 			} else {
 				log.info("no segments found");
 			}
@@ -215,7 +215,8 @@ public class Neo4jWayGraphReadDaoImpl<W extends IWaySegment> extends AbstractNeo
 	public void streamSegments(ISegmentOutputFormat<W> outputFormat, Polygon bounds, String viewName,
 			String version) {
 		try (Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx()) {
-			super.iterateSegmentNodes(super.getNodeIterator(viewName,version),outputFormat,segmentMapper,neo4jWaySegmentConnectionsNodeMapper);
+			super.iterateSegmentNodes(super.getNodeIterator(viewName,version), outputFormat, segmentMapper,
+					neo4jWaySegmentConnectionsNodeMapper, viewName, version);
 			
 			tx.success();
 		}

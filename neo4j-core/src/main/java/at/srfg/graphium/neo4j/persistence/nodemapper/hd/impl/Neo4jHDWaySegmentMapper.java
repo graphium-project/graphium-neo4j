@@ -39,8 +39,8 @@ public class Neo4jHDWaySegmentMapper<W extends IHDWaySegment> extends Neo4jWaySe
 	private static Logger log = LoggerFactory.getLogger(Neo4jHDWaySegmentMapper.class);
 	
 	@Override
-	public W mapWithXInfoTypes(Node node, String... types) {
-		W segment = super.mapWithXInfoTypes(node, types);
+	public W mapWithXInfoTypes(Node node, String graphName, String version, String... types) {
+		W segment = super.mapWithXInfoTypes(node, null, null, types);
 
 		Map<String, Object> properties = node.getAllProperties();
 		
