@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 
 import org.apache.commons.lang3.StringUtils;
-import org.codehaus.jackson.map.ObjectMapper;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.neo4j.graphdb.Node;
@@ -40,6 +40,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import at.srfg.graphium.core.exception.GraphNotExistsException;
 import at.srfg.graphium.geomutils.GeometryUtils;
@@ -96,6 +98,7 @@ public class Neo4jMapMatcherEmbeddedTest {
 //	private String routingMode = "bike";
 	private String routingMode = "car";
 	
+	@Ignore
 	@Test
 	public void testMatchTrack() {
 //		String graphName = "osm_at";
@@ -124,6 +127,7 @@ public class Neo4jMapMatcherEmbeddedTest {
 		
 	}		
 	
+	@Ignore
 	@Test
 	public void testMatchTrackAsync() {
 		String graphName = "gip_at_miv";
@@ -198,6 +202,7 @@ public class Neo4jMapMatcherEmbeddedTest {
 		
 	}		
 	
+	@Ignore
 	@Test
 	public void testMatchTrackOnline() {
 		String graphName = "osm_at";
@@ -232,6 +237,7 @@ public class Neo4jMapMatcherEmbeddedTest {
 		
 	}		
 	
+	@Ignore
 	@Test
 	public void testMatchTracks() {
 		String graphName = "gip_at_frc_0_8";
@@ -328,6 +334,7 @@ public class Neo4jMapMatcherEmbeddedTest {
 		return branches;
 	}
 	
+	@Ignore
 	@Test
 	public void testMatchTrackInLoop() throws RoutingParameterException {
 		
@@ -439,6 +446,7 @@ public class Neo4jMapMatcherEmbeddedTest {
 		}
 	}
 	
+	@Ignore
 	@Test
 	public void testTraverser() throws RoutingParameterException {
 		
@@ -509,6 +517,7 @@ public class Neo4jMapMatcherEmbeddedTest {
 		return traversalDescription.traverse(node);
 	}
 	
+	@Ignore
 	@Test
 	public void testExtendedPathFinding() throws RoutingParameterException {
 		String graphName = "osm_dk";

@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import org.codehaus.jackson.map.util.LRUMap;
+import org.apache.commons.collections4.map.LRUMap;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.traversal.TraversalDescription;
@@ -31,8 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
-import at.srfg.graphium.geomutils.GeometryUtils;
 import at.srfg.graphium.core.exception.GraphNotExistsException;
+import at.srfg.graphium.geomutils.GeometryUtils;
 import at.srfg.graphium.mapmatching.matcher.impl.SegmentDistance;
 import at.srfg.graphium.mapmatching.model.Direction;
 import at.srfg.graphium.mapmatching.model.IMatchedBranch;
