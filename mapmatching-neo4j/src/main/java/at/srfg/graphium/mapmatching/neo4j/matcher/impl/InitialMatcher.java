@@ -70,7 +70,7 @@ public class InitialMatcher {
 
 		traversalDescription = neo4jUtil.getTraverser();
 		
-		startSegmentsCache = new LRUMap<ITrackPoint, List<SegmentDistance<IWaySegment>>>(50, 200);
+		startSegmentsCache = new LRUMap<ITrackPoint, List<SegmentDistance<IWaySegment>>>(200, 50);
 	}
 
 	/**
