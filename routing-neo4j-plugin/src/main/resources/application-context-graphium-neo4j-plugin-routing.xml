@@ -15,10 +15,10 @@
 
 	<!-- controllers -->
 	<!-- scan graphium api controllers -->
-	<context:component-scan base-package="at.srfg.graphium.api.controller" />
+	<context:component-scan base-package="at.srfg.graphium.routing.api.controller" />
 	
 	<!-- controller -->
-	<bean id="graphVersionMetadataApiController" class="at.srfg.graphium.routing.api.controller.impl.WaySegmentRoutingApiController">
+	<bean id="waySegmentRoutingApiController" class="at.srfg.graphium.routing.api.controller.impl.WaySegmentRoutingApiController">
 		<property name="routingOptionsFactory" ref="routingOptionsFactory"/>
 		<property name="routeService" ref="neo4jRoutingService"/>
 		<property name="adapterRegistry" ref="routeOutputAdapterRegistry"/>

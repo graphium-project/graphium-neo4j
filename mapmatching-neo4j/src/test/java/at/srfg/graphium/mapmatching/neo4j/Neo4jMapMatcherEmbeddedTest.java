@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 
 import org.apache.commons.lang3.StringUtils;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,6 +40,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import at.srfg.graphium.core.exception.GraphNotExistsException;
 import at.srfg.graphium.geomutils.GeometryUtils;
@@ -519,6 +520,7 @@ public class Neo4jMapMatcherEmbeddedTest {
 		return traversalDescription.traverse(node);
 	}
 	
+	@Ignore
 	@Test
 	public void testExtendedPathFinding() throws RoutingParameterException {
 		String graphName = "osm_dk";
