@@ -777,7 +777,7 @@ public class SegmentMatcher {
 			IMatchedWaySegment minDistSegment = null;
 			for (IMatchedWaySegment seg : segments) {
 				double distance = GeometryUtils.distanceMeters(seg.getGeometry(), tp.getPoint());
-				if (minDistance == -1 || minDistance >= distance) {
+				if ((minDistance == -1 || minDistance >= distance) && distance < properties.getMaxMatchingRadiusMeter()) {
 					minDistance = distance;
 					minDistSegment = seg;
 				}
