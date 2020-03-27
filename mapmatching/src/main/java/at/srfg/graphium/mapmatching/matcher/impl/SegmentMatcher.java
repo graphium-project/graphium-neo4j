@@ -64,18 +64,17 @@ public class SegmentMatcher {
 	 * @param branch
 	 * @return
 	 */
-	public IMatchedWaySegment matchSegment(IWaySegment newSegment, ITrack track, int startIndex, double matchingRadius, IMatchedBranch branch) {
+	public IMatchedWaySegment matchSegment(IWaySegment newSegment, ITrack track, int startIndex, IMatchedBranch branch) {
 		IMatchedWaySegment matchedWaySegment = new MatchedWaySegmentImpl();
 		matchedWaySegment.setSegment(newSegment);
 		
 		// check if points matched to the previous segment better fit to the current segment
 		IMatchedWaySegment previousSegment = branch.getMatchedWaySegments().get(branch.getMatchedWaySegments().size() - 1);
-		int newStartIndex = this.updateMatchesOfPreviousSegment(startIndex,
-				previousSegment, matchedWaySegment, matchingRadius, track);
+		int newStartIndex = this.updateMatchesOfPreviousSegment(startIndex, previousSegment, matchedWaySegment, track);
 		matchedWaySegment.setStartPointIndex(newStartIndex);
 		
 		// get last matched point + distances for the current segment
-		List<Double> distances = this.getValidPointDistances(matchedWaySegment, newStartIndex, track, matchingRadius);
+		List<Double> distances = this.getValidPointDistances(matchedWaySegment, newStartIndex, track);
 		
 		int newEndIndex = newStartIndex + distances.size();
 		boolean atLeastOnePointMatches = newEndIndex > newStartIndex;
@@ -85,8 +84,8 @@ public class SegmentMatcher {
 					&& emptySegmentsAtEndOfBranch(branch)) {
 				// if there are empty segments at the end of the branch, 
 				// rematch all points starting from the last matching segment
-				newStartIndex = this.updateMatchesOfPreviousEmptySegments(previousSegment, matchedWaySegment, branch, matchingRadius, track);
-				distances = this.getValidPointDistances(matchedWaySegment, newStartIndex, track, matchingRadius);
+				newStartIndex = this.updateMatchesOfPreviousEmptySegments(previousSegment, matchedWaySegment, branch, track);
+				distances = this.getValidPointDistances(matchedWaySegment, newStartIndex, track);
 				
 				newEndIndex = newStartIndex + distances.size();
 				atLeastOnePointMatches = newEndIndex > newStartIndex;
@@ -99,7 +98,7 @@ public class SegmentMatcher {
 		boolean keepShortSegment = false;
 
 		double segmentLength = matchedWaySegment.getLength();
-		if (!atLeastOnePointMatches && this.isShortSegment(track, newStartIndex, segmentLength, matchingRadius)) {
+		if (!atLeastOnePointMatches && this.isShortSegment(track, newStartIndex, segmentLength)) {
 			if (previousSegment.getEndPointIndex() > previousSegment.getStartPointIndex()) { // check short segments only if previous segment has a match
 				keepShortSegment = this.shouldKeepShortSegment(newEndIndex, track,
 						segmentLine, matchedWaySegment);
@@ -130,7 +129,7 @@ public class SegmentMatcher {
 	 * @param matchingRadius
 	 * @return The distances for every matched point.
 	 */
-	public List<Double> getValidPointDistances(IWaySegment segment, int startIndex, ITrack track, double matchingRadius) {
+	public List<Double> getValidPointDistances(IWaySegment segment, int startIndex, ITrack track) {
 		List<Double> distances = new ArrayList<Double>();
 		List<Double> tempDistances = new ArrayList<Double>();
 		
@@ -141,7 +140,7 @@ public class SegmentMatcher {
 		while (currentPointIndex < track.getTrackPoints().size() && valid) {
 			double distance = GeometryUtils.distanceMeters(line, track.getTrackPoints().get(currentPointIndex).getPoint());
 		    
-			if (distance <= matchingRadius) {
+			if (distance <= properties.getMaxMatchingRadiusMeter()) {
 				// the point is within the search radius
 				valid = true;
 				currentPointIndex++;
@@ -202,9 +201,9 @@ public class SegmentMatcher {
 		}
 	}
 
-	protected int getPossibleLowerStartIndex(IMatchedWaySegment previousSegment, IMatchedWaySegment currentSegment, ITrack track,
-										   int startIndex, double matchingRadius) {
-		return this.getPossibleLowerStartIndex(previousSegment, currentSegment, track, startIndex, matchingRadius, true);
+	protected int getPossibleLowerStartIndex(IMatchedWaySegment previousSegment, IMatchedWaySegment currentSegment,
+			ITrack track, int startIndex) {
+		return this.getPossibleLowerStartIndex(previousSegment, currentSegment, track, startIndex, true);
 	}
 
 	private enum CompareMode {Normal, Equal, TowardsCurrentSegment, Skip};
@@ -228,7 +227,7 @@ public class SegmentMatcher {
 	 * @return The new start index for the current segment.
 	 */
 	public int getPossibleLowerStartIndex(IMatchedWaySegment previousSegment, IMatchedWaySegment currentSegment, ITrack track,
-										   int startIndex, double matchingRadius, boolean uturnMode) {
+			int startIndex, boolean uturnMode) {
 		int newStartIndex =  startIndex;
 		
 		if (previousSegment.getStartPointIndex() != previousSegment.getEndPointIndex()) {
@@ -241,7 +240,7 @@ public class SegmentMatcher {
 				double distance = GeometryUtils.distanceMeters(currentSegment.getGeometry(),
 						track.getTrackPoints().get(trackPointIndex).getPoint());
 
-				if (distance < matchingRadius && (
+				if (distance < properties.getMaxMatchingRadiusMeter() && (
 						(uturnMode && previousSegment.isUTurnSegment())
 						|| (distance < previousSegment.getDistances().get(distancesIndex)))) {
 					newStartIndex = trackPointIndex;
@@ -280,15 +279,14 @@ public class SegmentMatcher {
 	 * signal outages, where the next segment is far away. In this case routing should be
 	 * used to avoid appending many 'bad' segments to the path.
 	 */
-	boolean isShortSegment(ITrack track, int startIndex,
-			double segmentLineLength, double matchingRadius) {
+	boolean isShortSegment(ITrack track, int startIndex, double segmentLineLength) {
 		if (startIndex > 2 && startIndex < track.getTrackPoints().size()) {
 			double medianDistanceOfPreviousPoints = this.getMedianPointDistances(track,
 					startIndex);
 			
-			return segmentLineLength < medianDistanceOfPreviousPoints + matchingRadius;
+			return segmentLineLength < medianDistanceOfPreviousPoints + properties.getMaxMatchingRadiusMeter();
 		} else {
-			return segmentLineLength < matchingRadius;
+			return segmentLineLength < properties.getMaxMatchingRadiusMeter();
 		}
 	}
 
@@ -406,11 +404,8 @@ public class SegmentMatcher {
 	 * @return The new start index for the new segment.
 	 */
 	public int updateMatchesOfPreviousSegment(int startIndexNewSegment,
-			IMatchedWaySegment previousSegment,
-			IMatchedWaySegment newWaySegment, double matchingRadius,
-			ITrack track) {
-		int newStartIndexNewSegment =
-				this.getPossibleLowerStartIndex(previousSegment, newWaySegment, track, startIndexNewSegment, matchingRadius);
+			IMatchedWaySegment previousSegment, IMatchedWaySegment newWaySegment, ITrack track) {
+		int newStartIndexNewSegment = this.getPossibleLowerStartIndex(previousSegment, newWaySegment, track, startIndexNewSegment);
 		
 		if (newStartIndexNewSegment < startIndexNewSegment) {
 			// at least one point was rematched
@@ -447,10 +442,8 @@ public class SegmentMatcher {
 	 * 
 	 * @return The start index for the new segment.
 	 */
-	public int updateMatchesOfPreviousEmptySegments(
-			IMatchedWaySegment previousSegment,
-			IMatchedWaySegment newSegment, IMatchedBranch branch,
-			double matchingRadius, ITrack track) {
+	public int updateMatchesOfPreviousEmptySegments(IMatchedWaySegment previousSegment, IMatchedWaySegment newSegment,
+			IMatchedBranch branch, ITrack track) {
 		List<IMatchedWaySegment> segmentsToRematch = this.getSegmentsToRematch(branch);
 		
 		if (segmentsToRematch.isEmpty() ||
@@ -469,7 +462,7 @@ public class SegmentMatcher {
 			IMatchedWaySegment currentSegment = segmentsToRematch.get(i);
 			IMatchedWaySegment nextSegment = segmentsToRematch.get(i + 1);
 			
-			updateMatchesOfSegment(currentSegment, nextSegment, matchingRadius, track, i == 0);
+			updateMatchesOfSegment(currentSegment, nextSegment, track, i == 0);
 		}
 		
 		return newSegment.getStartPointIndex();
@@ -481,9 +474,8 @@ public class SegmentMatcher {
 	 * better matches to the current or the next segment. The algorithm goes on until a point is
 	 * found that is closer to the next segment.
 	 */
-	private void updateMatchesOfSegment(
-			IMatchedWaySegment currentSegment, IMatchedWaySegment nextSegment,
-			double matchingRadius, ITrack track, boolean useCachedDistance) {
+	private void updateMatchesOfSegment(IMatchedWaySegment currentSegment, IMatchedWaySegment nextSegment,
+			ITrack track, boolean useCachedDistance) {
 
 		int newEndIndex = currentSegment.getStartPointIndex();
 		int currentPointIndex = currentSegment.getStartPointIndex();
@@ -494,7 +486,7 @@ public class SegmentMatcher {
 			
 			double distanceToCurrentSegment = getDistanceToSegment(currentSegment, currentPointIndex, point, useCachedDistance);
 		    
-			if (distanceToCurrentSegment <= matchingRadius) {
+			if (distanceToCurrentSegment <= properties.getMaxMatchingRadiusMeter()) {
 				// the point is within the search radius
 				double distanceToNextSegment = getDistanceToSegment(nextSegment, currentPointIndex, point, false);
 				
@@ -513,7 +505,7 @@ public class SegmentMatcher {
 					
 				    double distanceForNextPoint = getDistanceToSegment(currentSegment, currentPointIndex + 1, nextPoint, useCachedDistance);
 				    
-					if (distanceForNextPoint <= matchingRadius) {
+					if (distanceForNextPoint <= properties.getMaxMatchingRadiusMeter()) {
 						// next point is valid again, continue
 						double distanceToNextSegmentForNextPoint =
 								getDistanceToSegment(nextSegment, currentPointIndex + 1, nextPoint, false);
@@ -694,8 +686,7 @@ public class SegmentMatcher {
 		IMatchedWaySegment lastSegment = branch.getMatchedWaySegments().get(branch.getMatchedWaySegments().size() - 1);
 		int startIndex = lastSegment.getStartPointIndex();
 		
-		List<Double> distances = this.getValidPointDistances(lastSegment, startIndex, 
-				track, properties.getMaxMatchingRadiusMeter());
+		List<Double> distances = this.getValidPointDistances(lastSegment, startIndex, track);
 		int newEndIndex = startIndex + distances.size();
 		
 		lastSegment.setEndPointIndex(newEndIndex);
@@ -715,8 +706,8 @@ public class SegmentMatcher {
 	 * @param matchingRadius
 	 * @return
 	 */
-	public int getLastPointIndex(IWaySegment segment, int pointIndex, ITrack track, double matchingRadius) {
-		List<Double> distances = this.getValidPointDistances(segment, pointIndex, track, matchingRadius);
+	public int getLastPointIndex(IWaySegment segment, int pointIndex, ITrack track) {
+		List<Double> distances = this.getValidPointDistances(segment, pointIndex, track);
 		int index = pointIndex + distances.size();
 		
 		return index;

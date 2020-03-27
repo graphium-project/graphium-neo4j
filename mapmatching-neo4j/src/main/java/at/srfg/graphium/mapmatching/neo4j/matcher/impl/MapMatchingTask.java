@@ -109,7 +109,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 		this.segmentMatcher = new SegmentMatcher(this.properties);
 		this.pathExpanderMatcher = new PathExpanderMatcher(this, this.properties, neo4jUtil);
 		this.routingMatcher = new RoutingMatcher(this, mapMatcher.getRoutingService(), this.properties, this.trackSanitizer, cancellationObject);
-		this.alternativePathMatcher = new AlternativePathMatcher(this, this.properties);
+		this.alternativePathMatcher = new AlternativePathMatcher(this);
 		this.matchesFilter = new MatchesFilter(this, alternativePathMatcher, this.properties);
 		this.weightingStrategyFactory = weightingStrategyFactory;
 		this.globalStatistics = globalStatistics;
@@ -663,7 +663,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 			IMatchedWaySegment currentSegment = branch.getMatchedWaySegments().get(1);
 			for (int i=2; i<branch.getMatchedWaySegments().size(); i++) {
 				if (previousSegment.getEndPointIndex() > currentSegment.getStartPointIndex()) {
-					updateIndices(currentSegment, previousSegment, properties.getMaxMatchingRadiusMeter());
+					updateIndices(currentSegment, previousSegment);
 				}
 				previousSegment = currentSegment;
 				currentSegment = branch.getMatchedWaySegments().get(i);
@@ -672,9 +672,8 @@ public class MapMatchingTask implements IMapMatcherTask {
 		}
 	}
 
-	private void updateIndices(IMatchedWaySegment currentSegment, IMatchedWaySegment previousSegment,
-			int maxMatchingRadiusMeter) {
-		int newStartIndex = segmentMatcher.updateMatchesOfPreviousSegment(previousSegment.getEndPointIndex(), previousSegment, currentSegment, properties.getMaxMatchingRadiusMeter(), track);
+	private void updateIndices(IMatchedWaySegment currentSegment, IMatchedWaySegment previousSegment) {
+		int newStartIndex = segmentMatcher.updateMatchesOfPreviousSegment(previousSegment.getEndPointIndex(), previousSegment, currentSegment, track);
 		currentSegment.setStartPointIndex(newStartIndex);
 	}
 

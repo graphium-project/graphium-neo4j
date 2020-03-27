@@ -300,10 +300,7 @@ public class InitialMatcher {
 				// try to match every connected segment (calculate matching factor)
 				IMatchedWaySegment matchedSegment = matchingTask.getSegmentMatcher().matchSegment(
 						matchingTask.getGraphDao().mapNode(matchingTask.getGraphName(), matchingTask.getGraphVersion(), connectedSegmentNode), 
-						track,
-						startSegment.getEndPointIndex(),
-						properties.getMaxMatchingRadiusMeter(),
-						branch);
+						track, startSegment.getEndPointIndex(), branch);
 
 				if (matchedSegment != null && clonedSegment.getMatchedPoints() > 0) {
 					// the matching for the connected segment is valid and the start segment also still
@@ -379,11 +376,7 @@ public class InitialMatcher {
 	 */
 	private void assignMatchingPoints(IMatchedWaySegment startSegment,
 			int pointIndex, ITrack track) {
-		int lastPointIndex = matchingTask.getSegmentMatcher().getLastPointIndex(
-				startSegment, 
-				pointIndex, 
-				track, 
-				properties.getMaxMatchingRadiusMeter());
+		int lastPointIndex = matchingTask.getSegmentMatcher().getLastPointIndex(startSegment, pointIndex, track);
 		startSegment.setEndPointIndex(lastPointIndex);
 		
 		startSegment.calculateDistances(track);
@@ -414,7 +407,7 @@ public class InitialMatcher {
 		return clonedStartSegment;
 	}
 
-	protected LRUMap getStartSegmentsCache() {
+	protected LRUMap<ITrackPoint, List<SegmentDistance<IWaySegment>>> getStartSegmentsCache() {
 		return startSegmentsCache;
 	}
 

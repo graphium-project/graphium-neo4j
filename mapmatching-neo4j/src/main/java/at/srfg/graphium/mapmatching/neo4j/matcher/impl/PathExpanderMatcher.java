@@ -227,11 +227,7 @@ public class PathExpanderMatcher {
 				// example for those cases: roundabouts!!!
 				while (matchedSegment == null && endPointIndexDiff <= iTrackPointRematch) {
 					matchedSegment = matchingTask.getSegmentMatcher().matchSegment(
-							connectedSegment, 
-							track, 
-							segment.getEndPointIndex() - endPointIndexDiff++, 
-							properties.getMaxMatchingRadiusMeter(), 
-							clonedBranch);
+							connectedSegment, track, segment.getEndPointIndex() - endPointIndexDiff++, clonedBranch);
 				}
 				endPointIndexDiff--;
 				
@@ -283,11 +279,7 @@ public class PathExpanderMatcher {
 									connectedSegmentNode = connectedPath.endNode();
 									connectedSegment = matchingTask.getGraphDao().mapNode(matchingTask.getGraphName(), matchingTask.getGraphVersion(), connectedSegmentNode);
 									matchedSegment = matchingTask.getSegmentMatcher().matchSegment(
-											connectedSegment, 
-											track, 
-											previousSegment.getEndPointIndex(), 
-											properties.getMaxMatchingRadiusMeter(), 
-											clonedBranch);
+											connectedSegment, track, previousSegment.getEndPointIndex(), clonedBranch);
 								}
 							} else {
 								matchedSegment = null;
@@ -427,13 +419,9 @@ public class PathExpanderMatcher {
 				IWaySegment connectedSegment = matchingTask.getGraphDao().mapNode(matchingTask.getGraphName(), matchingTask.getGraphVersion(), connectedSegmentNode);
 				
 				if (!isVisited(clonedBranch, connectedSegment) && 
-					isCloser(track.getTrackPoints().get(segment.getEndPointIndex()), segment, connectedSegment, properties.getMaxMatchingRadiusMeter())) {
+					isCloser(track.getTrackPoints().get(segment.getEndPointIndex()),segment, connectedSegment, properties.getMaxMatchingRadiusMeter())) {
 					IMatchedWaySegment matchedSegment = matchingTask.getSegmentMatcher().matchSegment(
-															connectedSegment, 
-															track, 
-															segment.getEndPointIndex(), 
-															properties.getMaxMatchingRadiusMeter(), 
-															clonedBranch);
+															connectedSegment, track, segment.getEndPointIndex(), clonedBranch);
 
 					double distanceForBranch;
 					if (matchedSegment != null && matchedSegment.getMatchedPoints() > 0) {

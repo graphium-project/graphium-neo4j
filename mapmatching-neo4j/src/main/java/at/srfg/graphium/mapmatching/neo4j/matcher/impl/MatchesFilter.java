@@ -180,7 +180,7 @@ public class MatchesFilter {
 					if (matchingSegmentOfBestPath2.getId() == lastSegment.getId()) {
 						// rematch the last segment of path to expand
 						matchingTask.getSegmentMatcher().updateMatchesOfPreviousSegment(lastSegment.getEndPointIndex(), 
-							lastSegment, clonedSegment, matchingTask.getProperties().getMaxMatchingRadiusMeter(), matchingTask.getTrack());
+							lastSegment, clonedSegment, matchingTask.getTrack());
 					}
 					
 					segmentsToMerge.add(clonedSegment);

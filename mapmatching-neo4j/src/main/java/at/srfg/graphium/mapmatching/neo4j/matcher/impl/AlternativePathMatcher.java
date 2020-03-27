@@ -32,7 +32,6 @@ import at.srfg.graphium.mapmatching.model.Direction;
 import at.srfg.graphium.mapmatching.model.IMatchedBranch;
 import at.srfg.graphium.mapmatching.model.IMatchedWaySegment;
 import at.srfg.graphium.mapmatching.model.ITrack;
-import at.srfg.graphium.mapmatching.properties.IMapMatchingProperties;
 import at.srfg.graphium.mapmatching.statistics.MapMatcherStatistics;
 
 
@@ -45,11 +44,9 @@ public class AlternativePathMatcher {
 	private static Logger log = LoggerFactory.getLogger(AlternativePathMatcher.class);
 	
 	private MapMatchingTask matchingTask;
-	private IMapMatchingProperties properties;
 	
-	public AlternativePathMatcher(MapMatchingTask mapMatchingTask, IMapMatchingProperties properties) {
+	public AlternativePathMatcher(MapMatchingTask mapMatchingTask) {
 		this.matchingTask = mapMatchingTask;
-		this.properties = properties;
 	}
 
 	
@@ -482,8 +479,7 @@ public class AlternativePathMatcher {
 		IMatchedWaySegment previousSegment = clonedBranch.getMatchedWaySegments().get(clonedBranch.getMatchedWaySegments().size() - 1);
 		
 		int newStartIndex = matchingTask.getSegmentMatcher().getPossibleLowerStartIndex(previousSegment, 
-				matchedWaySegment, track, startPointIndex, 
-				properties.getMaxMatchingRadiusMeter(), uturnMode);
+				matchedWaySegment, track, startPointIndex, uturnMode);
 		
 		// update matched points of previous segment
 		if (newStartIndex <= previousSegment.getEndPointIndex()) {
@@ -521,8 +517,7 @@ public class AlternativePathMatcher {
 						previousSegment = clonedBranch.getMatchedWaySegments().get(clonedBranch.getMatchedWaySegments().size() - 1);
 						// previousSegment.setFromPathSearch(true); // TODO ???
 						newStartIndex = matchingTask.getSegmentMatcher().getPossibleLowerStartIndex(previousSegment, 
-								matchedWaySegment, track, startPointIndex, 
-								properties.getMaxMatchingRadiusMeter(), uturnMode);
+								matchedWaySegment, track, startPointIndex, uturnMode);
 						if (previousSegment.getEndPointIndex() > newStartIndex) {
 							removeDiffDistances(previousSegment, newStartIndex);
 						}
@@ -575,7 +570,7 @@ public class AlternativePathMatcher {
 
 		// set matched points + distances for new segment
 		matchedWaySegment.setStartPointIndex(newStartIndex);
-		int endPointIndex =  matchingTask.getSegmentMatcher().getLastPointIndex(matchedWaySegment, startPointIndex, track, properties.getMaxMatchingRadiusMeter());
+		int endPointIndex =  matchingTask.getSegmentMatcher().getLastPointIndex(matchedWaySegment, startPointIndex, track);
 		
 		if (endPointIndex > newStartIndex) {
 			// at least one point matches
@@ -584,7 +579,7 @@ public class AlternativePathMatcher {
 				// if there are empty segments at the end of the branch, 
 				// rematch all points starting from the last matching segment
 				newStartIndex = matchingTask.getSegmentMatcher().updateMatchesOfPreviousEmptySegments(previousSegment, matchedWaySegment, 
-						clonedBranch, properties.getMaxMatchingRadiusMeter(), track);
+						clonedBranch, track);
 				// matchedWaySegment has wrong indexes
 //				matchedWaySegment.setStartPointIndex(startPointIndex);
 
