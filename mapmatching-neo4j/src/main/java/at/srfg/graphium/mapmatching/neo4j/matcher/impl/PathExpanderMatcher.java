@@ -419,7 +419,7 @@ public class PathExpanderMatcher {
 				IWaySegment connectedSegment = matchingTask.getGraphDao().mapNode(matchingTask.getGraphName(), matchingTask.getGraphVersion(), connectedSegmentNode);
 				
 				if (!isVisited(clonedBranch, connectedSegment) && 
-					isCloser(track.getTrackPoints().get(segment.getEndPointIndex()),segment, connectedSegment, properties.getMaxMatchingRadiusMeter())) {
+					isCloser(track.getTrackPoints().get(segment.getEndPointIndex()), segment, connectedSegment)) {
 					IMatchedWaySegment matchedSegment = matchingTask.getSegmentMatcher().matchSegment(
 															connectedSegment, track, segment.getEndPointIndex(), clonedBranch);
 
@@ -450,10 +450,10 @@ public class PathExpanderMatcher {
 		return resultBranches;
 	}
 	
-	private boolean isCloser(ITrackPoint tp, IMatchedWaySegment segment, IWaySegment connectedSegment, int matchingRadius) {
+	private boolean isCloser(ITrackPoint tp, IMatchedWaySegment segment, IWaySegment connectedSegment) {
 		double distanceSegment = GeometryUtils.distanceMeters(connectedSegment.getGeometry(), tp.getPoint());
 		
-		if (distanceSegment <= matchingRadius) {
+		if (distanceSegment <= properties.getMaxMatchingRadiusMeter()) {
 			return true;
 		} else {
 
