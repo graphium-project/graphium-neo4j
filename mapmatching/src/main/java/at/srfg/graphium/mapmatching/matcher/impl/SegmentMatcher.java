@@ -810,15 +810,22 @@ public class SegmentMatcher {
 			int nextStartPointIndex = 0;
 			IMatchedWaySegment currentSegment = null;
 			IMatchedWaySegment nextSegment = null;
+			
+			//Adjust indices for last segment
 			IMatchedWaySegment nextToLastSegment = segments.get(segments.size()-2);
 			if (nextToLastSegment.getStartPointIndex() > lastSegment.getStartPointIndex()) {
 				lastSegment.setStartPointIndex(routeEndPointIndex);
 			}
+			Integer segmentNextTrackpointIndex = segmentsNearTrackpoints.get(lastSegment);
+			if (segmentNextTrackpointIndex != null) {
+					lastSegment.setEndPointIndex(segmentNextTrackpointIndex.intValue() + 1);
+			}
+			
 			for (int iSegs = segments.size()-2; iSegs >= 0; iSegs--) {
 				currentSegment = segments.get(iSegs);
 				nextSegment = segments.get(iSegs + 1);
 				
-				Integer segmentNextTrackpointIndex = segmentsNearTrackpoints.get(currentSegment);
+				segmentNextTrackpointIndex = segmentsNearTrackpoints.get(currentSegment);
 				if (segmentNextTrackpointIndex != null) {
 					nextStartPointIndex = segmentNextTrackpointIndex.intValue() + 1;
 				} else if (nextSegment.getStartPointIndex() > 0) {
