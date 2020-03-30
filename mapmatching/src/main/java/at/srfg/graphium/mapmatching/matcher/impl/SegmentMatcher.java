@@ -751,71 +751,80 @@ public class SegmentMatcher {
 	 * @param endPointIndex
 	 * @param matchedWaySegments
 	 */
-	public void recalculateSegmentsIndexes(ITrack track, int startPointIndexOfRouting, int routeEndPointIndex,
+	public void recalculateSegmentsIndexes(ITrack track, int routeStartPointIndex, int routeEndPointIndex,
 			List<IMatchedWaySegment> segments) {
 		
 		if (segments.isEmpty()) {
 			return;
 		}
-
-		// build metadata about segment order
-		int iSegs = 0;
-		Map<IMatchedWaySegment, Integer> segsReverseMap = new HashMap<>();
-		for (IMatchedWaySegment seg : segments) {
-			segsReverseMap.put(seg, iSegs++);
-			if (iSegs > 0 && iSegs < segments.size()) {
-				// set startPointIndex of each segment except start and end segment of list to 0 => indicates to be updated in further step
-				seg.setStartPointIndex(0);
-			}
-		}
 		
-		// identify segments with min distance to each track point
-		Map<IMatchedWaySegment, Integer> minDistanceSegments = new LinkedHashMap<>();
-		for (int iTp=startPointIndexOfRouting; iTp<routeEndPointIndex; iTp++) {
-			ITrackPoint tp = track.getTrackPoints().get(iTp);
+		// identify segments with minimum distance to each track point (value refers to track point)
+		Map<IMatchedWaySegment, Integer> segmentsNearTrackpoints = new LinkedHashMap<>();
+		// identify segments with minimum distance to each track point (value refers to next matched track point)
+		Map<IMatchedWaySegment, Integer> segmentsNearTrackpointNextIndex = new LinkedHashMap<>();
+		IMatchedWaySegment previousMinDistanceSegment = null;
+		int indexOfFirstTrackpointNearSegment = -1;
+		for (int iTp=routeStartPointIndex; iTp<=routeEndPointIndex; iTp++) {
+			ITrackPoint trackpoint = track.getTrackPoints().get(iTp);
 			double minDistance = -1;
-			IMatchedWaySegment minDistSegment = null;
-			for (IMatchedWaySegment seg : segments) {
-				double distance = GeometryUtils.distanceMeters(seg.getGeometry(), tp.getPoint());
+			IMatchedWaySegment minDistanceSegment = null;
+			for (IMatchedWaySegment segment : segments) {
+				double distance = GeometryUtils.distanceMeters(segment.getGeometry(), trackpoint.getPoint());
 				if ((minDistance == -1 || minDistance >= distance) && distance < properties.getMaxMatchingRadiusMeter()) {
 					minDistance = distance;
-					minDistSegment = seg;
+					minDistanceSegment = segment;
+					if (indexOfFirstTrackpointNearSegment == -1) {
+						indexOfFirstTrackpointNearSegment = iTp;
+					}
 				}
 			}
-			minDistanceSegments.put(minDistSegment, iTp);
+			if (minDistanceSegment != null) {
+				segmentsNearTrackpoints.put(minDistanceSegment, iTp);
+				
+				if (previousMinDistanceSegment != null) {
+					segmentsNearTrackpointNextIndex.put(previousMinDistanceSegment, iTp);
+				}
+				//will be overridden at next track point, except for last track point
+				segmentsNearTrackpointNextIndex.put(minDistanceSegment, iTp + 1);
+				
+				previousMinDistanceSegment = minDistanceSegment;
+			}
 		}
 		
-		// identify start point index for segments having min distances to track points
-		iSegs = -1;
-		int currentIndex = startPointIndexOfRouting;
+		// identify start point index for segments having minimum distances to track points
+		int currentIndex = indexOfFirstTrackpointNearSegment;
+		if (currentIndex == -1) {
+			currentIndex = routeStartPointIndex;
+		}
 		for (IMatchedWaySegment segment : segments) {
-			Integer iTp = minDistanceSegments.get(segment);
-			if (iTp != null) {
-				if (iTp > currentIndex) {
-					currentIndex = iTp;					
-				}
-			}
 			segment.setStartPointIndex(currentIndex);
+			Integer segmentNextTrackpointIndex = segmentsNearTrackpointNextIndex.get(segment);
+			if (segmentNextTrackpointIndex != null) {
+				currentIndex = segmentNextTrackpointIndex;
+			}
 		}
 		
 		// set end point indexes
 		IMatchedWaySegment lastSegment = segments.get(segments.size()-1);
-		int nextStartPointIndex = 0;
-		IMatchedWaySegment currSegment = null;
-		IMatchedWaySegment nextSegment = null;
 		if (segments.size() > 1) {
+			int nextStartPointIndex = 0;
+			IMatchedWaySegment currentSegment = null;
+			IMatchedWaySegment nextSegment = null;
 			IMatchedWaySegment nextToLastSegment = segments.get(segments.size()-2);
 			if (nextToLastSegment.getStartPointIndex() > lastSegment.getStartPointIndex()) {
 				lastSegment.setStartPointIndex(routeEndPointIndex);
 			}
-			for (iSegs = segments.size()-2; iSegs >= 0; iSegs--) {
-				currSegment = segments.get(iSegs);
+			for (int iSegs = segments.size()-2; iSegs >= 0; iSegs--) {
+				currentSegment = segments.get(iSegs);
 				nextSegment = segments.get(iSegs + 1);
 				
-				if (nextSegment.getStartPointIndex() > 0) {
+				Integer segmentNextTrackpointIndex = segmentsNearTrackpoints.get(currentSegment);
+				if (segmentNextTrackpointIndex != null) {
+					nextStartPointIndex = segmentNextTrackpointIndex.intValue() + 1;
+				} else if (nextSegment.getStartPointIndex() > 0) {
 					nextStartPointIndex = nextSegment.getStartPointIndex();
 				}
-				currSegment.setEndPointIndex(nextStartPointIndex);
+				currentSegment.setEndPointIndex(nextStartPointIndex);
 				
 			}
 		}
@@ -835,7 +844,5 @@ public class SegmentMatcher {
 		for (IMatchedWaySegment seg : segments) {
 			seg.calculateDistances(track);
 		}
-		
 	}
-
 }
