@@ -174,7 +174,8 @@ public class MatchesFilter {
 					}
 				}
 			} else {
-				if (matchingSegmentOfBestPath2.getEndPointIndex() == currentSegment.getStartPointIndex()) {
+				if (matchingSegmentOfBestPath2.getEndPointIndex() == currentSegment.getStartPointIndex() &&
+						currentSegment.getStartPointIndex() >= lastSegment.getEndPointIndex()) {
 					IMatchedWaySegment clonedSegment = (IMatchedWaySegment) currentSegment.clone();
 
 					if (matchingSegmentOfBestPath2.getId() == lastSegment.getId()) {
