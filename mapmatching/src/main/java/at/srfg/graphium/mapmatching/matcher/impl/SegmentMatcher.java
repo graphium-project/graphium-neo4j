@@ -84,7 +84,7 @@ public class SegmentMatcher {
 					&& emptySegmentsAtEndOfBranch(branch)) {
 				// if there are empty segments at the end of the branch, 
 				// rematch all points starting from the last matching segment
-				newStartIndex = this.updateMatchesOfPreviousEmptySegments(previousSegment, matchedWaySegment, branch, track);
+				newStartIndex = this.updateMatchesOfPreviousEmptySegments(matchedWaySegment, branch, track);
 				distances = this.getValidPointDistances(matchedWaySegment, newStartIndex, track);
 				
 				newEndIndex = newStartIndex + distances.size();
@@ -433,8 +433,8 @@ public class SegmentMatcher {
 	 * 
 	 * The main idea for this method is best explained with an example: Segment A is able to match point 0 to 63.
 	 * Then segment B is added to the path. B could match 45 to 49, but can not match the last point of A, so that
-	 * no point is matched to B. Then segment C is added to the path, which could match point 50 t0 67. But because the
-	 * previous segment (B) has no match, also no point can be rematched to C (for example see gpx track 3155 at the start).
+	 * no point is matched to B. Then segment C is added to the path, which could match point 50 to 67. But because the
+	 * previous segment (B) has no match, also no point can be rematched to C.
 	 * 
 	 * This method makes sure that the points of the last matching segment (here: segment A) are correctly matched to the 
 	 * following segments. The algorithm begins at the start point of the last matching segment, and checks if the points
@@ -442,7 +442,7 @@ public class SegmentMatcher {
 	 * 
 	 * @return The start index for the new segment.
 	 */
-	public int updateMatchesOfPreviousEmptySegments(IMatchedWaySegment previousSegment, IMatchedWaySegment newSegment,
+	public int updateMatchesOfPreviousEmptySegments(IMatchedWaySegment newSegment,
 			IMatchedBranch branch, ITrack track) {
 		List<IMatchedWaySegment> segmentsToRematch = this.getSegmentsToRematch(branch);
 		

@@ -578,7 +578,7 @@ public class AlternativePathMatcher {
 					&& matchingTask.getSegmentMatcher().emptySegmentsAtEndOfBranch(clonedBranch)) {
 				// if there are empty segments at the end of the branch, 
 				// rematch all points starting from the last matching segment
-				newStartIndex = matchingTask.getSegmentMatcher().updateMatchesOfPreviousEmptySegments(previousSegment, matchedWaySegment, 
+				newStartIndex = matchingTask.getSegmentMatcher().updateMatchesOfPreviousEmptySegments(matchedWaySegment, 
 						clonedBranch, track);
 				// matchedWaySegment has wrong indexes
 //				matchedWaySegment.setStartPointIndex(startPointIndex);
