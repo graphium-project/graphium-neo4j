@@ -47,7 +47,9 @@ import at.srfg.graphium.mapmatching.model.ITrack;
 import at.srfg.graphium.mapmatching.model.impl.MatchedWaySegmentImpl;
 import at.srfg.graphium.mapmatching.neo4j.matcher.impl.AlternativePathMatcher.AlternativePath;
 import at.srfg.graphium.mapmatching.properties.IMapMatchingProperties;
+import at.srfg.graphium.mapmatching.properties.impl.MaxSpeedForRoutingMode;
 import at.srfg.graphium.mapmatching.statistics.MapMatcherStatistics;
+import at.srfg.graphium.model.FormOfWay;
 import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
@@ -76,11 +78,6 @@ public class RoutingMatcher {
 	private int cacheSize = 100;
 	
 	private int maxNrOfTargetSegments = 5;
-	private int MAXSPEED_CAR_FRC_0 = 150; // km/h
-	private int MAXSPEED_CAR_FRC_1_X = 120; // km/h
-	private int MAXSPEED_CAR_URBAN = 70; // km/h
-	private int MAXSPEED_BIKE = 50; // km/h
-	private int MAXSPEED_PEDESTRIAN = 20; // km/h
 	private int skippedPointsThresholdToCreateNewPath = 3;
 	
 	public RoutingMatcher(MapMatchingTask mapMatchingTask, IRoutingService<IWaySegment, Node, IRoutingOptions> routingClient, 
@@ -355,26 +352,13 @@ public class RoutingMatcher {
 	
 	            float durationS = 0;
 	            int i = 0;
+	            MaxSpeedForRoutingMode maxSpeeds = null;
+	            if (properties.getMaxSpeedForRouting() != null) {
+	            	maxSpeeds = properties.getMaxSpeedForRouting().getSpeedsPerRoutingMode().get(routingOptions.getMode());
+	            }
+	            
 	            for (IMatchedWaySegment seg : routedSegments) {
-	                float maxSpeed = 0;
-	                
-	                // MAXSPEEDs: GIP's maxSpeed is often too low
-	                if (routingOptions.getMode().equals(RoutingMode.CAR)) {
-		                if (seg.getFrc().getValue() == 0 &&
-		                	seg.getFormOfWay().getValue() != 10) {
-		                	maxSpeed = MAXSPEED_CAR_FRC_0;
-		                } else {
-		                	if (seg.isUrban()) {
-		                		maxSpeed = MAXSPEED_CAR_URBAN;
-		                	} else {
-		                		maxSpeed = MAXSPEED_CAR_FRC_1_X;
-		                	}
-		                }
-	                } else if (routingOptions.getMode().equals(RoutingMode.BIKE)) {
-	                	maxSpeed = MAXSPEED_BIKE;
-	                } else {
-	                	maxSpeed = MAXSPEED_PEDESTRIAN;
-	                }
+	                float maxSpeed = getMaximumSpeed(seg, maxSpeeds);
 	                
 	                float length = 0;
 	                if (i == 0) {
@@ -429,7 +413,42 @@ public class RoutingMatcher {
         }
     	
     	return valid;
-    } 
+    }
+    
+	private float getMaximumSpeed(IMatchedWaySegment segment, MaxSpeedForRoutingMode maxSpeeds) {
+		float maxSpeed = 150;
+		if (maxSpeeds != null) {
+			// routing mode is available in maxSpeedForRouting map
+			maxSpeed = maxSpeeds.getDefaultSpeed();
+			if (segment.getFrc().getValue() == 0) {
+				if (maxSpeeds.getFrcOverrides() != null) {
+					if (segment.getFormOfWay().equals(FormOfWay.PART_OF_A_SLIP_ROAD) ) {
+						Integer frcSpeed = maxSpeeds.getFrcOverrides().get(segment.getFrc().getValue());
+						if (frcSpeed != null) {
+							maxSpeed = frcSpeed.intValue();
+						}
+					} else {
+						Integer frcSpeed = maxSpeeds.getFrcOverrides().get((short)1);
+						if (frcSpeed != null) {
+							maxSpeed = frcSpeed.intValue();
+						}
+					}
+				}
+			} else {
+				if (segment.isUrban() && maxSpeeds.isUrbanEnabled()) {
+					maxSpeed = maxSpeeds.getUrbanSpeed();
+				} else {
+					if (maxSpeeds.getFrcOverrides() != null) {
+						Integer frcSpeed = maxSpeeds.getFrcOverrides().get(segment.getFrc().getValue());
+						if (frcSpeed != null) {
+							maxSpeed = frcSpeed.intValue();
+						}
+					}
+				}
+			}
+		}
+		return maxSpeed;
+	}
 
 	/**
 	 * Starts new paths at index {@code pointIndexAfterSkippedPart} with segment

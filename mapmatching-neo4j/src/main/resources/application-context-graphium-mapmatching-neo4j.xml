@@ -39,6 +39,7 @@
 		<property name="minLength" value="${mapmatcher.minLength}"/>
 		<property name="minSegmentsPerSection" value="${mapmatcher.minSegmentsPerSection}"/>
 		<property name="maxSegmentsForShortestPath" value="${mapmatcher.maxSegmentsForShortestPath}"/>
+		<property name="maxSpeedForRoutingJson" value="${mapmatcher.maxSpeedForRoutingJson}"/>
 		<property name="maxCountLoopsWithoutPathExtension" value="${mapmatcher.maxCountLoopsWithoutPathExtension}"/>
 		<property name="envelopeSideLength" value="${mapmatcher.envelopeSideLengthForStartSegmentSearch}"/>
 		<property name="graphDao" ref="neo4jWayGraphReadDao"/>

@@ -371,6 +371,14 @@ public class Neo4jMapMatcher implements IMapMatcher {
 		properties.setActivateExtendedPathMatching(activateExtendedPathMatching);;
 	}
 
+	public String getMaxSpeedForRoutingJson() {
+		return properties.getMaxSpeedForRoutingJson();
+	}
+
+	public void setMaxSpeedForRoutingJson(String maxSpeedForShortestPathJson) {
+		properties.setMaxSpeedForRoutingJson(maxSpeedForShortestPathJson);
+	}
+
 	public int getMaxDistanceForExtendedPathMatching() {
 		return properties.getMaxDistanceForExtendedPathMatching();
 	}
