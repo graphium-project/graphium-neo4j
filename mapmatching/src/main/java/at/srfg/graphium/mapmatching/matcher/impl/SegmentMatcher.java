@@ -19,7 +19,6 @@ package at.srfg.graphium.mapmatching.matcher.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -764,15 +763,18 @@ public class SegmentMatcher {
 		Map<IMatchedWaySegment, Integer> segmentsNearTrackpointNextIndex = new LinkedHashMap<>();
 		IMatchedWaySegment previousMinDistanceSegment = null;
 		int indexOfFirstTrackpointNearSegment = -1;
+		// firstSegmentIndex to avoid linking a track point to a earlier segment
+		int firstSegmentIndex = 0;
 		for (int iTp=routeStartPointIndex; iTp<=routeEndPointIndex; iTp++) {
 			ITrackPoint trackpoint = track.getTrackPoints().get(iTp);
 			double minDistance = -1;
 			IMatchedWaySegment minDistanceSegment = null;
-			for (IMatchedWaySegment segment : segments) {
-				double distance = GeometryUtils.distanceMeters(segment.getGeometry(), trackpoint.getPoint());
+			for (int j=firstSegmentIndex; j<segments.size(); j++) {
+				double distance = GeometryUtils.distanceMeters(segments.get(j).getGeometry(), trackpoint.getPoint());
 				if ((minDistance == -1 || minDistance >= distance) && distance < properties.getMaxMatchingRadiusMeter()) {
 					minDistance = distance;
-					minDistanceSegment = segment;
+					minDistanceSegment = segments.get(j);
+					firstSegmentIndex = j;
 					if (indexOfFirstTrackpointNearSegment == -1) {
 						indexOfFirstTrackpointNearSegment = iTp;
 					}
@@ -796,6 +798,7 @@ public class SegmentMatcher {
 		if (currentIndex == -1) {
 			currentIndex = routeStartPointIndex;
 		}
+		// set start point indexes
 		for (IMatchedWaySegment segment : segments) {
 			segment.setStartPointIndex(currentIndex);
 			Integer segmentNextTrackpointIndex = segmentsNearTrackpointNextIndex.get(segment);
@@ -818,7 +821,7 @@ public class SegmentMatcher {
 			}
 			Integer segmentNextTrackpointIndex = segmentsNearTrackpoints.get(lastSegment);
 			if (segmentNextTrackpointIndex != null) {
-					lastSegment.setEndPointIndex(segmentNextTrackpointIndex.intValue() + 1);
+				lastSegment.setEndPointIndex(segmentNextTrackpointIndex.intValue() + 1);
 			}
 			
 			for (int iSegs = segments.size()-2; iSegs >= 0; iSegs--) {
