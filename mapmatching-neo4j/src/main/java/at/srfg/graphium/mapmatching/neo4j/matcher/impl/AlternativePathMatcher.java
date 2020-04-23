@@ -445,7 +445,26 @@ public class AlternativePathMatcher {
 				this.matchingTask.getSegmentMatcher().recalculateSegmentsIndexes(track, routeStartSegment.getEndPointIndex(), routeEndPointIndex, segments);
 			}
 		}
-
+		
+		// Check speed between track points of routed part
+		List<IMatchedWaySegment> segmentsToCheck = new ArrayList<IMatchedWaySegment>();
+		// TODO maybe a greater start value can be used for the loop (e.g. route start segment)
+		for (int i = 0; i < clonedBranch.getMatchedWaySegments().size(); i++) {
+			IMatchedWaySegment segment = clonedBranch.getMatchedWaySegments().get(i);
+			if (segmentsToCheck.size() > 0 || segment.getEndPointIndex() - segment.getStartPointIndex() > 0) {
+				segmentsToCheck.add(segment);
+			}
+			if (segmentsToCheck.size() >= 2 && segment.getStartPointIndex() < segment.getEndPointIndex()) {
+				boolean possibleRoute = this.matchingTask.getRoutingMatcher()
+						.checkImpossibleRoute(segmentsToCheck, track, segmentsToCheck.get(0).getStartPointIndex(), segment.getStartPointIndex());
+				if (!possibleRoute) {
+					return null;
+				}
+				segmentsToCheck.clear();
+				segmentsToCheck.add(segment);
+			}
+		}
+		
 		/* Number of last parts that are checked: every new segment that matches a point creates
 		 * two parts + a buffer.
 		 */

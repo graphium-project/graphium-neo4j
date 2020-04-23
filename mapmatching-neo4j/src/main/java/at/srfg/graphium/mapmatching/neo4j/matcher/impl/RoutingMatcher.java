@@ -340,7 +340,7 @@ public class RoutingMatcher {
 	/**
      * @return false if route is possible so the average time the route takes to drive through could match the track
      */
-    private boolean checkImpossibleRoute(List<IMatchedWaySegment> routedSegments, ITrack track, int startIndex, int endIndex) {
+    public boolean checkImpossibleRoute(List<IMatchedWaySegment> routedSegments, ITrack track, int startIndex, int endIndex) {
     	boolean valid = true;
     	if (routedSegments.size() > 1) {
             if (startIndex == endIndex || endIndex <= 0) {
