@@ -502,6 +502,8 @@ public class AlternativePathMatcher {
 					}
 					
 					clonedBranch.removeLastMatchedWaySegment();
+					previousSegment = null;
+					
 				} else if (previousSegment.isUTurnSegment()) {
 					// if there is an u-turn on the previous segment and all previously matched points
 					// can be rematched to the new segment, remove the previous segment from the path
@@ -511,6 +513,7 @@ public class AlternativePathMatcher {
 					}
 					
 					clonedBranch.removeLastMatchedWaySegment();
+					previousSegment = null;
 					
 					// calculate possible start index again because the previous segment has been removed
 					if (!clonedBranch.getMatchedWaySegments().isEmpty()) {
@@ -554,6 +557,7 @@ public class AlternativePathMatcher {
 						 */
 						if (previousSegment.getEndPointIndex() == newStartIndex) {
 							clonedBranch.removeLastMatchedWaySegment();
+							previousSegment = null;
 						} else {
 							matchedWaySegment.setAfterSkippedPart(true);
 							
@@ -563,7 +567,9 @@ public class AlternativePathMatcher {
 						}
 					}
 					
-					removeDiffDistances(previousSegment, newStartIndex);
+					if (previousSegment != null) {
+						removeDiffDistances(previousSegment, newStartIndex);
+					}
 				}
 			}
 		}
@@ -574,7 +580,7 @@ public class AlternativePathMatcher {
 		
 		if (endPointIndex > newStartIndex) {
 			// at least one point matches
-			if (!previousSegment.isAfterSkippedPart() 
+			if (previousSegment != null && !previousSegment.isAfterSkippedPart() 
 					&& matchingTask.getSegmentMatcher().emptySegmentsAtEndOfBranch(clonedBranch)) {
 				// if there are empty segments at the end of the branch, 
 				// rematch all points starting from the last matching segment
@@ -591,7 +597,7 @@ public class AlternativePathMatcher {
 			}
 		}
 		
-		if (newStartIndex > previousSegment.getEndPointIndex() &&
+		if (previousSegment != null && newStartIndex > previousSegment.getEndPointIndex() &&
 			matchedWaySegment.getId() == previousSegment.getId()) {
 			// same segment identified, but new start index is greater than old end index => some points in between could have not been matched
 			// => update previous segment and ignore matched segment
