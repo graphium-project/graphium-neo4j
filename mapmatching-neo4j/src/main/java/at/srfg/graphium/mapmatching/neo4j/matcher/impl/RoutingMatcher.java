@@ -422,16 +422,14 @@ public class RoutingMatcher {
 			maxSpeed = maxSpeeds.getDefaultSpeed();
 			if (segment.getFrc().getValue() == 0) {
 				if (maxSpeeds.getFrcOverrides() != null) {
+					Integer frcSpeed;
 					if (segment.getFormOfWay().equals(FormOfWay.PART_OF_A_SLIP_ROAD) ) {
-						Integer frcSpeed = maxSpeeds.getFrcOverrides().get(segment.getFrc().getValue());
-						if (frcSpeed != null) {
-							maxSpeed = frcSpeed.intValue();
-						}
+						frcSpeed = maxSpeeds.getFrcOverrides().get((short)1);
 					} else {
-						Integer frcSpeed = maxSpeeds.getFrcOverrides().get((short)1);
-						if (frcSpeed != null) {
-							maxSpeed = frcSpeed.intValue();
-						}
+						frcSpeed = maxSpeeds.getFrcOverrides().get((short)0);
+					}
+					if (frcSpeed != null) {
+						maxSpeed = frcSpeed.intValue();
 					}
 				}
 			} else {
