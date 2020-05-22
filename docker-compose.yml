@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  neo4j:
+    build: .
+    environment:
+      - "NEO4J_AUTH=neo4j/test"
+      - "GRAPHIUM_SERVER_NAME=satellite_graphserver_neo4j"
+      - "GRAPHIUM_SERVER_URI=http://localhost:7474/graphium"
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - ./logs:/logs
