@@ -28,6 +28,13 @@
 				<scope>provided</scope>
 			</dependency>
 		
+			<dependency>
+				<groupId>at.srfg.graphium</groupId>
+				<artifactId>graphium-routing</artifactId>
+				<version>${graphium-neo4j.version}</version>
+				<scope>provided</scope>
+			</dependency>
+		
 		</dependencies>
 	</dependencyManagement>
 

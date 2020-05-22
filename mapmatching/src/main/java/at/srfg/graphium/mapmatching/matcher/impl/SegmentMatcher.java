@@ -461,7 +461,7 @@ public class SegmentMatcher {
 			IMatchedWaySegment currentSegment = segmentsToRematch.get(i);
 			IMatchedWaySegment nextSegment = segmentsToRematch.get(i + 1);
 			
-			updateMatchesOfSegment(currentSegment, nextSegment, track, i == 0);
+			updateMatchesOfSegment(currentSegment, nextSegment, track, i == 0, newSegment.getStartPointIndex());
 		}
 		
 		return newSegment.getStartPointIndex();
@@ -474,13 +474,13 @@ public class SegmentMatcher {
 	 * found that is closer to the next segment.
 	 */
 	private void updateMatchesOfSegment(IMatchedWaySegment currentSegment, IMatchedWaySegment nextSegment,
-			ITrack track, boolean useCachedDistance) {
+			ITrack track, boolean useCachedDistance, int endPointIndex) {
 
 		int newEndIndex = currentSegment.getStartPointIndex();
 		int currentPointIndex = currentSegment.getStartPointIndex();
 
 		boolean valid = true;
-		while (currentPointIndex < track.getTrackPoints().size() && valid) {
+		while (currentPointIndex < track.getTrackPoints().size() && currentPointIndex < endPointIndex && valid) {
 			Point point = track.getTrackPoints().get(currentPointIndex).getPoint();
 			
 			double distanceToCurrentSegment = getDistanceToSegment(currentSegment, currentPointIndex, point, useCachedDistance);
@@ -771,7 +771,7 @@ public class SegmentMatcher {
 			IMatchedWaySegment minDistanceSegment = null;
 			for (int j=firstSegmentIndex; j<segments.size(); j++) {
 				double distance = GeometryUtils.distanceMeters(segments.get(j).getGeometry(), trackpoint.getPoint());
-				if ((minDistance == -1 || minDistance >= distance) && distance < properties.getMaxMatchingRadiusMeter()) {
+				if ((minDistance == -1 || minDistance > distance) && distance < properties.getMaxMatchingRadiusMeter()) {
 					minDistance = distance;
 					minDistanceSegment = segments.get(j);
 					firstSegmentIndex = j;

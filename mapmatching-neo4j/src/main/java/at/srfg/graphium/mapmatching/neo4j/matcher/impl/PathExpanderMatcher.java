@@ -439,7 +439,7 @@ public class PathExpanderMatcher {
 							setSegmentDirection(segment, matchedSegment);
 							WaySegmentRelationshipType newLastRel = determineDirection(matchedSegment);
 							clonedBranch.addMatchedWaySegment(matchedSegment);
-							matchSegment(matchedSegment, clonedBranch, newLastRel, track, properties, distanceTrackPoints, distanceForBranch, resultBranches, depth++);
+							matchSegment(matchedSegment, clonedBranch, newLastRel, track, properties, distanceTrackPoints, distanceForBranch, resultBranches, ++depth);
 						}
 					}
 				}

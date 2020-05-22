@@ -222,6 +222,9 @@ public class MatchesFilter {
 		if (paths.isEmpty()) {
 			return Collections.emptyList();
 		}
+		if (paths.size() == 1) {
+			return paths;
+		}
 		
 		List<IMatchedBranch> newBranches = new ArrayList<IMatchedBranch>();
 		
@@ -251,6 +254,10 @@ public class MatchesFilter {
 //			for (IMatchedWaySegment seg : path.getMatchedWaySegments()) {
 //				if (seg.getStartPointIndex() < prevIdx) {
 //					log.debug("////////// (2) Index error at segment " + seg.getId() + ": " + seg.getStartPointIndex() + " < " + prevIdx);
+//					
+//					log.warn("Found indexing error of merged paths - return original paths");
+//					return paths;
+//					
 //				}
 //				prevIdx = seg.getEndPointIndex();
 //			}	
@@ -488,12 +495,10 @@ public class MatchesFilter {
 			IMatchedBranch branch = it.next();
 			bestBranches.add(branch);
 			
-			int noMatchedPointsBestPath = branch.getMatchedPoints();
 			while (it.hasNext()) {
 				branch = it.next();
 				
 				if (bestBranches.size() < minNrOfBestPaths) {
-//						|| noMatchedPointsBestPath <= branch.getMatchedPoints()) {
 					bestBranches.add(branch);
 					branch = null;
 				} else {
@@ -535,9 +540,12 @@ public class MatchesFilter {
 								&& indexOfSegment > 0 // exists in path and not the first element
 								&& indexOfSegment < pathB.getMatchedWaySegments().size() - 1) { // not the last element
 							removeSegmentsAfterIndex(pathB, indexOfSegment);
-							if (pathA.getMatchedWaySegments().get(pathA.getMatchedWaySegments().size() - 2).getId() !=
-									pathB.getMatchedWaySegments().get(indexOfSegment - 1).getId()) {
-								log.warn("Different segments before equal segments in paths");
+							if (pathA.getMatchedWaySegments().size() >= 2 &&
+								pathB.getMatchedWaySegments().size() >= indexOfSegment) {
+								if (pathA.getMatchedWaySegments().get(pathA.getMatchedWaySegments().size() - 2).getId() !=
+										pathB.getMatchedWaySegments().get(indexOfSegment - 1).getId()) {
+									log.warn("Different segments before equal segments in paths");
+								}
 							}
 						}
 					}

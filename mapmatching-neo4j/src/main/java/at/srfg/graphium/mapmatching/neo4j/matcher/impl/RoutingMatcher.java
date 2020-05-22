@@ -143,7 +143,7 @@ public class RoutingMatcher {
 		 */
 		int radius = properties.getMaxMatchingRadiusMeter();
 
-		int pointIndexRoutingTo = getPossiblePathsToNextPoint(lastSegment, pointIndex, radius,
+		int pointIndexRoutingTo = getPossiblePathsToNextPoint(branch, lastSegment, pointIndex, radius,
 				track, potentialShortestPaths, skippedPaths, fallbackRoutes);
 		
 		// prepare paths to return: drop first segment (start segment), mark as obtained from routing 
@@ -160,6 +160,7 @@ public class RoutingMatcher {
 						// set same start index for all segments, the real indices are set in matchShortestPathSegment()
 						segment.setStartPointIndex(pointIndexRoutingTo);
 						segment.setFromPathSearch(true);
+						segment.calculateDistances(track);
 						path.add(segment);
 					} else if (i == 0) {
 						// the first segment of the route is the last segment of the path, so no need to add it again
@@ -208,7 +209,7 @@ public class RoutingMatcher {
 	 * @param fallbackRoutes Paths skipping parts that are used when none of the found routes is valid
 	 * @return The index of the point actually used for the shortest path search
 	 */
-	private int getPossiblePathsToNextPoint(IMatchedWaySegment lastSegment, int pointIndex,
+	private int getPossiblePathsToNextPoint(IMatchedBranch branch, IMatchedWaySegment lastSegment, int pointIndex,
 			int radius, ITrack track,
 			List<AlternativePath> potentialShortestPaths, List<AlternativePath> skippedPaths,
 			List<AlternativePath> fallbackRoutes) {
@@ -225,7 +226,7 @@ public class RoutingMatcher {
 				log.debug("Search possible paths for track " + track.getId() + " to point index " + pointIndex);
 			}
 			
-			foundTargetSegment = getShortestPath(lastSegment, track, pointIndex, skippedPoints, radius, initialPointIndexRoutingFrom, 
+			foundTargetSegment = getShortestPath(branch, lastSegment, track, pointIndex, skippedPoints, radius, initialPointIndexRoutingFrom, 
 					potentialShortestPaths, skippedPaths, fallbackRoutes);
 			
 			// if no route could be found for the next point, try one of the next points (the third)
@@ -253,7 +254,7 @@ public class RoutingMatcher {
 					tryRouteToNextPoint++;
 					List<AlternativePath> dummySkippedPaths = new ArrayList<>();
 					List<AlternativePath> dummyFallbackRoutes = new ArrayList<>();
-					foundTargetSegment = getShortestPath(lastSegment, track, pointIndex, skippedPoints, radius, initialPointIndexRoutingFrom, 
+					foundTargetSegment = getShortestPath(branch, lastSegment, track, pointIndex, skippedPoints, radius, initialPointIndexRoutingFrom, 
 							potentialShortestPaths, dummySkippedPaths, dummyFallbackRoutes);
 					
 				}
@@ -265,7 +266,7 @@ public class RoutingMatcher {
 		return pointIndex;
 	}
 	
-	private boolean getShortestPath(IMatchedWaySegment lastSegment, ITrack track, int pointIndex, int skippedPoints, int radius, 
+	private boolean getShortestPath(IMatchedBranch branch, IMatchedWaySegment lastSegment, ITrack track, int pointIndex, int skippedPoints, int radius, 
 			int initialPointIndexRoutingFrom, List<AlternativePath> potentialShortestPaths, List<AlternativePath> skippedPaths, List<AlternativePath> fallbackRoutes) {
 		boolean foundTargetSegment = false;
 		// get segments near the next point
@@ -306,7 +307,29 @@ public class RoutingMatcher {
 									matchingTask.getGraphVersion());
 							
 							if (shortestPath != null && !shortestPath.isEmpty()) {
-								if (checkImpossibleRoute(shortestPath, track, initialPointIndexRoutingFrom, pointIndex)) {
+								
+								// If routing started from a segment without matched points add all segments until the last matched point
+								// has been found; checkImpossibleRoute() needs the whole route between two track points!
+								List<IMatchedWaySegment> routedSegments = new ArrayList<>();
+								if (lastSegment.getStartPointIndex() == lastSegment.getEndPointIndex()) {
+									boolean finished = false;
+									IMatchedWaySegment currentSeg = null;
+									if (branch.getMatchedWaySegments().size() >= 2) {
+										// start at the last but one
+										for (int i=branch.getMatchedWaySegments().size()-2; !finished && i>=0; i--) {
+											currentSeg = branch.getMatchedWaySegments().get(i);
+											routedSegments.add(currentSeg);
+											if (currentSeg.getStartPointIndex() != currentSeg.getEndPointIndex()) {
+												finished = true;
+											}		
+										}
+									}
+									Collections.reverse(routedSegments); 
+								}
+								routedSegments.addAll(shortestPath);
+								
+								// check if route is possible regarding speed
+								if (checkImpossibleRoute(routedSegments, track, initialPointIndexRoutingFrom, pointIndex)) {
 									potentialShortestPaths.add(AlternativePath.fromRouting(shortestPath));
 								}
 							}
@@ -362,7 +385,7 @@ public class RoutingMatcher {
 	                
 	                float length = 0;
 	                if (i == 0) {
-	                	// first segment is already partially travelled
+	                	// first segment is already partially traveled
 	                	Point p = track.getTrackPoints().get(startIndex).getPoint();
 	                	seg.getGeometry().setSRID(p.getSRID());
 	                	length = (float) GeometryUtils.distanceOnLineStringInMeter(p, seg.getGeometry());
@@ -546,7 +569,7 @@ public class RoutingMatcher {
 				if (log.isDebugEnabled()) {
 					log.debug("found route from segment " + fromSegment.getId() + " to segment " + toSegment.getId() + " in cache");
 				}
-				return segments;
+				return cloneSegments(segments);
 			}
 		}
 		
@@ -648,6 +671,17 @@ public class RoutingMatcher {
 		return segments;
 	}
 
+	private List<IMatchedWaySegment> cloneSegments(List<IMatchedWaySegment> segments) {
+		List<IMatchedWaySegment> clonedSegments = new ArrayList<>(segments.size());
+		for (IMatchedWaySegment segment : segments) {
+			try {
+				clonedSegments.add((IMatchedWaySegment) segment.clone());
+			} catch (CloneNotSupportedException e) {
+				log.error("Could not clone segment " + segment.getId());
+			}
+		}
+		return clonedSegments;
+	}
 	/**
 	 * Returns {@code true} if a path with at most {@code maxSegmentsForShortestPath} segments
 	 * exists between {@code startNode} and {@code endNode}.

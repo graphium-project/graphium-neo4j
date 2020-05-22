@@ -72,7 +72,9 @@ public class AlternativePathMatcher {
 			searchPaths.add(new SearchPath(lastSegment.getEndPointIndex(), branch));
 		}
 		
-		searchAlternativePaths2(searchPaths, newBranches, track);
+		if (!searchPaths.isEmpty()) {
+			searchAlternativePaths2(searchPaths, newBranches, track);
+		}
 
 		log.debug("search routes finished");
 
@@ -438,32 +440,34 @@ public class AlternativePathMatcher {
 		}
 		
 		if (!isPathSkipped) {
-			if (routeStartSegment.getEndPointIndex() < previousEndPointIndex ||
+			if (startPointIndex < previousEndPointIndex ||
 				routeEndPointIndex != segments.get(segments.size()-1).getStartPointIndex()) {
 				// if we have a routed path without skipped parts (e.g. track left graph and returns...) AND there is a gap between indexes (could occur if
 				// some track points we want to route to have GPS errors and couldn't be matched on any segment) we have to recalculate indexes of routed segments
-				this.matchingTask.getSegmentMatcher().recalculateSegmentsIndexes(track, routeStartSegment.getEndPointIndex(), routeEndPointIndex, segments);
+				this.matchingTask.getSegmentMatcher().recalculateSegmentsIndexes(track, startPointIndex, routeEndPointIndex, segments);
 			}
 		}
 		
-		// Check speed between track points of routed part
-		List<IMatchedWaySegment> segmentsToCheck = new ArrayList<IMatchedWaySegment>();
-		// TODO maybe a greater start value can be used for the loop (e.g. route start segment)
-		for (int i = 0; i < clonedBranch.getMatchedWaySegments().size(); i++) {
-			IMatchedWaySegment segment = clonedBranch.getMatchedWaySegments().get(i);
-			if (segmentsToCheck.size() > 0 || segment.getEndPointIndex() - segment.getStartPointIndex() > 0) {
-				segmentsToCheck.add(segment);
-			}
-			if (segmentsToCheck.size() >= 2 && segment.getStartPointIndex() < segment.getEndPointIndex()) {
-				boolean possibleRoute = this.matchingTask.getRoutingMatcher()
-						.checkImpossibleRoute(segmentsToCheck, track, segmentsToCheck.get(0).getStartPointIndex(), segment.getStartPointIndex());
-				if (!possibleRoute) {
-					return null;
-				}
-				segmentsToCheck.clear();
-				segmentsToCheck.add(segment);
-			}
-		}
+		// This code is buggy: checks also segments found NOT by routing
+		// FIXME
+//		// Check speed between track points of routed part
+//		List<IMatchedWaySegment> segmentsToCheck = new ArrayList<IMatchedWaySegment>();
+//		// TODO maybe a greater start value can be used for the loop (e.g. route start segment)
+//		for (int i = 0; i < clonedBranch.getMatchedWaySegments().size(); i++) {
+//			IMatchedWaySegment segment = clonedBranch.getMatchedWaySegments().get(i);
+//			if (segmentsToCheck.size() > 0 || segment.getEndPointIndex() - segment.getStartPointIndex() > 0) {
+//				segmentsToCheck.add(segment);
+//			}
+//			if (segmentsToCheck.size() >= 2 && segment.getStartPointIndex() < segment.getEndPointIndex()) {
+//				boolean possibleRoute = this.matchingTask.getRoutingMatcher()
+//						.checkImpossibleRoute(segmentsToCheck, track, segmentsToCheck.get(0).getStartPointIndex(), segment.getStartPointIndex());
+//				if (!possibleRoute) {
+//					return null;
+//				}
+//				segmentsToCheck.clear();
+//				segmentsToCheck.add(segment);
+//			}
+//		}
 		
 		/* Number of last parts that are checked: every new segment that matches a point creates
 		 * two parts + a buffer.
@@ -595,7 +599,7 @@ public class AlternativePathMatcher {
 
 		// set matched points + distances for new segment
 		matchedWaySegment.setStartPointIndex(newStartIndex);
-		int endPointIndex =  matchingTask.getSegmentMatcher().getLastPointIndex(matchedWaySegment, startPointIndex, track);
+		int endPointIndex =  matchingTask.getSegmentMatcher().getLastPointIndex(matchedWaySegment, newStartIndex, track);
 		
 		if (endPointIndex > newStartIndex) {
 			// at least one point matches
