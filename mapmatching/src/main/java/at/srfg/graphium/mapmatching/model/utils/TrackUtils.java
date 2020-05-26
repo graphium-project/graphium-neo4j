@@ -29,6 +29,7 @@ import com.vividsolutions.jts.geom.Point;
 import at.srfg.graphium.geomutils.GeometryUtils;
 import at.srfg.graphium.mapmatching.model.ITrack;
 import at.srfg.graphium.mapmatching.model.ITrackPoint;
+import at.srfg.graphium.mapmatching.model.impl.TrackMetadataImpl;
 
 /**
  * @author mwimmer
@@ -146,6 +147,9 @@ public class TrackUtils {
 	 * @param track
 	 */
 	public static void calculateTrackMetadata(ITrack track) {
+		if (track.getMetadata() == null) {
+			track.setMetadata(new TrackMetadataImpl());
+		}
 		track.getMetadata().setNumberOfPoints(track.getTrackPoints().size());
 		track.getMetadata().setLength(calculateLength(track.getTrackPoints(), 0, track.getTrackPoints().size()));	
 		
