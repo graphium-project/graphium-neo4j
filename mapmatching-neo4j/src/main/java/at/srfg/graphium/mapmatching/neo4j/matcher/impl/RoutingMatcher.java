@@ -22,6 +22,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.lang3.mutable.MutableBoolean;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphalgo.GraphAlgoFactory;
 import org.neo4j.graphalgo.PathFinder;
 import org.neo4j.graphdb.Node;
@@ -31,6 +34,8 @@ import org.neo4j.graphdb.PathExpanders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.vividsolutions.jts.geom.Point;
 
 import at.srfg.graphium.geomutils.GeometryUtils;
@@ -42,9 +47,14 @@ import at.srfg.graphium.mapmatching.model.ITrack;
 import at.srfg.graphium.mapmatching.model.impl.MatchedWaySegmentImpl;
 import at.srfg.graphium.mapmatching.neo4j.matcher.impl.AlternativePathMatcher.AlternativePath;
 import at.srfg.graphium.mapmatching.properties.IMapMatchingProperties;
+import at.srfg.graphium.mapmatching.properties.impl.MaxSpeedForRoutingMode;
+import at.srfg.graphium.mapmatching.statistics.MapMatcherStatistics;
+import at.srfg.graphium.model.FormOfWay;
 import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
+import at.srfg.graphium.routing.exception.RoutingParameterException;
+import at.srfg.graphium.routing.exception.UnkownRoutingAlgoException;
 import at.srfg.graphium.routing.model.IRoute;
 import at.srfg.graphium.routing.model.IRoutingOptions;
 import at.srfg.graphium.routing.model.impl.RoutingAlgorithms;
@@ -60,20 +70,19 @@ public class RoutingMatcher {
 	private MapMatchingTask matchingTask;
 	private IMapMatchingProperties properties;
 	
-	private IRoutingService<IWaySegment> routingClient;
+	private IRoutingService<IWaySegment, Node, IRoutingOptions> routingClient;
 	private IRoutingOptions routingOptions;
 	private TrackSanitizer trackSanitizer;
 	
+	private Cache<Pair<Long, Long>, List<IMatchedWaySegment>> cachedRoutes = null;
+	private int cacheSize = 100;
+	
 	private int maxNrOfTargetSegments = 5;
-	private int MAXSPEED_CAR_FRC_0 = 150; // km/h
-	private int MAXSPEED_CAR_FRC_1_X = 120; // km/h
-	private int MAXSPEED_CAR_URBAN = 70; // km/h
-	private int MAXSPEED_BIKE = 50; // km/h
-	private int MAXSPEED_PEDESTRIAN = 20; // km/h
 	private int skippedPointsThresholdToCreateNewPath = 3;
 	
-	public RoutingMatcher(MapMatchingTask mapMatchingTask,
-			IRoutingService<IWaySegment> routingClient, IMapMatchingProperties properties, TrackSanitizer trackSanitizer) {
+	public RoutingMatcher(MapMatchingTask mapMatchingTask, IRoutingService<IWaySegment, Node, IRoutingOptions> routingClient, 
+			IMapMatchingProperties properties, TrackSanitizer trackSanitizer, MutableBoolean cancellationObject) 
+					throws RoutingParameterException {
 		this.matchingTask = mapMatchingTask;
 		this.routingClient = routingClient;
 		this.properties = properties;
@@ -85,7 +94,7 @@ public class RoutingMatcher {
 		} else {
 			routingMode = RoutingMode.CAR;
 		}
-		RoutingCriteria routingCriteria = RoutingCriteria.fromValue(properties.getRoutingCriteria());
+		RoutingCriteria routingCriteria = (RoutingCriteria) RoutingCriteria.fromValue(properties.getRoutingCriteria());
 		RoutingAlgorithms routingAlgorithm;
 		if (properties.getRoutingAlgorithm() != null && properties.getRoutingAlgorithm().length() > 0) {
 			routingAlgorithm = RoutingAlgorithms.valueOf(properties.getRoutingAlgorithm());
@@ -93,8 +102,15 @@ public class RoutingMatcher {
 			routingAlgorithm = RoutingAlgorithms.DIJKSTRA;
 		}
 		
-		routingOptions = new RoutingOptionsImpl(matchingTask.getGraphName(), mapMatchingTask.getGraphVersion(),
-				routingAlgorithm, routingCriteria, routingMode);
+		routingOptions = new RoutingOptionsImpl(matchingTask.getGraphName(), mapMatchingTask.getGraphVersion());
+		routingOptions.setAlgorithm(routingAlgorithm);
+		routingOptions.setCriteria(routingCriteria);
+		routingOptions.setMode(routingMode);
+		routingOptions.setCancellationObject(cancellationObject);
+		
+		cachedRoutes = CacheBuilder.newBuilder()
+								   .maximumSize(cacheSize)
+								   .build();
 		
 		if (log.isDebugEnabled()) {
 			log.debug("created " + this.getClass().getSimpleName() + " with following routing options: " + routingOptions.toString());
@@ -127,7 +143,7 @@ public class RoutingMatcher {
 		 */
 		int radius = properties.getMaxMatchingRadiusMeter();
 
-		int pointIndexRoutingTo = getPossiblePathsToNextPoint(lastSegment, pointIndex, radius,
+		int pointIndexRoutingTo = getPossiblePathsToNextPoint(branch, lastSegment, pointIndex, radius,
 				track, potentialShortestPaths, skippedPaths, fallbackRoutes);
 		
 		// prepare paths to return: drop first segment (start segment), mark as obtained from routing 
@@ -144,6 +160,7 @@ public class RoutingMatcher {
 						// set same start index for all segments, the real indices are set in matchShortestPathSegment()
 						segment.setStartPointIndex(pointIndexRoutingTo);
 						segment.setFromPathSearch(true);
+						segment.calculateDistances(track);
 						path.add(segment);
 					} else if (i == 0) {
 						// the first segment of the route is the last segment of the path, so no need to add it again
@@ -192,7 +209,7 @@ public class RoutingMatcher {
 	 * @param fallbackRoutes Paths skipping parts that are used when none of the found routes is valid
 	 * @return The index of the point actually used for the shortest path search
 	 */
-	private int getPossiblePathsToNextPoint(IMatchedWaySegment lastSegment, int pointIndex,
+	private int getPossiblePathsToNextPoint(IMatchedBranch branch, IMatchedWaySegment lastSegment, int pointIndex,
 			int radius, ITrack track,
 			List<AlternativePath> potentialShortestPaths, List<AlternativePath> skippedPaths,
 			List<AlternativePath> fallbackRoutes) {
@@ -209,7 +226,7 @@ public class RoutingMatcher {
 				log.debug("Search possible paths for track " + track.getId() + " to point index " + pointIndex);
 			}
 			
-			foundTargetSegment = getShortestPath(lastSegment, track, pointIndex, skippedPoints, radius, initialPointIndexRoutingFrom, 
+			foundTargetSegment = getShortestPath(branch, lastSegment, track, pointIndex, skippedPoints, radius, initialPointIndexRoutingFrom, 
 					potentialShortestPaths, skippedPaths, fallbackRoutes);
 			
 			// if no route could be found for the next point, try one of the next points (the third)
@@ -237,7 +254,7 @@ public class RoutingMatcher {
 					tryRouteToNextPoint++;
 					List<AlternativePath> dummySkippedPaths = new ArrayList<>();
 					List<AlternativePath> dummyFallbackRoutes = new ArrayList<>();
-					foundTargetSegment = getShortestPath(lastSegment, track, pointIndex, skippedPoints, radius, initialPointIndexRoutingFrom, 
+					foundTargetSegment = getShortestPath(branch, lastSegment, track, pointIndex, skippedPoints, radius, initialPointIndexRoutingFrom, 
 							potentialShortestPaths, dummySkippedPaths, dummyFallbackRoutes);
 					
 				}
@@ -249,7 +266,7 @@ public class RoutingMatcher {
 		return pointIndex;
 	}
 	
-	private boolean getShortestPath(IMatchedWaySegment lastSegment, ITrack track, int pointIndex, int skippedPoints, int radius, 
+	private boolean getShortestPath(IMatchedBranch branch, IMatchedWaySegment lastSegment, ITrack track, int pointIndex, int skippedPoints, int radius, 
 			int initialPointIndexRoutingFrom, List<AlternativePath> potentialShortestPaths, List<AlternativePath> skippedPaths, List<AlternativePath> fallbackRoutes) {
 		boolean foundTargetSegment = false;
 		// get segments near the next point
@@ -290,10 +307,35 @@ public class RoutingMatcher {
 									matchingTask.getGraphVersion());
 							
 							if (shortestPath != null && !shortestPath.isEmpty()) {
-								if (checkImpossibleRoute(shortestPath, track, initialPointIndexRoutingFrom, pointIndex)) {
+								
+								// If routing started from a segment without matched points add all segments until the last matched point
+								// has been found; checkImpossibleRoute() needs the whole route between two track points!
+								List<IMatchedWaySegment> routedSegments = new ArrayList<>();
+								if (lastSegment.getStartPointIndex() == lastSegment.getEndPointIndex()) {
+									boolean finished = false;
+									IMatchedWaySegment currentSeg = null;
+									if (branch.getMatchedWaySegments().size() >= 2) {
+										// start at the last but one
+										for (int i=branch.getMatchedWaySegments().size()-2; !finished && i>=0; i--) {
+											currentSeg = branch.getMatchedWaySegments().get(i);
+											routedSegments.add(currentSeg);
+											if (currentSeg.getStartPointIndex() != currentSeg.getEndPointIndex()) {
+												finished = true;
+											}		
+										}
+									}
+									Collections.reverse(routedSegments); 
+								}
+								routedSegments.addAll(shortestPath);
+								
+								// check if route is possible regarding speed
+								if (checkImpossibleRoute(routedSegments, track, initialPointIndexRoutingFrom, pointIndex)) {
 									potentialShortestPaths.add(AlternativePath.fromRouting(shortestPath));
 								}
 							}
+
+							matchingTask.statistics.incrementValue(MapMatcherStatistics.SHORTEST_PATH_SEARCH);
+
 						}
 
 						if (skippedPoints > skippedPointsThresholdToCreateNewPath || 
@@ -321,7 +363,7 @@ public class RoutingMatcher {
 	/**
      * @return false if route is possible so the average time the route takes to drive through could match the track
      */
-    private boolean checkImpossibleRoute(List<IMatchedWaySegment> routedSegments, ITrack track, int startIndex, int endIndex) {
+    public boolean checkImpossibleRoute(List<IMatchedWaySegment> routedSegments, ITrack track, int startIndex, int endIndex) {
     	boolean valid = true;
     	if (routedSegments.size() > 1) {
             if (startIndex == endIndex || endIndex <= 0) {
@@ -333,30 +375,17 @@ public class RoutingMatcher {
 	
 	            float durationS = 0;
 	            int i = 0;
+	            MaxSpeedForRoutingMode maxSpeeds = null;
+	            if (properties.getMaxSpeedForRouting() != null) {
+	            	maxSpeeds = properties.getMaxSpeedForRouting().getSpeedsPerRoutingMode().get(routingOptions.getMode());
+	            }
+	            
 	            for (IMatchedWaySegment seg : routedSegments) {
-	                float maxSpeed = 0;
-	                
-	                // MAXSPEEDs: GIP's maxSpeed is often too low
-	                if (routingOptions.getMode().equals(RoutingMode.CAR)) {
-		                if (seg.getFrc().getValue() == 0 &&
-		                	seg.getFormOfWay().getValue() != 10) {
-		                	maxSpeed = MAXSPEED_CAR_FRC_0;
-		                } else {
-		                	if (seg.isUrban()) {
-		                		maxSpeed = MAXSPEED_CAR_URBAN;
-		                	} else {
-		                		maxSpeed = MAXSPEED_CAR_FRC_1_X;
-		                	}
-		                }
-	                } else if (routingOptions.getMode().equals(RoutingMode.BIKE)) {
-	                	maxSpeed = MAXSPEED_BIKE;
-	                } else {
-	                	maxSpeed = MAXSPEED_PEDESTRIAN;
-	                }
+	                float maxSpeed = getMaximumSpeed(seg, maxSpeeds);
 	                
 	                float length = 0;
 	                if (i == 0) {
-	                	// first segment is already partially travelled
+	                	// first segment is already partially traveled
 	                	Point p = track.getTrackPoints().get(startIndex).getPoint();
 	                	seg.getGeometry().setSRID(p.getSRID());
 	                	length = (float) GeometryUtils.distanceOnLineStringInMeter(p, seg.getGeometry());
@@ -407,7 +436,40 @@ public class RoutingMatcher {
         }
     	
     	return valid;
-    } 
+    }
+    
+	private float getMaximumSpeed(IMatchedWaySegment segment, MaxSpeedForRoutingMode maxSpeeds) {
+		float maxSpeed = 150;
+		if (maxSpeeds != null) {
+			// routing mode is available in maxSpeedForRouting map
+			maxSpeed = maxSpeeds.getDefaultSpeed();
+			if (segment.getFrc().getValue() == 0) {
+				if (maxSpeeds.getFrcOverrides() != null) {
+					Integer frcSpeed;
+					if (segment.getFormOfWay().equals(FormOfWay.PART_OF_A_SLIP_ROAD) ) {
+						frcSpeed = maxSpeeds.getFrcOverrides().get((short)1);
+					} else {
+						frcSpeed = maxSpeeds.getFrcOverrides().get((short)0);
+					}
+					if (frcSpeed != null) {
+						maxSpeed = frcSpeed.intValue();
+					}
+				}
+			} else {
+				if (segment.isUrban() && maxSpeeds.isUrbanEnabled()) {
+					maxSpeed = maxSpeeds.getUrbanSpeed();
+				} else {
+					if (maxSpeeds.getFrcOverrides() != null) {
+						Integer frcSpeed = maxSpeeds.getFrcOverrides().get(segment.getFrc().getValue());
+						if (frcSpeed != null) {
+							maxSpeed = frcSpeed.intValue();
+						}
+					}
+				}
+			}
+		}
+		return maxSpeed;
+	}
 
 	/**
 	 * Starts new paths at index {@code pointIndexAfterSkippedPart} with segment
@@ -499,7 +561,21 @@ public class RoutingMatcher {
 		
 		List<IMatchedWaySegment> segments = null;
 		
-		log.debug("find route from segment " + fromSegment.getId() + " to segment " + toSegment.getId());
+		Pair<Long, Long> cacheKey = new ImmutablePair<Long, Long>(fromSegment.getId(), toSegment.getId());
+		if (cachedRoutes != null) {
+			segments = cachedRoutes.getIfPresent(cacheKey);
+			
+			if (segments != null) {
+				if (log.isDebugEnabled()) {
+					log.debug("found route from segment " + fromSegment.getId() + " to segment " + toSegment.getId() + " in cache");
+				}
+				return cloneSegments(segments);
+			}
+		}
+		
+		if (log.isDebugEnabled()) {
+			log.debug("find route from segment " + fromSegment.getId() + " to segment " + toSegment.getId());
+		}
 
 		long startTime = System.nanoTime();
 		
@@ -508,10 +584,17 @@ public class RoutingMatcher {
 		
 		if (validPathExists(startNode, targetNode, maxSegmentsForShortestPath)) {
 		
+			List<Long> segmentIds = new ArrayList<>();
+			segmentIds.add(fromSegment.getId());
+			segmentIds.add(toSegment.getId());
+			
 			// if a path can be found with at most 'maxSegmentsForShortestPath' segments, run exact routing 
-			IRoute<IWaySegment> route = routingClient.route(routingOptions, 
-					Collections.singletonList(startNode), 
-					Collections.singletonList(targetNode));
+			IRoute<IWaySegment, Node> route = null;
+			try {
+				route = routingClient.routePerSegmentIds(routingOptions, segmentIds);
+			} catch (UnkownRoutingAlgoException e) {
+				log.error("Could not route!", e);
+			}
 			
 			if (route != null && route.getSegments() != null && route.getSegments().size() > 1) {
 				List<IWaySegment> routeSegments = route.getSegments();
@@ -576,12 +659,29 @@ public class RoutingMatcher {
 			log.debug("routing not possible");
 		}
 			
-		long endTime = System.nanoTime();
-		log.debug("routing took " + (endTime - startTime) + "ns");
+		if (log.isDebugEnabled()) {
+			long endTime = System.nanoTime();
+			log.debug("routing took " + (endTime - startTime) + "ns");
+		}
+		
+		if (cacheKey != null && segments != null) {
+			cachedRoutes.put(cacheKey, segments);
+		}
 		
 		return segments;
 	}
 
+	private List<IMatchedWaySegment> cloneSegments(List<IMatchedWaySegment> segments) {
+		List<IMatchedWaySegment> clonedSegments = new ArrayList<>(segments.size());
+		for (IMatchedWaySegment segment : segments) {
+			try {
+				clonedSegments.add((IMatchedWaySegment) segment.clone());
+			} catch (CloneNotSupportedException e) {
+				log.error("Could not clone segment " + segment.getId());
+			}
+		}
+		return clonedSegments;
+	}
 	/**
 	 * Returns {@code true} if a path with at most {@code maxSegmentsForShortestPath} segments
 	 * exists between {@code startNode} and {@code endNode}.
@@ -612,6 +712,11 @@ public class RoutingMatcher {
 		return graphDao.getSegmentNodeBySegmentId(graphName, version, id);
 	}
 
+	// TODO uncomment...
+//	public void cancel() {
+//		routingClient.cancel();
+//	}
+	
 	public int getMaxNrOfTargetSegments() {
 		return maxNrOfTargetSegments;
 	}

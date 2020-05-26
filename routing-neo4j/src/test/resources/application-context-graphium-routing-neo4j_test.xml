@@ -37,27 +37,12 @@
 	<import resource="classpath:/application-context-graphium-neo4j-persistence.xml"/>
 	<import resource="classpath:/application-context-graphium-neo4j-aliasing.xml"/>
 	<import resource="classpath:/application-context-graphium-neo4j-service.xml"/>
-
+	<import resource="classpath:/application-context-graphium-routing-neo4j.xml"/>
+	
 	<!-- graph database provider -->	
 	<bean id="graphDatabaseProvider" class="at.srfg.graphium.neo4j.persistence.configuration.TempGraphDatabaseProvider">
 		<property name="neo4jPropertiesFile" value="${graphium.neo4j.propertiesFile}"/>
 		<property name="neo4jGraphDBDirectory" value="${graphium.neo4j.dbDirectory}"/>
 	</bean>
-
-    <!-- evaluators -->
-    <bean id="nodeBasedCostEvaluatorFactory" class="at.srfg.graphium.routing.neo4j.evaluators.impl.NodeBasedCostEvaluatorFactoryImpl"/>
-
-    <!-- factories -->
-    <bean id="routeModelFactory" class="at.srfg.graphium.routing.model.impl.RouteModelFactoryImpl"/>
-
-    <!-- services -->
-    <bean id="neo4jRoutingService" class="at.srfg.graphium.routing.service.neo4j.impl.Neo4jRoutingServiceImpl">
-    	<property name="costEvaluatorFactory" ref="nodeBasedCostEvaluatorFactory"/>
-    	<property name="graphDatabaseProvider" ref="graphDatabaseProvider"/>
-    	<property name="graphReadDao" ref="neo4jWayGraphReadDao"/>
-    	<property name="metadataDao" ref="neo4jWayGraphVersionMetadataDao"/>
-    	<property name="modelFactory" ref="routeModelFactory"/>
-    	<property name="nodeMapper" ref="neo4jWaySegmentMapper"/>
-    </bean>
 
 </beans>
