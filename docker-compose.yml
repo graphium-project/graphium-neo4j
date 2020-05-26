@@ -2,7 +2,10 @@ version: '3'
 
 services:
   neo4j:
-    build: .
+    build:
+      context: .
+      args:
+        GRAPHIUM_BRANCH_NAME: develop
     environment:
       - "NEO4J_AUTH=neo4j/test"
       - "GRAPHIUM_SERVER_NAME=satellite_graphserver_neo4j"

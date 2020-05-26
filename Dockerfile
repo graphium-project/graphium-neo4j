@@ -1,14 +1,16 @@
 FROM maven:3.5.3-jdk-8 as builder
 
+ARG GRAPHIUM_BRANCH_NAME=master
+
 # install openjfx
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y openjfx \
+    && apt-get install --no-install-recommends -y openjfx git \
     && apt-get clean \
     && rm -f /var/lib/apt/lists/*_dists_*
 
 # build graphium dependency
 RUN git clone https://github.com/graphium-project/graphium /graphium
-RUN mvn -f /graphium/pom.xml clean install -DskipTests
+RUN cd /graphium && git checkout $GRAPHIUM_BRANCH_NAME && mvn -f pom.xml clean install -DskipTests
 
 COPY . /graphium-neo4j/
 RUN mvn -f /graphium-neo4j/pom.xml clean package -DskipTests -Dsource.skip
