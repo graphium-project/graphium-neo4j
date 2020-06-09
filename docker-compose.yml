@@ -8,7 +8,6 @@ services:
         GRAPHIUM_BRANCH_NAME: develop
     container_name: neo4j-graphium
     environment:
-      # - "NEO4J_AUTH=neo4j/test"
       - "NEO4J_AUTH=none"
       - "GRAPHIUM_SECURED=false"
       - "GRAPHIUM_SERVER_NAME=satellite_graphserver_neo4j"
