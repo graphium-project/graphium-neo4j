@@ -1,22 +1,25 @@
-FROM maven:3.5.3-jdk-8 as builder
-
-ARG GRAPHIUM_BRANCH_NAME=master
-
-# install openjfx
-RUN apt-get update \
-    && apt-get install --no-install-recommends -y openjfx \
-    && apt-get clean \
-    && rm -f /var/lib/apt/lists/*_dists_*
-
-# build graphium dependency
-RUN git clone https://github.com/graphium-project/graphium /graphium
-RUN cd /graphium && git checkout $GRAPHIUM_BRANCH_NAME && mvn -f pom.xml clean install -DskipTests
-
-COPY . /graphium-neo4j/
-RUN mvn -f /graphium-neo4j/pom.xml clean package -DskipTests -Dsource.skip
+#FROM maven:3.5.3-jdk-8 as builder
+#
+#ARG GRAPHIUM_BRANCH_NAME=master
+#
+## install openjfx
+#RUN apt-get update \
+#    && apt-get install --no-install-recommends -y openjfx \
+#    && apt-get clean \
+#    && rm -f /var/lib/apt/lists/*_dists_*
+#
+## build graphium dependency
+#RUN git clone https://github.com/graphium-project/graphium /graphium
+#RUN cd /graphium && git checkout $GRAPHIUM_BRANCH_NAME && mvn -f pom.xml clean install -DskipTests
+#
+#COPY . /graphium-neo4j/
+#RUN mvn -f /graphium-neo4j/pom.xml clean package -DskipTests -Dsource.skip
 
 
 FROM neo4j:3.2.9
+
+RUN apk add --no-cache --virtual curl
+
 COPY --from=builder /graphium-neo4j/neo4j-server-integration/target/graphium-neo4j-server-integration-*.jar /plugins/
 COPY --from=builder /graphium-neo4j/api-neo4j-plugin/target/graphium-api-neo4j-plugin-*.jar /plugins/
 COPY --from=builder /graphium-neo4j/routing-neo4j-plugin/target/graphium-routing-neo4j-plugin-*.jar /plugins/
