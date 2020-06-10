@@ -7,3 +7,7 @@ Dockerfile
 *.ear
 *.tar.gz
 *.rar
+*.iml
+.git
+.gitignore
+README.md

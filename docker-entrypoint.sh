@@ -10,7 +10,5 @@ fi
 
 sed -i "s/.*dbms\.unmanaged\_extension\_classes=.*/dbms.unmanaged_extension_classes=at.srfg.graphium.neo4j.bootstrap=\/graphium/" /var/lib/neo4j/conf/neo4j.conf
 grep -q '^dbms\.jvm.additional=-Dgraphium\.conf\.' /var/lib/neo4j/conf/neo4j.conf || echo 'dbms.jvm.additional=-Dgraphium.conf.path=file:conf/' >> /var/lib/neo4j/conf/neo4j.conf
-grep -q '^graphium\.secured=' /var/lib/neo4j/conf/neo4j.conf || echo "graphium.secured=${GRAPHIUM_SECURED:-false}" >> /var/lib/neo4j/conf/neo4j.conf
-sed -i "s/^graphium\.secured=.*$/graphium.secured=${GRAPHIUM_SECURED:-false}/" /var/lib/neo4j/conf/neo4j.conf
 
 exec /sbin/tini -s -- /docker-entrypoint.sh neo4j

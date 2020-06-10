@@ -9,7 +9,6 @@ services:
     container_name: neo4j-graphium
     environment:
       - "NEO4J_AUTH=none"
-      - "GRAPHIUM_SECURED=false"
       - "GRAPHIUM_SERVER_NAME=satellite_graphserver_neo4j"
       - "GRAPHIUM_SERVER_URI=http://localhost:7474/graphium"
     ports:
