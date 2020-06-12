@@ -1,3 +1,13 @@
 target/
 docker-compose.yml
 Dockerfile
+.idea
+*.jar
+*.war
+*.ear
+*.tar.gz
+*.rar
+*.iml
+.git
+.gitignore
+README.md

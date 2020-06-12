@@ -6,10 +6,18 @@ services:
       context: .
       args:
         GRAPHIUM_BRANCH_NAME: develop
+<<<<<<< HEAD
     container_name: graphium-neo4j-server
+=======
+    container_name: neo4j-graphium
+>>>>>>> branch 'develop' of https://github.com/graphium-project/graphium-neo4j
     environment:
       - "NEO4J_AUTH=none"
+<<<<<<< HEAD
       - "GRAPHIUM_SERVER_NAME=graphium_neo4j"
+=======
+      - "GRAPHIUM_SERVER_NAME=satellite_graphserver_neo4j"
+>>>>>>> branch 'develop' of https://github.com/graphium-project/graphium-neo4j
       - "GRAPHIUM_SERVER_URI=http://localhost:7474/graphium/api"
     ports:
       - "7474:7474"

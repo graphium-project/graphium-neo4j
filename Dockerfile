@@ -33,6 +33,11 @@ COPY ./neo4j-server-integration/doc/neo4j-default/conf/*  /var/lib/neo4j/conf/
 
 COPY --from=builder /graphium/converters/osm2graphium/target/osm2graphium.one-jar.jar /osm2graphium.one-jar.jar
 COPY --from=builder /graphium/converters/idf2graphium/target/idf2graphium.one-jar.jar /idf2graphium.one-jar.jar
+<<<<<<< HEAD
+=======
+
+ENV routing.astarEstimatorFactor=0.8
+>>>>>>> branch 'develop' of https://github.com/graphium-project/graphium-neo4j
 
 COPY docker-entrypoint.sh /docker-graphium-entrypoint.sh
 ENTRYPOINT ["/sbin/tini", "-g", "--", "/docker-graphium-entrypoint.sh"]
