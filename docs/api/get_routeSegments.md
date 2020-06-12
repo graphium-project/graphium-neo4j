@@ -20,7 +20,7 @@
 
 ## Example URL
 
-`http://localhost:7474/graphium/api/graphs/osm_at_lower_levels/routing/getRouteSegments.do?timestamp=2017-09-08&startX=13.043516&startY=47.812558&endX=13.044208&endY=47.812287&routingMode=CAR&routingCriteria=length`
+`http://localhost:7474/graphium/api/graphs/osm_at/routing/getRouteSegments.do?timestamp=2020-06-10&startX=13.043516&startY=47.812558&endX=13.044208&endY=47.812287&routingMode=CAR&routingCriteria=length`
 
 ## Example Response
 ```json

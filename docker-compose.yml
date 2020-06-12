@@ -1,4 +1,4 @@
-version: '3'
+version: '3.7'
 
 services:
   neo4j:
@@ -6,10 +6,11 @@ services:
       context: .
       args:
         GRAPHIUM_BRANCH_NAME: develop
+    container_name: graphium-neo4j-server
     environment:
-      - "NEO4J_AUTH=neo4j/test"
-      - "GRAPHIUM_SERVER_NAME=satellite_graphserver_neo4j"
-      - "GRAPHIUM_SERVER_URI=http://localhost:7474/graphium"
+      - "NEO4J_AUTH=none"
+      - "GRAPHIUM_SERVER_NAME=graphium_neo4j"
+      - "GRAPHIUM_SERVER_URI=http://localhost:7474/graphium/api"
     ports:
       - "7474:7474"
       - "7687:7687"

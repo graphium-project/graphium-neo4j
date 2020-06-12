@@ -4,75 +4,21 @@
 
 # Graphium Neo4j
 
+Graphium Neo4j is an extension of the project [Graphium](https://github.com/graphium-project/graphium) implemented as Neo4j Server plugin.
+
 Graphium Neo4j is an extension of the project Graphium based on Neo4j. Neo4j is a famous graph database which comes with various graph algorithms. Neo4j's graph model is built for answering graph dependent questions in a more flexible and performant way than you can do with a relational database. As transport graphs can be modeled as graphs and stored in Neo4j, we benefit from its features.
 
-Graphium Neo4j is built for those who want to manage graphs and graph versions within Neo4j and / or need routing or even a map matching API.
+Graphium Neo4j is built for those who want to manage graphs and graph versions within Neo4j and / or need routing or even a map matching API. Graphium Neo4j consists of modules which have to be deployed as Neo4j Server plugins (so called unmanaged extensions). Therefore Graphium Neo4j is not a standalone server but requires a Neo4j Server.
 
-## Neo4j Server Plugins
+## Features
 
-Graphium Neo4j consists of modules which must be deployed as Neo4j Server plugins (so called unmanaged extensions). Therefore Graphium Neo4j is not a standalone server but requires a Neo4j Server.
+### Graphium Core
 
-### Deployment
+Graphium Neo4j include all Graphium core features. See [Graphium](https://github.com/graphium-project/graphium).
 
-Graphium Neo4j is an extension of Graphium. Therefore [Graphium](https://github.com/graphium-project/graphium) has to be checked out and built before. Then following plugins have to be built and deployed in the Neo4j's *plugins* directory:
-
-- `graphium-neo4j-server-integration-plugin-XXX.jar` (Graphium's core functionality and integration into Neo4j)
-- `graphium-api-neo4j-plugin-XXX.jar` (API)
-- `graphium-routing-neo4j-plugin-XXX.jar` (routing functionality and API)
-- `graphium-mapmatching-neo4j-plugin-XXX.jar` (map matching functionality and API)
-
-### Configuration of Graphium
-
-Graphium Neo4j needs some properties files that must be copied in Neo4j's *conf* directory:
-
-- graphVersionCapacities.properties
-- import.properties
-- log4j.xml
-- mapmatcher.properties
-- neo4j_db.properties
-- server.properties
-
-The following properties within server.properties have to be adapted. Be careful at changing other property values.
-
-- graphium.server.name
-- graphium.server.uri
-
-
-
-Default property files can be found in [neo4j-server-integration/doc/neo4j-default/conf](neo4j-server-integration/doc/neo4j-default/conf).
-
-### Configuration of Neo4j
-
-Graphium Neo4j plugins has to be registered in Neo4j Server. Therefore, *neo4j.conf* in Neo4j's *conf* directory has to be extended by:
-
-- `dbms.unmanaged_extension_classes=at.srfg.graphium.neo4j.bootstrap=/graphium`
-- `dbms.jvm.additional=-Dgraphium.conf.path=file:conf/`
-- `graphium.secured=true/false`
-
-For both routing and map matching a valid graph version (especially validity has to be defined correctly) has to be imported and activated (state is ACTIVE). If a graph version has been imported its state is INITIAL, which normally means someone has to verify the data first or this graph version is only some kind of test version and should not be taken into account for the production system. Only after verification and activation of a graph version it can be used for processing.
-
-Import:
-
-`curl -X POST "http://localhost/graphium/api/segments/graphs/{graph}/versions/{version}?overrideIfExists={overrideIfExists}" -F "file=@{FILE}"`
-
-Activation:
-
-`curl -X PUT "http://localhost/graphium/api/metadata/graphs/{graph}/versions/{version}/state/ACTIVE"`
-
-## Routing
+### Routing
 
 Graphium Neo4j's routing API handles routing requests between two coordinates on a transport graph. The result will be returned in a JSON format.
-
-### API
-
-- [GET route](docs/api/get_route.md)
-- [GET route on graph version](docs/api/get_routeOnGraphVersion.md)
-- [GET route segments](docs/api/get_routeSegments.md)
-- [GET route segments on graph version](docs/api/get_routeSegmentsOnGraphVersion.md)
-
-### Examples
-
-A visualized route calculated by Graphium Neo4j's routing engine.
 
 <p align="center">
 <img src="docs/img/routing_1.JPG" width="800">
@@ -80,18 +26,11 @@ A visualized route calculated by Graphium Neo4j's routing engine.
 <a href="https://www.basemap.at/">Map: basemap.at</a>
 </p>
 
-## Map Matching
+### Map Matching
 
 Graphium Neo4j's map matching API matches trajectories onto a transport graph. In contrast to Hidden Markov Model implementations, Graphium Neo4j's map matching core implementation is built for processing trajectories having a high sampling rate (<20 seconds). The main focus was to enable a high-performance processing of those high-sampled trajectories with a very low error ratio. Also low-sampled trajectories can be processed, but with an increasing error ratio. With Graphium's ability of working in distributed systems, you can improve the performance by horizontal scaling. Graphium Neo4j's map matching supports offline and online map matching.
 
-### API
-
-- [POST match track](docs/api/post_matchTrack.md)
-- [POST match track on current graph version](docs/api/post_matchTrackOnCurrentGraphVersion.md)
-
-### Examples
-
-Map Matching of a lower sampled track (for better visualization). Blue point show GPS track points, red linestring represents the map matched path on graph (thin black linestrings).
+Map Matching of a lower sampled track (for better visualization); blue point show GPS track points, red linestring represents the map matched path on graph (thin black linestrings):
 
 <p align="center">
 <img src="docs/img/mapmatching_2.JPG" width="800">
@@ -99,13 +38,150 @@ Map Matching of a lower sampled track (for better visualization). Blue point sho
 <a href="https://www.basemap.at/">Map: basemap.at</a>
 </p>
 
-Map Matching of a track whose GPS track points partially could not have been matched onto graph. The map matcher detects non matchable parts of the track and splits the map matched path.
+
+Map Matching of a track whose GPS track points partially could not have been matched onto graph. The map matcher detects non matchable parts of the track and splits the map matched path:
 
 <p align="center">
 <img src="docs/img/mapmatching_1.JPG" width="800">
 <br/>
 <a href="https://www.basemap.at/">Map: basemap.at</a>
 </p>
+
+### Please note
+
+For both routing and map matching a valid graph version (especially validity has to be defined correctly) has to be imported and activated (state is ACTIVE). If a graph version has been imported its state is INITIAL, which normally means someone has to verify the data first or this graph version is only some kind of test version and should not be taken into account for the production system. Only after verification and activation of a graph version it can be used for processing.
+
+## API
+
+### Routing
+
+- [GET route](docs/api/get_route.md)
+- [GET route on graph version](docs/api/get_routeOnGraphVersion.md)
+- [GET route segments](docs/api/get_routeSegments.md)
+- [GET route segments on graph version](docs/api/get_routeSegmentsOnGraphVersion.md)
+
+### Map Matching
+
+- [POST match track](docs/api/post_matchTrack.md)
+- [POST match track on current graph version](docs/api/post_matchTrackOnCurrentGraphVersion.md)
+
+## Quickstart
+
+### Build and Deployment
+
+1. Graphium Neo4j is an extension of Graphium. Therefore [Graphium](https://github.com/graphium-project/graphium) has to be checked out and built before. 
+
+2. Build Graphium Neo4j via Maven
+   `mvn clean install`
+
+3. The following plugins have to be deployed in the Neo4j's *plugins* directory:
+   `graphium-neo4j-server-integration-plugin-XXX.jar` (Graphium's core functionality and integration into Neo4j)
+   `graphium-api-neo4j-plugin-XXX.jar` (API)
+   `graphium-routing-neo4j-plugin-XXX.jar` (routing functionality and API)
+   `graphium-mapmatching-neo4j-plugin-XXX.jar` (map matching functionality and API)
+
+4. Copy property files to Neo4j's *conf* directory and configure:
+
+   ```
+   graphVersionCapacities.properties
+   import.properties
+   log4j.xml
+   mapmatcher.properties
+   neo4j_db.properties
+   server.properties
+   ```
+
+   Default property files can be found in [neo4j-server-integration/doc/neo4j-default/conf](neo4j-server-integration/doc/neo4j-default/conf).
+
+   The following properties within server.properties have to be adapted. Be careful at changing other property values:
+   *graphium.server.name*
+   *graphium.server.uri*
+
+5. Register Graphium at Neo4j: *neo4j.conf* in Neo4j's *conf* directory has to be extended by:
+
+   ```
+   dbms.unmanaged_extension_classes=at.srfg.graphium.neo4j.bootstrap=/graphium-neo4j/api
+   dbms.jvm.additional=-Dgraphium.conf.path=file:conf/
+   graphium.secured=true/false
+   ```
+
+6. Start Neo4j
+
+    ```shell script
+    neo4j.bat console
+   ```
+7. Download OSM File:
+
+   ```shell script
+   curl http://download.geofabrik.de/europe/andorra-latest.osm.pbf -o /data/osm/andorra-latest.osm.pbf
+   ```
+
+8. Convert OSM File into Graphium's JSON format:
+
+   ```shell script
+   java -jar converters/target/osm2graphium.one-jar.jar -i /data/osm/andorra-latest.osm.pbf -o /path/to/output -n osm_andorra -v 200603 -q 20000 -t 5 -highwayTypes "motorway, motorway_link, primary, primary_link"
+   ```
+
+9. Import OSM into Graphium Neo4j server
+
+   ```shell script
+   curl -X POST "http://localhost:7474/graphium/api/segments/graphs/osm_andorra/versions/200603?overrideIfExists=true" -F "file=@/path/to/output/osm_andorra.json"
+   ```
+
+10. Activate imported graph version
+
+    ```shell script
+    curl -X PUT "http://localhost:7474/graphium/api/metadata/graphs/osm_andorra/versions/200603/state/ACTIVE"
+    ```
+
+11. Check server state
+
+    ```shell script
+    curl -X GET "http://localhost:7474/graphium/api/status"
+    ```
+
+## Docker
+
+1. Start Docker setup
+
+   ```shell script
+   docker-compose up -d
+   ```
+
+Application and database logs can be obtained via `docker-compose logs`.
+
+2. Download OSM File:
+
+   ```shell script
+   docker exec -it graphium-neo4j-server curl http://download.geofabrik.de/europe/andorra-latest.osm.pbf -o /andorra-latest.osm.pbf
+   ```
+
+If any of the following steps crashes because of a Java heap exception you have configure memory definition of Docker.
+
+3. Convert OSM File into Graphium's JSON format:
+
+   ```shell script
+   docker exec -it graphium-neo4j-server java -jar /osm2graphium.one-jar.jar -i /andorra-latest.osm.pbf -o / -n osm_andorra -v 200603 -q 20000 -t 5 -highwayTypes "motorway, motorway_link, primary, primary_link"
+   ```
+
+4. Import OSM into Graphium central server
+
+   ```shell script
+   docker exec -it graphium-neo4j-server curl -X POST "http://localhost:7474/graphium/api/segments/graphs/osm_andorra/versions/200603?overrideIfExists=true" -F "file=@/osm_andorra_200603.json"
+   ```
+
+5. Activate imported graph version
+
+   ```shell script
+   docker exec -it graphium-neo4j-server curl -X PUT "http://localhost:7474/graphium/api/metadata/graphs/osm_andorra/versions/200603/state/ACTIVE"
+   ```
+
+6. Check server state
+
+   ```shell script
+   docker exec -it graphium-neo4j-server curl -X GET "http://localhost:7474/graphium/api/status"
+   ```
+
 
 ## Plugins Development
 
