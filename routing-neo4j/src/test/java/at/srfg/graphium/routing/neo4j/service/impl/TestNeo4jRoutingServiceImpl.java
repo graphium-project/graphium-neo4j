@@ -21,7 +21,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -154,7 +154,7 @@ public class TestNeo4jRoutingServiceImpl {
 	}
 
 	//@Test
-	public void testRouteWithWaySegmentsInLoop() throws UnkownRoutingAlgoException {
+	public void testRouteWithWaySegmentsInLoop() throws UnkownRoutingAlgoException, RoutingException {
 		log.info("Testing testRouteWithWaySegmentsInLoop()...");
 		for (int i=0; i<10; i++) {
 			testRouteWithWaySegments();
@@ -163,7 +163,7 @@ public class TestNeo4jRoutingServiceImpl {
 	
 	@Test
 //	@Ignore
-	public void testRouteWithWaySegments() throws UnkownRoutingAlgoException {
+	public void testRouteWithWaySegments() throws UnkownRoutingAlgoException, RoutingException {
 		log.info("Testing testRouteWithWaySegments()...");
 
 		long startSegmentId = 4586021;
@@ -201,7 +201,7 @@ public class TestNeo4jRoutingServiceImpl {
 	
 	@Test
 //	@Ignore
-	public void testRouteWithWaySegmentsForCurrentVersion() throws UnkownRoutingAlgoException {
+	public void testRouteWithWaySegmentsForCurrentVersion() throws UnkownRoutingAlgoException, RoutingException {
 		log.info("Testing testRouteWithWaySegmentsForCurrentVersion()...");
 		
 		long startSegmentId = 4586021;
@@ -233,7 +233,7 @@ public class TestNeo4jRoutingServiceImpl {
 
 	@Test
 //	@Ignore
-	public void testRouteWithValidFilters() throws UnkownRoutingAlgoException {
+	public void testRouteWithValidFilters() throws UnkownRoutingAlgoException, RoutingException {
 		log.info("Testing testRouteWithValidFilters()...");
 		
 		long startSegmentId = 4586021;
@@ -280,7 +280,7 @@ public class TestNeo4jRoutingServiceImpl {
 
 	@Test
 //	@Ignore
-	public void testRouteWithInValidFilters() throws UnkownRoutingAlgoException {
+	public void testRouteWithInValidFilters() throws UnkownRoutingAlgoException, RoutingException {
 		log.info("Testing testRouteWithInValidFilters()...");
 		
 		long startSegmentId = 4586021;
@@ -331,7 +331,7 @@ public class TestNeo4jRoutingServiceImpl {
 
 	@Test
 //	@Ignore
-	public void testRouteWithWaySegmentsForValidTimestamp() throws UnkownRoutingAlgoException {
+	public void testRouteWithWaySegmentsForValidTimestamp() throws UnkownRoutingAlgoException, RoutingException {
 		log.info("Testing testRouteWithWaySegmentsForValidTimestamp()...");
 
 		long startSegmentId = 4586021;
@@ -366,7 +366,7 @@ public class TestNeo4jRoutingServiceImpl {
 
 	@Test
 	@Ignore
-	public void testRouteWithWaySegmentsForInvalidTimestamp() throws UnkownRoutingAlgoException {
+	public void testRouteWithWaySegmentsForInvalidTimestamp() throws UnkownRoutingAlgoException, RoutingException {
 		log.info("Testing testRouteWithWaySegmentsForInvalidTimestamp()...");
 		
 		long startSegmentId = 4586021;
@@ -462,7 +462,7 @@ public class TestNeo4jRoutingServiceImpl {
 		IRoutingOptions options = new RoutingOptionsImpl(graphName, null, coords);
 		options.setCriteria(RoutingCriteria.MIN_DURATION);
 		options.setMode(RoutingMode.CAR);
-		options.setRoutingTimestamp(LocalDate.now());
+		options.setRoutingTimestamp(LocalDateTime.now());
 
 		// by default segments will be cut!
 		IRoute<IWaySegment, Double> route = routingService.route(options);

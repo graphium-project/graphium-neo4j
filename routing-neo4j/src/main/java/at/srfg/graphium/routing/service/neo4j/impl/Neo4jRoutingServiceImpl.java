@@ -56,7 +56,7 @@ public class Neo4jRoutingServiceImpl extends GenericRoutingServiceImpl<IWaySegme
 	}
 
 	@Override
-	public IRoute<IWaySegment, Double> routePerSegments(IRoutingOptions options, List<IWaySegment> segments) throws UnkownRoutingAlgoException {
+	public IRoute<IWaySegment, Double> routePerSegments(IRoutingOptions options, List<IWaySegment> segments) throws UnkownRoutingAlgoException, RoutingException {
 		IRoute<IWaySegment, Double> route = null;
 		try (Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx()) {
 			route = super.routePerSegments(options, segments);
@@ -66,7 +66,7 @@ public class Neo4jRoutingServiceImpl extends GenericRoutingServiceImpl<IWaySegme
 	}
 
 	@Override
-	public IRoute<IWaySegment, Double> routePerSegmentIds(IRoutingOptions options, List<Long> segmentIds) throws UnkownRoutingAlgoException {
+	public IRoute<IWaySegment, Double> routePerSegmentIds(IRoutingOptions options, List<Long> segmentIds) throws UnkownRoutingAlgoException, RoutingException {
 		IRoute<IWaySegment, Double> route = null;
 		try (Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx()) {
 			route = super.routePerSegmentIds(options, segmentIds);

@@ -53,6 +53,7 @@ import at.srfg.graphium.model.FormOfWay;
 import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
+import at.srfg.graphium.routing.exception.RoutingException;
 import at.srfg.graphium.routing.exception.RoutingParameterException;
 import at.srfg.graphium.routing.exception.UnkownRoutingAlgoException;
 import at.srfg.graphium.routing.model.IRoute;
@@ -592,7 +593,7 @@ public class RoutingMatcher {
 			IRoute<IWaySegment, Node> route = null;
 			try {
 				route = routingClient.routePerSegmentIds(routingOptions, segmentIds);
-			} catch (UnkownRoutingAlgoException e) {
+			} catch (UnkownRoutingAlgoException | RoutingException e) {
 				log.error("Could not route!", e);
 			}
 			

@@ -62,7 +62,7 @@ public class MapMatchingController {
 	private IAdapter<MatchedBranchDTO, IMatchedBranch> verboseBranchAdapter;
 	private IWayGraphVersionMetadataDao metadataDao;
 	
-	@RequestMapping(value="/graphs/{graph}/matchtrack", method=RequestMethod.POST)
+	@RequestMapping(value="/matching/graphs/{graph}/matchtrack", method=RequestMethod.POST)
     public @ResponseBody MatchedBranchDTO matchTrack(
     		@PathVariable(value = "graph") String graphName,
     		@RequestParam(name = "startSegmentId", required = false) Long startSegmentId,
@@ -90,7 +90,7 @@ public class MapMatchingController {
 		return match(graphName, graphVersion, track, startSegmentId, timeout, outputVerbose, routingMode);
 	}
 
-	@RequestMapping(value="/graphs/{graph}/versions/current/matchtrack", method=RequestMethod.POST)
+	@RequestMapping(value="/matching/graphs/{graph}/versions/current/matchtrack", method=RequestMethod.POST)
     public @ResponseBody MatchedBranchDTO matchTrackOnCurrentVersion(
     		@PathVariable(value = "graph") String graphName,
     		@RequestParam(name = "startSegmentId", required = false) Long startSegmentId,
@@ -101,6 +101,33 @@ public class MapMatchingController {
 
 		ITrack track = trackAdapter.adapt(trackDto);
 		return match(graphName, null, track, startSegmentId, timeout, outputVerbose, routingMode);
+		
+	}
+
+	@Deprecated
+	@RequestMapping(value="/graphs/{graph}/matchtrack", method=RequestMethod.POST)
+    public @ResponseBody MatchedBranchDTO matchTrackOld(
+    		@PathVariable(value = "graph") String graphName,
+    		@RequestParam(name = "startSegmentId", required = false) Long startSegmentId,
+    		@RequestParam(name = "timeoutMs", required = false, defaultValue = "10000") int timeout, // timeout in milliseconds
+    		@RequestParam(name = "outputVerbose", required = false, defaultValue = "false") boolean outputVerbose, // if true return additionally waysegments 
+    		@RequestParam(name = "routingMode", required = false, defaultValue = "car") String routingMode, // optional routingMode
+    		@RequestBody TrackDTO trackDto) throws GraphNotExistsException, RoutingParameterException, CancellationException {
+
+		return matchTrack(graphName, startSegmentId, timeout, outputVerbose, routingMode, trackDto);
+	}
+	
+	@Deprecated
+	@RequestMapping(value="/graphs/{graph}/versions/current/matchtrack", method=RequestMethod.POST)
+    public @ResponseBody MatchedBranchDTO matchTrackOnCurrentVersionOld(
+    		@PathVariable(value = "graph") String graphName,
+    		@RequestParam(name = "startSegmentId", required = false) Long startSegmentId,
+    		@RequestParam(name = "timeoutMs", required = false, defaultValue = "10000") int timeout, // timeout in milliseconds
+    		@RequestParam(name = "outputVerbose", required = false, defaultValue = "false") boolean outputVerbose, // if true return additionally waysegments 
+    		@RequestParam(name = "routingMode", required = false, defaultValue = "car") String routingMode, // optional routingMode
+    		@RequestBody TrackDTO trackDto) throws GraphNotExistsException, RoutingParameterException, CancellationException {
+
+		return matchTrackOnCurrentVersion(graphName, startSegmentId, timeout, outputVerbose, routingMode, trackDto);
 		
 	}
 
