@@ -67,8 +67,6 @@ For both routing and map matching a valid graph version (especially validity has
 
 ## Quickstart
 
-### Build and Deployment
-
 1. Graphium Neo4j is an extension of Graphium. Therefore [Graphium](https://github.com/graphium-project/graphium) has to be checked out and built before. 
 
 2. Build Graphium Neo4j via Maven
@@ -173,15 +171,26 @@ If any of the following steps crashes because of a Java heap exception you have 
 5. Activate imported graph version
 
    ```shell script
-   docker exec -it graphium-neo4j-server curl -X PUT "http://localhost:7474/graphium/api/metadata/graphs/osm_andorra/versions/200603/state/ACTIVE"
+   curl -X PUT "http://localhost:7474/graphium/api/metadata/graphs/osm_andorra/versions/200603/state/ACTIVE"
    ```
 
 6. Check server state
 
    ```shell script
-   docker exec -it graphium-neo4j-server curl -X GET "http://localhost:7474/graphium/api/status"
+   curl -X GET "http://localhost:7474/graphium/api/status"
    ```
 
+## Routing Example
+
+```shell script
+curl -X GET "http://localhost:7474/graphium/routing/graphs/osm_andorra/route.do?	coords=1.614733,42.5720773;1.5937977,42.56574"
+```
+
+## Map Matching Example
+
+```shell script
+curl -H "Accept:application/json" -H "Content-Type:application/json" -X POST "http://localhost:7474/graphium/api/matching/graphs/osm_andorra/versions/current/matchtrack?outputVerbose=true&timeoutMs=60000" -d '{"id":1,"trackPoints":[{"id":0,"timestamp":1591776000000,"x":1.5512481,"y":42.512805,"z":0},{"id":0,"timestamp":1591776002000,"x":1.5515414,"y":42.5130289,"z":0},{"id":0,"timestamp":1591776006000,"x":1.5520432,"y":42.5132296,"z":0},{"id":0,"timestamp":1591776011000,"x":1.5527147,"y":42.5135306,"z":0},{"id":0,"timestamp":1591776017000,"x":1.5533361,"y":42.514206,"z":0},{"id":0,"timestamp":1591776025000,"x":1.5538764,"y":42.5151092,"z":0},{"id":0,"timestamp":1591776035000,"x":1.5542151,"y":42.5162136,"z":0}]}'
+```
 
 ## Plugins Development
 
