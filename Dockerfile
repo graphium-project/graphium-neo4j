@@ -18,7 +18,7 @@ RUN mvn -f /graphium-neo4j/pom.xml clean package -DskipTests -Dsource.skip
 
 FROM neo4j:3.2.9
 
-RUN apk add --no-cache --virtual curl
+RUN apk add --no-cache curl tzdata
 
 COPY --from=builder /graphium-neo4j/neo4j-server-integration/target/graphium-neo4j-server-integration-*.jar /plugins/
 COPY --from=builder /graphium-neo4j/api-neo4j-plugin/target/graphium-api-neo4j-plugin-*.jar /plugins/

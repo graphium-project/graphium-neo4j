@@ -11,6 +11,7 @@ services:
       - "NEO4J_AUTH=none"
       - "GRAPHIUM_SERVER_NAME=graphium_neo4j"
       - "GRAPHIUM_SERVER_URI=http://localhost:7474/graphium/api"
+      - "TZ=Europe/Vienna"
     ports:
       - "7474:7474"
       - "7687:7687"
