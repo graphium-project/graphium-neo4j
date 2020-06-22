@@ -20,6 +20,10 @@ FROM neo4j:3.2.9
 
 RUN apk add --no-cache curl tzdata
 
+# set default value for heap size configuration
+ENV NEO4J_dbms_memory_heap_initial__size "1024m"
+ENV NEO4J_dbms_memory_heap_max__size "4096m"
+
 COPY --from=builder /graphium-neo4j/neo4j-server-integration/target/graphium-neo4j-server-integration-*.jar /plugins/
 COPY --from=builder /graphium-neo4j/api-neo4j-plugin/target/graphium-api-neo4j-plugin-*.jar /plugins/
 COPY --from=builder /graphium-neo4j/routing-neo4j-plugin/target/graphium-routing-neo4j-plugin-*.jar /plugins/
