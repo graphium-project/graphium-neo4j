@@ -108,10 +108,10 @@ For both routing and map matching a valid graph version (especially validity has
     ```shell script
     neo4j.bat console
    ```
-7. Download and convert OSM File into Graphium's JSON format, import into Graphium central server:
+7. Download and convert OSM File into Graphium's JSON format, import into Graphium central server *):
 
    ```shell script
-   docker exec -it graphium-neo4j-server java -jar /osm2graphium.one-jar.jar -i http://download.geofabrik.de/europe/andorra-latest.osm.pbf -o / -n osm_andorra -fd true -v 200603 -q 20000 -t 5 -highwayTypes "motorway, motorway_link, primary, primary_link" -u "http://localhost:7474/graphium/api/segments/graphs/osm_andorra/versions/200603?overrideIfExists=true"
+   docker exec -it graphium-neo4j-server java -jar /osm2graphium.one-jar.jar -i http://download.geofabrik.de/europe/andorra-latest.osm.pbf -o / -n osm_andorra -fd true -v 200603 -q 20000 -t 5 --highwayTypes "motorway, motorway_link, primary, primary_link" -u "http://localhost:7474/graphium/api/segments/graphs/osm_andorra/versions/200603?overrideIfExists=true"
    ```
 
 8. Activate imported graph version
@@ -138,10 +138,10 @@ Application and database logs can be obtained via `docker-compose logs`.
 
 If any of the following steps crashes because of a Java heap exception you have to configure memory definition of Docker and configure Neo4j's heap memory by setting the environment variable *NEO4J_dbms_memory_heap_max__size* within docker-compose.yml.
 
-2. Download and convert OSM File into Graphium's JSON format, import into Graphium central server:
+2. Download and convert OSM File into Graphium's JSON format, import into Graphium central server *):
 
    ```shell script
-   docker exec -it graphium-neo4j-server java -jar /osm2graphium.one-jar.jar -i http://download.geofabrik.de/europe/andorra-latest.osm.pbf -o / -n osm_andorra -fd true -v 200603 -q 20000 -t 5 -highwayTypes "motorway, motorway_link, primary, primary_link" -u "http://localhost:7474/graphium/api/segments/graphs/osm_andorra/versions/200603?overrideIfExists=true"
+   docker exec -it graphium-neo4j-server java -jar /osm2graphium.one-jar.jar -i http://download.geofabrik.de/europe/andorra-latest.osm.pbf -o / -n osm_andorra -fd true -v 200603 -q 20000 -t 5 --highwayTypes "motorway, motorway_link, primary, primary_link" -u "http://localhost:7474/graphium/api/segments/graphs/osm_andorra/versions/200603?overrideIfExists=true"
    ```
 
 3. Activate imported graph version
@@ -155,6 +155,8 @@ If any of the following steps crashes because of a Java heap exception you have 
    ```shell script
    curl -X GET "http://localhost:7474/graphium/api/status"
    ```
+
+*) Notice parameter *highwayTypes*: only high level streets will be imported; adapt if needed (see OSM highway types).
 
 ## Routing Example
 
