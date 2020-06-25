@@ -111,7 +111,7 @@ For both routing and map matching a valid graph version (especially validity has
 7. Download and convert OSM File into Graphium's JSON format, import into Graphium central server *):
 
    ```shell script
-   docker exec -it graphium-neo4j-server java -jar /osm2graphium.one-jar.jar -i http://download.geofabrik.de/europe/andorra-latest.osm.pbf -o / -n osm_andorra -fd true -v 200603 -q 20000 -t 5 --highwayTypes "motorway, motorway_link, primary, primary_link" -u "http://localhost:7474/graphium/api/segments/graphs/osm_andorra/versions/200603?overrideIfExists=true"
+   java -jar /osm2graphium.one-jar.jar -i http://download.geofabrik.de/europe/andorra-latest.osm.pbf -o / -n osm_andorra -fd true -v 200603 -q 20000 -t 5 --highwayTypes "motorway, motorway_link, primary, primary_link" -u "http://localhost:7474/graphium/api/segments/graphs/osm_andorra/versions/200603?overrideIfExists=true"
    ```
 
 8. Activate imported graph version
