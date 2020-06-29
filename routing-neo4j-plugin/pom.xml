@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>at.srfg.graphium</groupId>
 		<artifactId>graphium-neo4j-server-plugin-base</artifactId>
-		<version>1.1.0</version>
+		<version>1.1.1-SNAPSHOT</version>
 		<relativePath>../neo4j-server-integration/plugin/pom.xml</relativePath>
 	</parent>
 
