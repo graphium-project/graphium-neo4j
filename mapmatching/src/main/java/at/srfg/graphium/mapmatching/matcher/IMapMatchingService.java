@@ -28,6 +28,7 @@ import java.util.List;
 import at.srfg.graphium.core.exception.GraphNotExistsException;
 import at.srfg.graphium.mapmatching.model.IMatchedBranch;
 import at.srfg.graphium.mapmatching.model.ITrack;
+import at.srfg.graphium.routing.exception.RoutingParameterException;
 
 /**
  * @author mwimmer
@@ -51,6 +52,6 @@ public interface IMapMatchingService {
 	 * @throws GraphNotExistsException
 	 */
 	List<IMatchedBranch> matchTrack(String graphName, String graphVersion, ITrack track, Long startSegmentId, List<IMatchedBranch> previousBranches, 
-			int timeoutInSecs, boolean onlyBestResult, String routingMode) throws GraphNotExistsException;
+			int timeoutInSecs, boolean onlyBestResult, String routingMode) throws GraphNotExistsException, RoutingParameterException;
 	
 }

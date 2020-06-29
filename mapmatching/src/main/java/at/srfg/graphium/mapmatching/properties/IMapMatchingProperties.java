@@ -17,6 +17,8 @@
  */
 package at.srfg.graphium.mapmatching.properties;
 
+import at.srfg.graphium.mapmatching.properties.impl.MaxSpeedForRouting;
+
 public interface IMapMatchingProperties {
 
 	int getIntialRadiusMeter();
@@ -111,4 +113,10 @@ public interface IMapMatchingProperties {
 	
 	int getMaxDistanceForExtendedPathMatching();
 	void setMaxDistanceForExtendedPathMatching(int maxDistanceForExtendedPathMatching);
+	
+	String getMaxSpeedForRoutingJson();
+	void setMaxSpeedForRoutingJson(String maxSpeedForRoutingJson);
+	
+	MaxSpeedForRouting getMaxSpeedForRouting();
+	void setMaxSpeedForRouting(MaxSpeedForRouting maxSpeedForShortestPath);
 }

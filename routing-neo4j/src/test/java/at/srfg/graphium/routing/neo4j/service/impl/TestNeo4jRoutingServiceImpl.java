@@ -21,6 +21,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -43,6 +45,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.MultiLineString;
 
@@ -60,6 +63,8 @@ import at.srfg.graphium.model.IWaySegmentConnection;
 import at.srfg.graphium.model.OneWay;
 import at.srfg.graphium.model.State;
 import at.srfg.graphium.model.impl.WaySegment;
+import at.srfg.graphium.routing.exception.RoutingException;
+import at.srfg.graphium.routing.exception.UnkownRoutingAlgoException;
 import at.srfg.graphium.routing.model.IRoute;
 import at.srfg.graphium.routing.model.IRoutingOptions;
 import at.srfg.graphium.routing.model.impl.RoutingAlgorithms;
@@ -81,7 +86,7 @@ public class TestNeo4jRoutingServiceImpl {
 	private static Logger log = LoggerFactory.getLogger(TestNeo4jRoutingServiceImpl.class);
 	
 	@Resource(name="neo4jRoutingService")
-	private IRoutingService<IWaySegment> routingService;
+	private IRoutingService<IWaySegment, Double, IRoutingOptions> routingService;
 	
 	@Resource(name="neo4jWayGraphVersionMetadataDao")
 	private IWayGraphVersionMetadataDao metadataDao;
@@ -149,7 +154,7 @@ public class TestNeo4jRoutingServiceImpl {
 	}
 
 	//@Test
-	public void testRouteWithWaySegmentsInLoop() {
+	public void testRouteWithWaySegmentsInLoop() throws UnkownRoutingAlgoException, RoutingException {
 		log.info("Testing testRouteWithWaySegmentsInLoop()...");
 		for (int i=0; i<10; i++) {
 			testRouteWithWaySegments();
@@ -158,7 +163,7 @@ public class TestNeo4jRoutingServiceImpl {
 	
 	@Test
 //	@Ignore
-	public void testRouteWithWaySegments() {
+	public void testRouteWithWaySegments() throws UnkownRoutingAlgoException, RoutingException {
 		log.info("Testing testRouteWithWaySegments()...");
 
 		long startSegmentId = 4586021;
@@ -166,7 +171,10 @@ public class TestNeo4jRoutingServiceImpl {
 		
 		StopWatch stopWatch = new StopWatch();
 		
-		IRoutingOptions options = new RoutingOptionsImpl(graphName, version2, RoutingCriteria.LENGTH, RoutingMode.CAR);
+		IRoutingOptions options = new RoutingOptionsImpl(graphName, version2);
+		options.setCriteria(RoutingCriteria.LENGTH);
+		options.setMode(RoutingMode.CAR);
+
 //		IRoutingOptions options = new RoutingOptionsImpl(graphName, version, RoutingAlgorithms.DIJKSTRA, RoutingCriteria.LENGTH, RoutingMode.CAR);
 //		IRoutingOptions options = new RoutingOptionsImpl(graphName, version, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
 		
@@ -176,9 +184,12 @@ public class TestNeo4jRoutingServiceImpl {
 		startSegment.setId(startSegmentId);
 		IWaySegment endSegment = new WaySegment();
 		endSegment.setId(endSegmentId);
-
+		List<IWaySegment> segments = new ArrayList<>();
+		segments.add(startSegment);
+		segments.add(endSegment);
+		
 		stopWatch.start();
-		IRoute<IWaySegment> route = routingService.route(options, startSegment, endSegment);
+		IRoute<IWaySegment, Double> route = routingService.routePerSegments(options, segments);
 		stopWatch.stop();
 		
 		Assert.assertNotNull(route);
@@ -190,7 +201,7 @@ public class TestNeo4jRoutingServiceImpl {
 	
 	@Test
 //	@Ignore
-	public void testRouteWithWaySegmentsForCurrentVersion() {
+	public void testRouteWithWaySegmentsForCurrentVersion() throws UnkownRoutingAlgoException, RoutingException {
 		log.info("Testing testRouteWithWaySegmentsForCurrentVersion()...");
 		
 		long startSegmentId = 4586021;
@@ -198,15 +209,20 @@ public class TestNeo4jRoutingServiceImpl {
 		
 		StopWatch stopWatch = new StopWatch();
 		
-		IRoutingOptions options = new RoutingOptionsImpl(graphName, null, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
-		
+		IRoutingOptions options = new RoutingOptionsImpl(graphName, null);
+		options.setCriteria(RoutingCriteria.MIN_DURATION);
+		options.setMode(RoutingMode.CAR);
+
 		IWaySegment startSegment = new WaySegment();
 		startSegment.setId(startSegmentId);
 		IWaySegment endSegment = new WaySegment();
 		endSegment.setId(endSegmentId);
-
+		List<IWaySegment> segments = new ArrayList<>();
+		segments.add(startSegment);
+		segments.add(endSegment);
+		
 		stopWatch.start();
-		IRoute<IWaySegment> route = routingService.route(options, startSegment, endSegment);
+		IRoute<IWaySegment, Double> route = routingService.routePerSegments(options, segments);
 		stopWatch.stop();
 		
 		Assert.assertNotNull(route);
@@ -217,7 +233,7 @@ public class TestNeo4jRoutingServiceImpl {
 
 	@Test
 //	@Ignore
-	public void testRouteWithValidFilters() {
+	public void testRouteWithValidFilters() throws UnkownRoutingAlgoException, RoutingException {
 		log.info("Testing testRouteWithValidFilters()...");
 		
 		long startSegmentId = 4586021;
@@ -225,12 +241,14 @@ public class TestNeo4jRoutingServiceImpl {
 		
 		StopWatch stopWatch = new StopWatch();
 		
-		IRoutingOptions options = new RoutingOptionsImpl(graphName, null, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
+		IRoutingOptions options = new RoutingOptionsImpl(graphName, null);
+		options.setCriteria(RoutingCriteria.MIN_DURATION);
+		options.setMode(RoutingMode.CAR);
 		
 		Map<String, Set<Object>> tagFilters = new HashMap<>();
-		Set<Object> lanesFilter = new HashSet<>();
-		lanesFilter.add((short)1);
-		tagFilters.put("lanes_tow", lanesFilter);
+//		Set<Object> lanesFilter = new HashSet<>();
+//		lanesFilter.add((short)1);
+//		tagFilters.put("lanes_tow", lanesFilter);
 		
 		Set<Object> frcFilter = new HashSet<>();
 		frcFilter.add((short)0);
@@ -246,9 +264,12 @@ public class TestNeo4jRoutingServiceImpl {
 		startSegment.setId(startSegmentId);
 		IWaySegment endSegment = new WaySegment();
 		endSegment.setId(endSegmentId);
-
+		List<IWaySegment> segments = new ArrayList<>();
+		segments.add(startSegment);
+		segments.add(endSegment);
+		
 		stopWatch.start();
-		IRoute<IWaySegment> route = routingService.route(options, startSegment, endSegment);
+		IRoute<IWaySegment, Double> route = routingService.routePerSegments(options, segments);
 		stopWatch.stop();
 		
 		Assert.assertNotNull(route);
@@ -258,8 +279,8 @@ public class TestNeo4jRoutingServiceImpl {
 	}
 
 	@Test
-	@Ignore
-	public void testRouteWithInValidFilters() {
+//	@Ignore
+	public void testRouteWithInValidFilters() throws UnkownRoutingAlgoException, RoutingException {
 		log.info("Testing testRouteWithInValidFilters()...");
 		
 		long startSegmentId = 4586021;
@@ -267,13 +288,15 @@ public class TestNeo4jRoutingServiceImpl {
 
 		StopWatch stopWatch = new StopWatch();
 		
-		IRoutingOptions options = new RoutingOptionsImpl(graphName, null, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
-		
+		IRoutingOptions options = new RoutingOptionsImpl(graphName, null);
+		options.setCriteria(RoutingCriteria.MIN_DURATION);
+		options.setMode(RoutingMode.CAR);
+
 		Map<String, Set<Object>> tagFilters = new HashMap<>();
 		Set<Object> lanesFilter = new HashSet<>();
 		
-		// there are no segments with 2 lanes!!!
-		lanesFilter.add((short)2);
+		// there are no segments with 3 lanes!!!
+		lanesFilter.add((short)3);
 		tagFilters.put("lanes_tow", lanesFilter);
 		
 		Set<Object> frcFilter = new HashSet<>();
@@ -292,9 +315,12 @@ public class TestNeo4jRoutingServiceImpl {
 		startSegment.setId(startSegmentId);
 		IWaySegment endSegment = new WaySegment();
 		endSegment.setId(endSegmentId);
-
+		List<IWaySegment> segments = new ArrayList<>();
+		segments.add(startSegment);
+		segments.add(endSegment);
+		
 		stopWatch.start();
-		IRoute<IWaySegment> route = routingService.route(options, startSegment, endSegment);
+		IRoute<IWaySegment, Double> route = routingService.routePerSegments(options, segments);
 		stopWatch.stop();
 		
 		Assert.assertNotNull(route);
@@ -305,7 +331,7 @@ public class TestNeo4jRoutingServiceImpl {
 
 	@Test
 //	@Ignore
-	public void testRouteWithWaySegmentsForValidTimestamp() {
+	public void testRouteWithWaySegmentsForValidTimestamp() throws UnkownRoutingAlgoException, RoutingException {
 		log.info("Testing testRouteWithWaySegmentsForValidTimestamp()...");
 
 		long startSegmentId = 4586021;
@@ -316,14 +342,20 @@ public class TestNeo4jRoutingServiceImpl {
 		
 		StopWatch stopWatch = new StopWatch();
 		
-		IRoutingOptions options = new RoutingOptionsImpl(graphName, null, cal.getTime(), RoutingAlgorithms.ASTAR, RoutingCriteria.MIN_DURATION, RoutingMode.CAR, 0, null, 0);
+		IRoutingOptions options = new RoutingOptionsImpl(graphName, version2);
+		options.setCriteria(RoutingCriteria.MIN_DURATION);
+		options.setMode(RoutingMode.CAR);
+
 		IWaySegment startSegment = new WaySegment();
 		startSegment.setId(startSegmentId);
 		IWaySegment endSegment = new WaySegment();
 		endSegment.setId(endSegmentId);
-
+		List<IWaySegment> segments = new ArrayList<>();
+		segments.add(startSegment);
+		segments.add(endSegment);
+		
 		stopWatch.start();
-		IRoute<IWaySegment> route = routingService.route(options, startSegment, endSegment);
+		IRoute<IWaySegment, Double> route = routingService.routePerSegments(options, segments);
 		stopWatch.stop();
 		
 		Assert.assertNotNull(route);
@@ -334,7 +366,7 @@ public class TestNeo4jRoutingServiceImpl {
 
 	@Test
 	@Ignore
-	public void testRouteWithWaySegmentsForInvalidTimestamp() {
+	public void testRouteWithWaySegmentsForInvalidTimestamp() throws UnkownRoutingAlgoException, RoutingException {
 		log.info("Testing testRouteWithWaySegmentsForInvalidTimestamp()...");
 		
 		long startSegmentId = 4586021;
@@ -345,14 +377,21 @@ public class TestNeo4jRoutingServiceImpl {
 		
 		StopWatch stopWatch = new StopWatch();
 		
-		IRoutingOptions options = new RoutingOptionsImpl(graphName, null, cal.getTime(), RoutingAlgorithms.ASTAR, RoutingCriteria.MIN_DURATION, RoutingMode.CAR, 0, null, 0);
+		IRoutingOptions options = new RoutingOptionsImpl(graphName, version2);
+		options.setAlgorithm(RoutingAlgorithms.ASTAR);
+		options.setCriteria(RoutingCriteria.MIN_DURATION);
+		options.setMode(RoutingMode.CAR);
+
 		IWaySegment startSegment = new WaySegment();
 		startSegment.setId(startSegmentId);
 		IWaySegment endSegment = new WaySegment();
 		endSegment.setId(endSegmentId);
-
+		List<IWaySegment> segments = new ArrayList<>();
+		segments.add(startSegment);
+		segments.add(endSegment);
+		
 		stopWatch.start();
-		IRoute<IWaySegment> route = routingService.route(options, startSegment, endSegment);
+		IRoute<IWaySegment, Double> route = routingService.routePerSegments(options, segments);
 		stopWatch.stop();
 		
 		Assert.assertNotNull(route);
@@ -371,18 +410,29 @@ public class TestNeo4jRoutingServiceImpl {
 		double endY = 56.33339;
 		double endX = 10.12442;
 		
-		IRoutingOptions options = new RoutingOptionsImpl(graphName, version2, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
+		List<Coordinate> coords = new ArrayList<Coordinate>(2);
+		coords.add(new Coordinate(startX, startY));
+		coords.add(new Coordinate(endX, endY));
+		
+		IRoutingOptions options = new RoutingOptionsImpl(graphName, version2, coords); //, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
+		options.setCriteria(RoutingCriteria.LENGTH);
+		options.setMode(RoutingMode.CAR);
 
 		// by default segments will be cut!
-		IRoute<IWaySegment> route = routingService.route(options, startX, startY, endX, endY);
+		IRoute<IWaySegment, Double> route = null;
+		try {
+			route = routingService.route(options);
+		} catch (UnkownRoutingAlgoException | RoutingException e) {
+			log.error("Routing not successful!", e);
+		}
 		
 		Assert.assertNotNull(route);
 		
 		printRoute(route);
 		printRouteCSV(route);
 		printRouteGeom(route);
-		System.out.println("SRID=4326;POINT (" + startX + " " + startY + ")");
-		System.out.println("SRID=4326;POINT (" + endX + " " + endY + ")");
+		log.info("SRID=4326;POINT (" + startX + " " + startY + ")");
+		log.info("SRID=4326;POINT (" + endX + " " + endY + ")");
 		
 //		options = new RoutingOptionsImpl(graphName, version, RoutingCriteria.LENGTH, RoutingMode.CAR);
 //		
@@ -397,47 +447,57 @@ public class TestNeo4jRoutingServiceImpl {
 
 	@Test
 //	@Ignore
-	public void testRouteWithCoordinatesForCurrentVersion() {
+	public void testRouteWithCoordinatesForCurrentVersion() throws UnkownRoutingAlgoException, RoutingException {
 		log.info("Testing testRouteWithCoordinatesForCurrentVersion()...");
-
-		IRoutingOptions options = new RoutingOptionsImpl(graphName, null, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
-		options.setRoutingTimestamp(new Date());
 		
 		double startY = 55.3948;
 		double startX = 9.4495;
 		double endY = 55.41020;
 		double endX = 10.06664;
 
+		List<Coordinate> coords = new ArrayList<Coordinate>(2);
+		coords.add(new Coordinate(startX, startY));
+		coords.add(new Coordinate(endX, endY));
+		
+		IRoutingOptions options = new RoutingOptionsImpl(graphName, null, coords);
+		options.setCriteria(RoutingCriteria.MIN_DURATION);
+		options.setMode(RoutingMode.CAR);
+		options.setRoutingTimestamp(LocalDateTime.now());
+
 		// by default segments will be cut!
-		IRoute<IWaySegment> route = routingService.route(options, startX, startY, endX, endY);
+		IRoute<IWaySegment, Double> route = routingService.route(options);
 		
 		Assert.assertNotNull(route);
 		
 		printRoute(route);
 		printRouteCSV(route);
 		printRouteGeom(route);
-		System.out.println("SRID=4326;POINT (" + startX + " " + startY + ")");
-		System.out.println("SRID=4326;POINT (" + endX + " " + endY + ")");
+		log.info("SRID=4326;POINT (" + startX + " " + startY + ")");
+		log.info("SRID=4326;POINT (" + endX + " " + endY + ")");
 		
 		
 	}
 
 	@Test
 	@Ignore
-	public void testRouteWithCoordinatesCompareRoutingCriterias() {
+	public void testRouteWithCoordinatesCompareRoutingCriterias() throws UnkownRoutingAlgoException, RoutingException {
 		log.info("Testing testRouteWithCoordinatesCompareRoutingCriterias()...");
-
-//		String graphName = "gip_at_frc_0_8";
-//		String version = "16_04_161103_2";
-		IRoutingOptions options = new RoutingOptionsImpl(graphName, version2, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
 		
 		double startX = 13.02678;
 		double startY = 47.82557;
 		double endX = 13.01637;
 		double endY = 47.82050;
 
+		List<Coordinate> coords = new ArrayList<Coordinate>(2);
+		coords.add(new Coordinate(startX, startY));
+		coords.add(new Coordinate(endX, endY));
+		
+		IRoutingOptions options = new RoutingOptionsImpl(graphName, version2, coords);
+		options.setCriteria(RoutingCriteria.MIN_DURATION);
+		options.setMode(RoutingMode.CAR);
+
 		// by default segments will be cut!
-		IRoute<IWaySegment> route = routingService.route(options, startX, startY, endX, endY);
+		IRoute<IWaySegment, Double> route = routingService.route(options);
 		
 		Assert.assertNotNull(route);
 		
@@ -478,9 +538,12 @@ public class TestNeo4jRoutingServiceImpl {
 		};
 
 		compareRoutes(expectedMinDurationRoute, route);
-
-		options = new RoutingOptionsImpl(graphName, version2, RoutingCriteria.LENGTH, RoutingMode.CAR);
-		route = routingService.route(options, startX, startY, endX, endY);
+		
+		options = new RoutingOptionsImpl(graphName, version2, coords);
+		options.setCriteria(RoutingCriteria.LENGTH);
+		options.setMode(RoutingMode.CAR);
+		
+		route = routingService.route(options);
 		
 		Assert.assertNotNull(route);
 		
@@ -520,7 +583,7 @@ public class TestNeo4jRoutingServiceImpl {
 		System.out.println("SRID=4326;POINT (" + endX + " " + endY + ")");
 	}
 
-	private void compareRoutes(RouteSegment[] expectedMinDurationRoute, IRoute<IWaySegment> route) {
+	private void compareRoutes(RouteSegment[] expectedMinDurationRoute, IRoute<IWaySegment, Double> route) {
 		
 		Assert.assertEquals(expectedMinDurationRoute.length, route.getSegments().size());
 		List<IWaySegment> segments = route.getSegments();
@@ -556,28 +619,28 @@ public class TestNeo4jRoutingServiceImpl {
 		Assert.assertTrue(route.getDuration() <= duration);
 	}
 	
-	@Test
-	@Ignore
-	public void testRouteWithCoordinatesAndWithoutCutting() {
-		log.info("Testing testRouteWithCoordinatesAndWithoutCutting()...");
+//	@Test
+//	@Ignore
+//	public void testRouteWithCoordinatesAndWithoutCutting() {
+//		log.info("Testing testRouteWithCoordinatesAndWithoutCutting()...");
+//
+//		IRoutingOptions options = new RoutingOptionsImpl(graphName, version2, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
+//		
+//		double startY = 55.638616;
+//		double startX = 9.561346;
+//		double endY = 56.33339;
+//		double endX = 10.12442;
+//
+//		IRoute<IWaySegment> route = routingService.route(options, startX, startY, endX, endY, false);
+//		
+//		Assert.assertNotNull(route);
+//		
+//		printRoute(route);
+//		System.out.println("SRID=4326;POINT (" + startX + " " + startY + ")");
+//		System.out.println("SRID=4326;POINT (" + endX + " " + endY + ")");
+//	}
 
-		IRoutingOptions options = new RoutingOptionsImpl(graphName, version2, RoutingCriteria.MIN_DURATION, RoutingMode.CAR);
-		
-		double startY = 55.638616;
-		double startX = 9.561346;
-		double endY = 56.33339;
-		double endX = 10.12442;
-
-		IRoute<IWaySegment> route = routingService.route(options, startX, startY, endX, endY, false);
-		
-		Assert.assertNotNull(route);
-		
-		printRoute(route);
-		System.out.println("SRID=4326;POINT (" + startX + " " + startY + ")");
-		System.out.println("SRID=4326;POINT (" + endX + " " + endY + ")");
-	}
-
-	private void printRouteCSV(IRoute<IWaySegment> route) {
+	private void printRouteCSV(IRoute<IWaySegment, Double> route) {
 		log.info("Route found for Graph " + route.getGraphName() + " in Version " + route.getGraphVersion());
 		log.info("Path: " + route.getPath());
 		log.info("Length: " + route.getLength()); 
@@ -609,7 +672,7 @@ public class TestNeo4jRoutingServiceImpl {
 				}
 				
 				System.out.println(seg.getId() + "; " + seg.getStartNodeId() + "; " + seg.getEndNodeId() + "; " + startToEnd 
-						+ "; " + seg.getDuration(startToEnd) + "; " + seg.getLength() + "; " + seg.getFrc().getValue()
+						+ "; " + seg.getDuration(startToEnd) + "; " + seg.getLength() + "; " + (seg.getFrc() == null ? "" : seg.getFrc().getValue())
 						+ "; " + (startToEnd ? seg.getSpeedCalcTow() : seg.getSpeedCalcBkw()) + "; " + (startToEnd ? seg.getMaxSpeedTow() : seg.getMaxSpeedBkw()));				
 				prevSeg = seg;
 			}
@@ -618,7 +681,7 @@ public class TestNeo4jRoutingServiceImpl {
 		}
 	}
 	
-	private void printRoute(IRoute<IWaySegment> route) {
+	private void printRoute(IRoute<IWaySegment, Double> route) {
 		log.info("Route found for Graph " + route.getGraphName() + " in Version " + route.getGraphVersion());
 		log.info("Path: " + route.getPath());
 		log.info("Length: " + route.getLength()); 
@@ -649,7 +712,11 @@ public class TestNeo4jRoutingServiceImpl {
 		}
 	}
 	
-	private void printRouteGeom(IRoute<IWaySegment> route) {
+	private void printRouteGeom(IRoute<IWaySegment, Double> route) {
+		if (route.getGeometry() != null) {
+			System.out.println("Route's Geometry: " + route.getGeometry().toText());
+			
+		} else
 		if (route.getSegments() != null && !route.getSegments().isEmpty()) {
 			
 			LineString[] lineStrings = new LineString[route.getSegments().size()];

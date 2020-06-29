@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.TransactionTerminatedException;
 import org.slf4j.Logger;
@@ -53,6 +54,8 @@ import at.srfg.graphium.mapmatching.weighting.IWeightingStrategyFactory;
 import at.srfg.graphium.mapmatching.weighting.impl.RouteDistanceWeightingStrategyFactory;
 import at.srfg.graphium.model.IWayGraphVersionMetadata;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
+import at.srfg.graphium.neo4j.persistence.Neo4jUtil;
+import at.srfg.graphium.routing.exception.RoutingParameterException;
 
 public class MapMatchingTask implements IMapMatcherTask {
 
@@ -64,7 +67,8 @@ public class MapMatchingTask implements IMapMatcherTask {
 	private Neo4jUtil neo4jUtil;
 
 	// cancel request flag in case of processes taking too much time
-	private volatile boolean cancelRequested = false;
+//	private volatile boolean cancelRequested = false;
+	private MutableBoolean cancellationObject;
 	
 	// collect some statistical data
 	MapMatcherStatistics statistics = new MapMatcherStatistics();
@@ -84,14 +88,16 @@ public class MapMatchingTask implements IMapMatcherTask {
 	private static Logger csvLogger = null;
 
 	public MapMatchingTask(Neo4jMapMatcher mapMatcher, MapMatchingProperties properties, IWayGraphVersionMetadata graphMetadata, Neo4jUtil neo4jUtil, 
-			ITrack origTrack, String csvLoggerName, MapMatcherGlobalStatistics globalStatistics) {
+			ITrack origTrack, String csvLoggerName, MapMatcherGlobalStatistics globalStatistics) throws RoutingParameterException {
 		this(mapMatcher, properties, graphMetadata, neo4jUtil, origTrack, new RouteDistanceWeightingStrategyFactory(), 
 				csvLoggerName, globalStatistics);
 	}
 
 	public MapMatchingTask(Neo4jMapMatcher mapMatcher, MapMatchingProperties properties, IWayGraphVersionMetadata graphMetadata, 
 			Neo4jUtil neo4jUtil, ITrack origTrack, IWeightingStrategyFactory weightingStrategyFactory, String csvLoggerName,
-			MapMatcherGlobalStatistics globalStatistics) {
+			MapMatcherGlobalStatistics globalStatistics) throws RoutingParameterException {
+		cancellationObject = new MutableBoolean(false);
+		
 		this.mapMatcher = mapMatcher;
 		this.graphMetadata = graphMetadata;
 		this.track = origTrack;
@@ -102,8 +108,8 @@ public class MapMatchingTask implements IMapMatcherTask {
 		this.initialMatcher = new InitialMatcher(this, this.properties, neo4jUtil);
 		this.segmentMatcher = new SegmentMatcher(this.properties);
 		this.pathExpanderMatcher = new PathExpanderMatcher(this, this.properties, neo4jUtil);
-		this.routingMatcher = new RoutingMatcher(this, mapMatcher.getRoutingService(), this.properties, this.trackSanitizer);
-		this.alternativePathMatcher = new AlternativePathMatcher(this, this.properties);
+		this.routingMatcher = new RoutingMatcher(this, mapMatcher.getRoutingService(), this.properties, this.trackSanitizer, cancellationObject);
+		this.alternativePathMatcher = new AlternativePathMatcher(this);
 		this.matchesFilter = new MatchesFilter(this, alternativePathMatcher, this.properties);
 		this.weightingStrategyFactory = weightingStrategyFactory;
 		this.globalStatistics = globalStatistics;
@@ -146,7 +152,6 @@ public class MapMatchingTask implements IMapMatcherTask {
 			return Collections.emptyList();
 		}
 
-		cancelRequested = false;
 		statistics.reset();
 		Date startTimestamp = new Date();
 		statistics.setValue(MapMatcherStatistics.START_TIMESTAMP, startTimestamp);
@@ -277,6 +282,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 							paths, 
 							track, 
 							possiblePathsForStartSegments,
+							certainPath.size() > 0,
 							properties);
 					
 					////
@@ -369,7 +375,6 @@ public class MapMatchingTask implements IMapMatcherTask {
 			if (lastCertainSegment != null) {
 				List<IMatchedWaySegment> newCertainSegments = new ArrayList<>();
 				boolean fillNewCertainSegments = true;
-				List<IMatchedBranch> pathsToRemove = new ArrayList<>();
 	
 				for (IMatchedBranch path : paths) {
 					
@@ -434,14 +439,22 @@ public class MapMatchingTask implements IMapMatcherTask {
 				
 				certainPath.addAll(newCertainSegments);
 				
-				paths.removeAll(pathsToRemove);
-				
 				if (log.isDebugEnabled()) {
 					List<Long> segmentIds = new ArrayList<>(certainPath.size());
 					for (IMatchedWaySegment segment : certainPath) {
 						segmentIds.add(segment.getId());
 					}
 					log.debug("Certain Path = " + StringUtils.join(segmentIds, ", "));
+					
+					
+					///////////////////////////////////////////////////
+					List<String> segmentInfoList = new ArrayList<>(certainPath.size());
+					for (IMatchedWaySegment segment : certainPath) {
+						segmentInfoList.add(segment.getId() + "(" + segment.getStartPointIndex() + "-" + segment.getEndPointIndex() + ")");
+					}
+					log.debug("Certain Path = " + StringUtils.join(segmentInfoList, ", "));
+					///////////////////////////////////////////////////
+
 				}
 				
 			}
@@ -489,21 +502,29 @@ public class MapMatchingTask implements IMapMatcherTask {
 			for (IMatchedWaySegment segment : path.getMatchedWaySegments()) {
 				segmentIds.add(segment.getId());
 			}
-			log.debug("Path " + i++ + ", MatchedFactor = " + path.getMatchedFactor() +
+			log.debug("Path " + i + ", MatchedFactor = " + path.getMatchedFactor() +
 					", step = " + path.getStep() +
 					", empty segments = " + path.getNrOfEmptySegments() +
 					", matched track points = " + path.getMatchedPoints() +
 					", total track points = " + (path.getNrOfTotalTrackPoints()) +
 					", Segments = " + StringUtils.join(segmentIds, ", "));
 			
-//			int prevIdx = 0;
-//			for (IMatchedWaySegment seg : path.getMatchedWaySegments()) {
-//				if (seg.getStartPointIndex() < prevIdx) {
-//					log.debug("////////// (1) Index error at segment " + seg.getId() + ": " + seg.getStartPointIndex() + " < " + prevIdx);
-//				}
-//				prevIdx = seg.getEndPointIndex();
-//			}	
+			///////////////////////////////////////////////////
+			for (IMatchedWaySegment seg : path.getMatchedWaySegments()) {
+				if (seg.getStartPointIndex() > seg.getEndPointIndex()) {
+					log.debug("////////// Index error at segment " + seg.getId() + ": " + seg.getStartPointIndex() + " > " + seg.getEndPointIndex());
+				}
+			}	
+
+			List<String> segmentInfoList = new ArrayList<>(path.getMatchedWaySegments().size());
+			for (IMatchedWaySegment segment : path.getMatchedWaySegments()) {
+				segmentInfoList.add(segment.getId() + "(" + segment.getStartPointIndex() + "-" + segment.getEndPointIndex() + ")");
+			}
+			log.debug("Path " + i + ": " + StringUtils.join(segmentInfoList, ", "));
+			///////////////////////////////////////////////////
 			
+			i++;
+						
 		}
 	}
 
@@ -576,7 +597,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 	 * @throws CancellationException
 	 */
 	void checkCancelStatus() throws CancellationException {
-		if (cancelRequested) {
+		if (cancellationObject.booleanValue()) {
 			throw new CancellationException();
 		}
 	}
@@ -657,7 +678,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 			IMatchedWaySegment currentSegment = branch.getMatchedWaySegments().get(1);
 			for (int i=2; i<branch.getMatchedWaySegments().size(); i++) {
 				if (previousSegment.getEndPointIndex() > currentSegment.getStartPointIndex()) {
-					updateIndices(currentSegment, previousSegment, properties.getMaxMatchingRadiusMeter());
+					updateIndices(currentSegment, previousSegment);
 				}
 				previousSegment = currentSegment;
 				currentSegment = branch.getMatchedWaySegments().get(i);
@@ -666,10 +687,10 @@ public class MapMatchingTask implements IMapMatcherTask {
 		}
 	}
 
-	private void updateIndices(IMatchedWaySegment currentSegment, IMatchedWaySegment previousSegment,
-			int maxMatchingRadiusMeter) {
-		int newStartIndex = segmentMatcher.updateMatchesOfPreviousSegment(previousSegment.getEndPointIndex(), previousSegment, currentSegment, properties.getMaxMatchingRadiusMeter(), track);
+	private void updateIndices(IMatchedWaySegment currentSegment, IMatchedWaySegment previousSegment) {
+		int newStartIndex = segmentMatcher.updateMatchesOfPreviousSegment(previousSegment.getEndPointIndex(), previousSegment, currentSegment, track);
 		currentSegment.setStartPointIndex(newStartIndex);
+		currentSegment.calculateDistances(track);
 	}
 
 	/**
@@ -769,8 +790,9 @@ public class MapMatchingTask implements IMapMatcherTask {
 	
 	public void cancel() throws InterruptedException {
 		log.info("Cancel requested for track " + track.getId());
-		throw new InterruptedException();
 //		cancelRequested = true;
+		cancellationObject.setTrue();
+		throw new InterruptedException();
 	}
 	
 	private void logCsv() {

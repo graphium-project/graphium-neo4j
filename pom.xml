@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>at.srfg.graphium</groupId>
 	<artifactId>graphium-neo4j-parent</artifactId>
-	<version>1.0.3</version>
+	<version>1.1.0</version>
 	<packaging>pom</packaging>
 
 	<name>graphium-builder</name>
@@ -31,11 +31,16 @@
 			<name>Andreas Wagner</name>
 			<email>andreas.wagner@salzburgresearch.at</email>
 		</developer>
+		<developer>
+			<id>SGroe</id>
+			<name>Simon Gr&#246;chenig</name>
+			<email>simon.groechenig@salzburgresearch.at</email>
+		</developer>
 	</developers>
  	
 	<properties>
-		<graphium-neo4j.version>1.0.3</graphium-neo4j.version>
-		<graphium.version>1.0.3</graphium.version>
+		<graphium-neo4j.version>1.1.0</graphium-neo4j.version>
+		<graphium.version>1.1.0</graphium.version>
 		<neo4j.version>3.2.5</neo4j.version>	 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<slf4j-log4j12.version>1.7.21</slf4j-log4j12.version>
@@ -112,6 +117,22 @@
 			</plugin>
 			
 		</plugins>
+
+		<pluginManagement>
+	      <plugins>
+	        <plugin>
+	          <groupId>org.codehaus.mojo</groupId>
+	          <artifactId>license-maven-plugin</artifactId>
+	          <version>1.20</version>
+	          <executions>
+	            <execution>
+	              <id>add-third-party</id>
+	            </execution>
+	          </executions>
+	        </plugin>
+	      </plugins>
+	    </pluginManagement>
+
 	</build>
 
 	<dependencyManagement>
@@ -137,6 +158,12 @@
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
 				<artifactId>graphium-model</artifactId>
+				<version>${graphium.version}</version>
+			</dependency>
+		
+			<dependency>
+				<groupId>at.srfg.graphium</groupId>
+				<artifactId>graphium-routing</artifactId>
 				<version>${graphium.version}</version>
 			</dependency>
 		
@@ -199,5 +226,15 @@
 		<module>routing-neo4j</module>
 	 	<module>routing-neo4j-plugin</module>
 	</modules>
-  
+ 
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>license-maven-plugin</artifactId>
+				<version>1.20</version>
+			</plugin>
+		</plugins>
+	</reporting>
+ 
 </project>

@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import org.codehaus.jackson.map.util.LRUMap;
+import org.apache.commons.collections4.map.LRUMap;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.traversal.TraversalDescription;
@@ -31,8 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
-import at.srfg.graphium.geomutils.GeometryUtils;
 import at.srfg.graphium.core.exception.GraphNotExistsException;
+import at.srfg.graphium.geomutils.GeometryUtils;
 import at.srfg.graphium.mapmatching.matcher.impl.SegmentDistance;
 import at.srfg.graphium.mapmatching.model.Direction;
 import at.srfg.graphium.mapmatching.model.IMatchedBranch;
@@ -45,6 +45,7 @@ import at.srfg.graphium.mapmatching.properties.IMapMatchingProperties;
 import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.model.OneWay;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
+import at.srfg.graphium.neo4j.persistence.Neo4jUtil;
 
 /**
  * This class takes care of the initial matching: It searches segments
@@ -69,7 +70,7 @@ public class InitialMatcher {
 
 		traversalDescription = neo4jUtil.getTraverser();
 		
-		startSegmentsCache = new LRUMap<ITrackPoint, List<SegmentDistance<IWaySegment>>>(50, 200);
+		startSegmentsCache = new LRUMap<ITrackPoint, List<SegmentDistance<IWaySegment>>>(200, 50);
 	}
 
 	/**
@@ -299,10 +300,7 @@ public class InitialMatcher {
 				// try to match every connected segment (calculate matching factor)
 				IMatchedWaySegment matchedSegment = matchingTask.getSegmentMatcher().matchSegment(
 						matchingTask.getGraphDao().mapNode(matchingTask.getGraphName(), matchingTask.getGraphVersion(), connectedSegmentNode), 
-						track,
-						startSegment.getEndPointIndex(),
-						properties.getMaxMatchingRadiusMeter(),
-						branch);
+						track, startSegment.getEndPointIndex(), branch);
 
 				if (matchedSegment != null && clonedSegment.getMatchedPoints() > 0) {
 					// the matching for the connected segment is valid and the start segment also still
@@ -378,11 +376,7 @@ public class InitialMatcher {
 	 */
 	private void assignMatchingPoints(IMatchedWaySegment startSegment,
 			int pointIndex, ITrack track) {
-		int lastPointIndex = matchingTask.getSegmentMatcher().getLastPointIndex(
-				startSegment, 
-				pointIndex, 
-				track, 
-				properties.getMaxMatchingRadiusMeter());
+		int lastPointIndex = matchingTask.getSegmentMatcher().getLastPointIndex(startSegment, pointIndex, track);
 		startSegment.setEndPointIndex(lastPointIndex);
 		
 		startSegment.calculateDistances(track);
@@ -413,7 +407,7 @@ public class InitialMatcher {
 		return clonedStartSegment;
 	}
 
-	protected LRUMap getStartSegmentsCache() {
+	protected LRUMap<ITrackPoint, List<SegmentDistance<IWaySegment>>> getStartSegmentsCache() {
 		return startSegmentsCache;
 	}
 

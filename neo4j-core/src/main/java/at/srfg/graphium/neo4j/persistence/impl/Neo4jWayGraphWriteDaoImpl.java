@@ -82,12 +82,18 @@ public class Neo4jWayGraphWriteDaoImpl
 	@Override
 	public void createGraph(String graphName, String version, boolean overrideGraphIfExsists) throws GraphAlreadyExistException {
 		String graphVersionName = GraphVersionHelper.createGraphVersionName(graphName, version);
-		if (!overrideGraphIfExsists) {
-			throw new GraphAlreadyExistException("graph " + graphVersionName + " already exists");
-		} else {
-			// delete Nodes from Layer
-			deleteGraphVersionSegmentNodes(graphVersionName);
+		if (checkIfMetadataExists(graphName, version)) {
+			if (overrideGraphIfExsists) {
+				// delete Nodes from Layer
+				deleteGraphVersionSegmentNodes(graphVersionName);
+			} else {
+				throw new GraphAlreadyExistException("graph " + graphVersionName + " already exists");
+			}
 		}
+	}
+
+	private boolean checkIfMetadataExists(String graphName, String version) {
+		return getWayGraphVersionMetadataNode(graphName, version) != null;
 	}
 
 	private void deleteGraphVersionSegmentNodes(String graphVersionName) {

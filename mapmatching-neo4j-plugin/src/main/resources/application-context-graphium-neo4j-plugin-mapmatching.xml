@@ -17,7 +17,7 @@
 		<property name="ignoreResourceNotFound" value="true" />		
 	</bean>
 
-	<bean id="neo4jUtil" class="at.srfg.graphium.mapmatching.neo4j.matcher.impl.Neo4jUtil" lazy-init="true" >
+	<bean id="neo4jUtil" class="at.srfg.graphium.neo4j.persistence.Neo4jUtil" lazy-init="true" >
 		<property name="graphDatabaseProvider" ref="graphDatabaseProvider"/>
 	</bean>
 
@@ -30,6 +30,7 @@
 		<property name="minLength" value="${mapmatcher.minLength}"/>
 		<property name="minSegmentsPerSection" value="${mapmatcher.minSegmentsPerSection}"/>
 		<property name="maxSegmentsForShortestPath" value="${mapmatcher.maxSegmentsForShortestPath}"/>
+		<property name="maxSpeedForRoutingJson" value="${mapmatcher.maxSpeedForRoutingJson}"/>
 		<property name="maxCountLoopsWithoutPathExtension" value="${mapmatcher.maxCountLoopsWithoutPathExtension}"/>
 		<property name="envelopeSideLength" value="${mapmatcher.envelopeSideLengthForStartSegmentSearch}"/>
 		<property name="graphDao" ref="neo4jWayGraphReadDao"/>
@@ -76,4 +77,7 @@
     	<property name="service" ref="neo4jMapMatcher"/>
     	<property name="serviceInterface" value="at.srfg.graphium.mapmatching.matcher.IMapMatcher"/>
     </bean>
+    
+    <bean id="mapMatchingCapability" class="at.srfg.graphium.mapmatching.capabilities.impl.MapMatchingCapabilityImpl"/>
+    
 </beans>

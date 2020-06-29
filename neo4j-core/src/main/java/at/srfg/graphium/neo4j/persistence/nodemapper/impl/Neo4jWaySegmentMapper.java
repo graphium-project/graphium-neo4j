@@ -23,6 +23,7 @@ import org.neo4j.graphdb.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.io.ParseException;
 
 import at.srfg.graphium.model.FormOfWay;
@@ -30,10 +31,12 @@ import at.srfg.graphium.model.FuncRoadClass;
 import at.srfg.graphium.model.IWayGraphModelFactory;
 import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
+import at.srfg.graphium.neo4j.model.cache.SegmentCacheEntry;
 import at.srfg.graphium.neo4j.persistence.impl.Neo4jWayGraphWriteDaoImpl;
 import at.srfg.graphium.neo4j.persistence.impl.Neo4jWaySegmentHelperImpl;
 import at.srfg.graphium.neo4j.persistence.nodemapper.INeo4jXInfoNodeMapper;
 import at.srfg.graphium.neo4j.persistence.nodemapper.utils.Neo4jTagMappingUtils;
+import at.srfg.graphium.neo4j.service.impl.STRTreeCacheManager;
 
 /**
  * @author mwimmer
@@ -44,14 +47,15 @@ public class Neo4jWaySegmentMapper implements INeo4jXInfoNodeMapper<IWaySegment>
 	private static Logger log = LoggerFactory.getLogger(Neo4jWayGraphWriteDaoImpl.class);
 	
 	private IWayGraphModelFactory<IWaySegment> factory;
+	private STRTreeCacheManager cache;
 	
 	@Override
-	public synchronized IWaySegment map(Node node) {
-		return this.mapWithXInfoTypes(node);
+	public IWaySegment map(Node node) {
+		return this.mapWithXInfoTypes(node, null, null);
 	}
 
 	@Override
-	public IWaySegment mapWithXInfoTypes(Node node, String... types) {
+	public IWaySegment mapWithXInfoTypes(Node node, String graphName, String version, String... types) {
 		IWaySegment segment = factory.newSegment();
 
 		Map<String, Object> properties = node.getAllProperties();
@@ -126,10 +130,22 @@ public class Neo4jWaySegmentMapper implements INeo4jXInfoNodeMapper<IWaySegment>
 		}
 
 		if (properties.containsKey(WayGraphConstants.SEGMENT_GEOM)) {
-			try {
-				segment.setGeometry(Neo4jWaySegmentHelperImpl.encodeLineString(node));
-			} catch (ParseException e) {
-				log.error("Could not parse geometry", e);
+			LineString geometry = null;
+			if (graphName != null && version != null && cache != null) {
+				SegmentCacheEntry cacheEntry = cache.getCacheEntryPerNodeId(graphName, version, node.getId());
+				if (cacheEntry != null) {
+					geometry = cacheEntry.getGeometry();
+				}
+			}
+			if (geometry == null) {
+				try {
+					geometry = Neo4jWaySegmentHelperImpl.encodeLineString(node);
+				} catch (ParseException e) {
+					log.error("Could not parse geometry", e);
+				}
+			}
+			if (geometry != null) {
+				segment.setGeometry(geometry);
 			}
 		}
 
@@ -154,5 +170,12 @@ public class Neo4jWaySegmentMapper implements INeo4jXInfoNodeMapper<IWaySegment>
 		this.factory = factory;
 	}
 
+	public STRTreeCacheManager getCache() {
+		return cache;
+	}
+
+	public void setCache(STRTreeCacheManager cache) {
+		this.cache = cache;
+	}
 
 }

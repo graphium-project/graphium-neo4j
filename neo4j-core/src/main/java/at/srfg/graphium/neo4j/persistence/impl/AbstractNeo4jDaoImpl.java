@@ -98,6 +98,25 @@ public abstract class AbstractNeo4jDaoImpl {
 		}
 	}
 	
+	protected Node getWayGraphVersionMetadataNode(String graphName, String version) {
+		ResourceIterator<Node> nodeIterator = getGraphDatabase().findNodes(Label.label(WayGraphConstants.METADATA_LABEL),
+				WayGraphConstants.METADATA_GRAPHNAME, graphName);
+		Node metadataNode = null;
+		boolean found = false;
+		while (nodeIterator.hasNext() && !found) {
+			metadataNode = nodeIterator.next();
+			if (metadataNode.getProperty(WayGraphConstants.METADATA_VERSION).equals(version)) {
+				found = true;
+			}
+		}
+		nodeIterator.close();
+		if (found) {
+			return metadataNode;
+		} else {
+			return null;
+		}
+	}
+	
 	protected String getSegmentIdIndexName(String graphVersionName) {
 		return "index_" + graphVersionName + "_segment_id";
 	}
@@ -133,15 +152,19 @@ public abstract class AbstractNeo4jDaoImpl {
 	protected <T extends IBaseSegment> void iterateSegmentNodes(ResourceIterator<Node> segmentNodes,
 																final Collection<T> segments,
 																final INeo4jXInfoNodeMapper<T> segmentMapper,
-																final INeo4jXInfoNodeMapper<List<IWaySegmentConnection>> connectionMapper) {
-		this.iterateSegmentNodes(segmentNodes,segments,segmentMapper,connectionMapper,false);
+																final INeo4jXInfoNodeMapper<List<IWaySegmentConnection>> connectionMapper,
+																String graphName,
+																String version) {
+		this.iterateSegmentNodes(segmentNodes, segments, segmentMapper, connectionMapper, false, graphName, version);
 	}
 
 	protected <T extends IBaseSegment> void iterateSegmentNodes(ResourceIterator<Node> segmentNodes,
 																final ISegmentOutputFormat<T> outputFormat,
 																final INeo4jXInfoNodeMapper<T> segmentMapper,
-																final INeo4jXInfoNodeMapper<List<IWaySegmentConnection>> connectionMapper) {
-		this.iterateSegmentNodes(segmentNodes,outputFormat,segmentMapper,connectionMapper,false);
+																final INeo4jXInfoNodeMapper<List<IWaySegmentConnection>> connectionMapper,
+																String graphName,
+																String version) {
+		this.iterateSegmentNodes(segmentNodes, outputFormat, segmentMapper, connectionMapper, false, graphName, version);
 	}
 
 	protected <T extends IBaseSegment> void iterateSegmentNodes(ResourceIterator<Node> segmentNodes,
@@ -149,10 +172,12 @@ public abstract class AbstractNeo4jDaoImpl {
 																final INeo4jXInfoNodeMapper<T> segmentMapper,
 																final INeo4jXInfoNodeMapper<List<IWaySegmentConnection>> connectionMapper,
 																final boolean isSegmentXInfo,
+																String graphName,
+																String version,
 																final String... xInfoTypes) {
 		segmentNodes.stream().forEach(segmentNode -> {
 
-			T segment = this.getSegmentXInfos(segmentNode,segmentMapper,connectionMapper,isSegmentXInfo,xInfoTypes);
+			T segment = this.getSegmentXInfos(segmentNode, segmentMapper, connectionMapper, isSegmentXInfo, graphName, version, xInfoTypes);
 			segments.add(segment);
 			if (segments.size()%10000 == 0) {
 				log.info(segments.size() + " segments loaded");
@@ -165,17 +190,19 @@ public abstract class AbstractNeo4jDaoImpl {
 														INeo4jXInfoNodeMapper<T> segmentMapper,
 														INeo4jXInfoNodeMapper<List<IWaySegmentConnection>> connectionMapper,
 														boolean isSegmentXInfo,
+														String graphName,
+														String version,
 														String... xInfoTypes) {
 		T segment = null;
 		if (isSegmentXInfo) {
-			segment = segmentMapper.mapWithXInfoTypes(segmentNode, xInfoTypes);
+			segment = segmentMapper.mapWithXInfoTypes(segmentNode, graphName, version, xInfoTypes);
 			if (xInfoTypes == null || xInfoTypes.length == 0) {
 				//In case of no xinfos serialize all, otherwise skip the cons
 				segment.setCons(connectionMapper.map(segmentNode));
 			}
 		} else {
 			segment = segmentMapper.map(segmentNode);
-			segment.setCons(connectionMapper.mapWithXInfoTypes(segmentNode, xInfoTypes));
+			segment.setCons(connectionMapper.mapWithXInfoTypes(segmentNode, graphName, version, xInfoTypes));
 		}
 		return segment;
 	}
@@ -186,6 +213,8 @@ public abstract class AbstractNeo4jDaoImpl {
 																final INeo4jXInfoNodeMapper<T> segmentMapper,
 																final INeo4jXInfoNodeMapper<List<IWaySegmentConnection>> connectionMapper,
 																final boolean isSegmentXInfo,
+																String graphName,
+																String version,
 																final String... xInfoTypes) {
 		Consumer<Node> nodeConsumer = new Consumer<Node>() {
 
@@ -193,7 +222,7 @@ public abstract class AbstractNeo4jDaoImpl {
 
 			@Override
 			public void accept(Node segmentNode) {
-				T segment = getSegmentXInfos(segmentNode,segmentMapper,connectionMapper,isSegmentXInfo,xInfoTypes);
+				T segment = getSegmentXInfos(segmentNode, segmentMapper, connectionMapper, isSegmentXInfo, graphName, version, xInfoTypes);
 				try {
 					outputFormat.serialize(segment);
 				} catch (WaySegmentSerializationException e) {

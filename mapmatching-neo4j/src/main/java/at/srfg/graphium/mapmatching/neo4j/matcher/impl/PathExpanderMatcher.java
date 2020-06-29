@@ -45,6 +45,7 @@ import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
 import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
+import at.srfg.graphium.neo4j.persistence.Neo4jUtil;
 
 public class PathExpanderMatcher {
 	
@@ -153,6 +154,7 @@ public class PathExpanderMatcher {
 		WaySegmentRelationshipType traverserDirection = getTraverserDirection(segment);
 		
 		if (segment.getEndPointIndex() >= track.getTrackPoints().size()) {
+			storeNotExtendedPath(segment, branch, track, incomingBranchesWithDeadEnd, unmanipulatedBranches);
 			return false;
 		}
 		
@@ -225,11 +227,7 @@ public class PathExpanderMatcher {
 				// example for those cases: roundabouts!!!
 				while (matchedSegment == null && endPointIndexDiff <= iTrackPointRematch) {
 					matchedSegment = matchingTask.getSegmentMatcher().matchSegment(
-							connectedSegment, 
-							track, 
-							segment.getEndPointIndex() - endPointIndexDiff++, 
-							properties.getMaxMatchingRadiusMeter(), 
-							clonedBranch);
+							connectedSegment, track, segment.getEndPointIndex() - endPointIndexDiff++, clonedBranch);
 				}
 				endPointIndexDiff--;
 				
@@ -281,11 +279,7 @@ public class PathExpanderMatcher {
 									connectedSegmentNode = connectedPath.endNode();
 									connectedSegment = matchingTask.getGraphDao().mapNode(matchingTask.getGraphName(), matchingTask.getGraphVersion(), connectedSegmentNode);
 									matchedSegment = matchingTask.getSegmentMatcher().matchSegment(
-											connectedSegment, 
-											track, 
-											previousSegment.getEndPointIndex(), 
-											properties.getMaxMatchingRadiusMeter(), 
-											clonedBranch);
+											connectedSegment, track, previousSegment.getEndPointIndex(), clonedBranch);
 								}
 							} else {
 								matchedSegment = null;
@@ -425,13 +419,9 @@ public class PathExpanderMatcher {
 				IWaySegment connectedSegment = matchingTask.getGraphDao().mapNode(matchingTask.getGraphName(), matchingTask.getGraphVersion(), connectedSegmentNode);
 				
 				if (!isVisited(clonedBranch, connectedSegment) && 
-					isCloser(track.getTrackPoints().get(segment.getEndPointIndex()), segment, connectedSegment, properties.getMaxMatchingRadiusMeter())) {
+					isCloser(track.getTrackPoints().get(segment.getEndPointIndex()), segment, connectedSegment)) {
 					IMatchedWaySegment matchedSegment = matchingTask.getSegmentMatcher().matchSegment(
-															connectedSegment, 
-															track, 
-															segment.getEndPointIndex(), 
-															properties.getMaxMatchingRadiusMeter(), 
-															clonedBranch);
+															connectedSegment, track, segment.getEndPointIndex(), clonedBranch);
 
 					double distanceForBranch;
 					if (matchedSegment != null && matchedSegment.getMatchedPoints() > 0) {
@@ -449,7 +439,7 @@ public class PathExpanderMatcher {
 							setSegmentDirection(segment, matchedSegment);
 							WaySegmentRelationshipType newLastRel = determineDirection(matchedSegment);
 							clonedBranch.addMatchedWaySegment(matchedSegment);
-							matchSegment(matchedSegment, clonedBranch, newLastRel, track, properties, distanceTrackPoints, distanceForBranch, resultBranches, depth++);
+							matchSegment(matchedSegment, clonedBranch, newLastRel, track, properties, distanceTrackPoints, distanceForBranch, resultBranches, ++depth);
 						}
 					}
 				}
@@ -460,10 +450,10 @@ public class PathExpanderMatcher {
 		return resultBranches;
 	}
 	
-	private boolean isCloser(ITrackPoint tp, IMatchedWaySegment segment, IWaySegment connectedSegment, int matchingRadius) {
+	private boolean isCloser(ITrackPoint tp, IMatchedWaySegment segment, IWaySegment connectedSegment) {
 		double distanceSegment = GeometryUtils.distanceMeters(connectedSegment.getGeometry(), tp.getPoint());
 		
-		if (distanceSegment <= matchingRadius) {
+		if (distanceSegment <= properties.getMaxMatchingRadiusMeter()) {
 			return true;
 		} else {
 

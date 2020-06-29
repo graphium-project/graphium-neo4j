@@ -49,5 +49,7 @@
     	<property name="indexDao" ref="neo4jWayGraphIndexDao"/>
     	<property name="validityPeriodValidator" ref="graphVersionValidityPeriodValidator"/>
     </bean>
+    
+    <bean id="neo4jCapability" class="at.srfg.graphium.neo4j.capability.impl.Neo4jCapabilityImpl"/>
 
 </beans>

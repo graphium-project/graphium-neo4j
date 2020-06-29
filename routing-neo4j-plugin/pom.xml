@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>at.srfg.graphium</groupId>
 		<artifactId>graphium-neo4j-server-plugin-base</artifactId>
-		<version>1.0.3</version>
+		<version>1.1.0</version>
 		<relativePath>../neo4j-server-integration/plugin/pom.xml</relativePath>
 	</parent>
 
@@ -16,6 +16,14 @@
 		<dependency>
 			<groupId>at.srfg.graphium</groupId>
 			<artifactId>graphium-routing-neo4j</artifactId>
+			
+			<!-- TODO: apache-commons-logging soll nicht ins JAR gepackt werden! -->
+			<exclusions>
+				<exclusion>
+					<groupId>commons-logging</groupId>
+					<artifactId>commons-logging</artifactId>
+	        	</exclusion>
+			</exclusions>
 		</dependency>
 	</dependencies>
 	

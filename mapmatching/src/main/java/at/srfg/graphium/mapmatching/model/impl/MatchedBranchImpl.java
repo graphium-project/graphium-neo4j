@@ -56,7 +56,6 @@ public class MatchedBranchImpl implements IMatchedBranch, Cloneable, Serializabl
 	@Override
 	public void addMatchedWaySegment(IMatchedWaySegment segment) {
 		segments.add(segment);
-//		step++;
 		length += segment.getLength();
 		matchedFactorValid = false;
 		matchedPointsValid = false;

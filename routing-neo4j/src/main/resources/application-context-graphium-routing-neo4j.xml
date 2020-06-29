@@ -9,6 +9,7 @@
 		http://www.springframework.org/schema/context 
         http://www.springframework.org/schema/context/spring-context.xsd">
  
+	<import resource="classpath:/application-context-graphium-routing.xml"/>
 	<import resource="classpath:/application-context-graphium-neo4j-persistence.xml"/>
 
 	<bean id="routingConfigurer"
@@ -18,25 +19,32 @@
 		<property name="ignoreResourceNotFound" value="true" />		
 	</bean>
 
-    <!-- evaluators -->
+	<!-- services -->
+	<bean id="waySegmentsByIdLoader" class="at.srfg.graphium.routing.service.impl.WaySegmentsByIdLoaderImpl">
+		<constructor-arg name="graphDao" ref="neo4jWayGraphReadDao"/>
+	</bean>
+	
+	<bean id="neo4jRoutingNodeResolver" class="at.srfg.graphium.routing.neo4j.algos.impl.Neo4jRoutingNodeResolverImpl">
+		<constructor-arg name="graphReadDao" ref="neo4jWayGraphReadDao"/>
+	</bean>
+
+	<bean id="neo4jRoutingService" class="at.srfg.graphium.routing.service.neo4j.impl.Neo4jRoutingServiceImpl">
+		<property name="pointToRoutingNodeResolver" ref="neo4jRoutingNodeResolver"/>
+		<property name="segmentToRoutingNodeResolver" ref="neo4jRoutingNodeResolver"/>
+		<property name="segmentIdToRoutingNodeResolver" ref="neo4jRoutingNodeResolver"/>
+		<property name="routingAlgoFactory" ref="neo4jRoutingAlgoFactory"/>
+		<property name="toRouteAdapter" ref="directedSegmentSetToRouteAdapterService"/>
+		<property name="graphDatabaseProvider" ref="graphDatabaseProvider"/>
+	</bean>
+
+	<!-- factories -->
+	<bean id="neo4jRoutingAlgoFactory" class="at.srfg.graphium.routing.neo4j.algos.impl.Neo4jRoutingAlgoFactoryImpl">
+		<property name="cache" ref="strtreeCacheManager"/>
+	</bean>
+	
+	<!-- evaluators factory -->
+<!-- 
     <bean id="nodeBasedCostEvaluatorFactory" class="at.srfg.graphium.routing.neo4j.evaluators.impl.NodeBasedCostEvaluatorFactoryImpl"/>
-
-    <!-- factories -->
-    <bean id="routeModelFactory" class="at.srfg.graphium.routing.model.impl.RouteModelFactoryImpl"/>
-
-	<!-- adapters -->
-	<bean id="route2RouteDTOAdapter" class="at.srfg.graphium.routing.api.adapter.impl.Route2RouteDTOAdapter"/>
-	<bean id="routeSegment2RouteSegmentDTOAdapter" class="at.srfg.graphium.routing.api.adapter.impl.RouteSegment2RouteSegmentDTOAdapter"/>
-
-    <!-- services -->
-    <bean id="neo4jRoutingService" class="at.srfg.graphium.routing.service.neo4j.impl.Neo4jRoutingServiceImpl">
-    	<property name="costEvaluatorFactory" ref="nodeBasedCostEvaluatorFactory"/>
-    	<property name="graphDatabaseProvider" ref="graphDatabaseProvider"/>
-    	<property name="graphReadDao" ref="neo4jWayGraphReadDao"/>
-    	<property name="metadataDao" ref="neo4jWayGraphVersionMetadataDao"/>
-    	<property name="modelFactory" ref="routeModelFactory"/>
-    	<property name="nodeMapper" ref="neo4jWaySegmentMapper"/>
-    	<property name="astarEstimatorFactor" value="${routing.astarEstimatorFactor}"/>
-    </bean>
+-->
 
 </beans>

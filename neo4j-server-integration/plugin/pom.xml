@@ -12,7 +12,7 @@
 	<parent>
 		<groupId>at.srfg.graphium</groupId>
 		<artifactId>graphium-neo4j-server-base</artifactId>
-		<version>1.0.3</version>
+		<version>1.1.0</version>
 		<relativePath>../base/pom.xml</relativePath>
 	</parent>
 	
@@ -209,6 +209,13 @@
 				<artifactId>apache-log4j-extras</artifactId>
 				<version>1.2.17</version>
 			</dependency>
+		
+			<dependency>
+		      	<groupId>commons-logging</groupId>
+      			<artifactId>commons-logging</artifactId>
+      			<!-- <version>1.2</version> -->
+      			<scope>provided</scope>
+      		</dependency>
 		
 			<!-- plug-ins which are already deployed to neo server -->
 			<dependency>

@@ -32,7 +32,6 @@ import at.srfg.graphium.mapmatching.model.Direction;
 import at.srfg.graphium.mapmatching.model.IMatchedBranch;
 import at.srfg.graphium.mapmatching.model.IMatchedWaySegment;
 import at.srfg.graphium.mapmatching.model.ITrack;
-import at.srfg.graphium.mapmatching.properties.IMapMatchingProperties;
 import at.srfg.graphium.mapmatching.statistics.MapMatcherStatistics;
 
 
@@ -45,11 +44,9 @@ public class AlternativePathMatcher {
 	private static Logger log = LoggerFactory.getLogger(AlternativePathMatcher.class);
 	
 	private MapMatchingTask matchingTask;
-	private IMapMatchingProperties properties;
 	
-	public AlternativePathMatcher(MapMatchingTask mapMatchingTask, IMapMatchingProperties properties) {
+	public AlternativePathMatcher(MapMatchingTask mapMatchingTask) {
 		this.matchingTask = mapMatchingTask;
-		this.properties = properties;
 	}
 
 	
@@ -75,7 +72,9 @@ public class AlternativePathMatcher {
 			searchPaths.add(new SearchPath(lastSegment.getEndPointIndex(), branch));
 		}
 		
-		searchAlternativePaths2(searchPaths, newBranches, track);
+		if (!searchPaths.isEmpty()) {
+			searchAlternativePaths2(searchPaths, newBranches, track);
+		}
 
 		log.debug("search routes finished");
 
@@ -111,16 +110,19 @@ public class AlternativePathMatcher {
 			List<AlternativePath> alternativePaths = new LinkedList<AlternativePath>();
 			List<AlternativePath> skippedPaths = new ArrayList<AlternativePath>();
 			
+			long startTime = System.currentTimeMillis();
 			int newSearchIndex = matchingTask.getRoutingMatcher().routeToNextPoint(
 					searchPath.getBranch(), lastSegment, searchPath.getSearchIndex(),
 					alternativePaths, newBranches, skippedPaths, fallbackRoutes, track);
+			long endTime = System.currentTimeMillis();
 			
 			// store the branch with the next point to process, so that we can try again
 			// if no valid continuation can be found
 			newSearchPaths.add(new SearchPath(newSearchIndex, searchPath.getBranch()));
 		
 			matchingTask.checkCancelStatus();
-			matchingTask.statistics.incrementValue(MapMatcherStatistics.SHORTEST_PATH_SEARCH);
+//			matchingTask.statistics.incrementValue(MapMatcherStatistics.SHORTEST_PATH_SEARCH);
+			matchingTask.statistics.incrementValue(MapMatcherStatistics.SHORTEST_PATH_SEARCH_TOTAL_DURATION, (int)(endTime - startTime));
 			
 			List<IMatchedBranch> possibleBranches = new ArrayList<>();
 
@@ -438,14 +440,35 @@ public class AlternativePathMatcher {
 		}
 		
 		if (!isPathSkipped) {
-			if (routeStartSegment.getEndPointIndex() < previousEndPointIndex ||
+			if (startPointIndex < previousEndPointIndex ||
 				routeEndPointIndex != segments.get(segments.size()-1).getStartPointIndex()) {
 				// if we have a routed path without skipped parts (e.g. track left graph and returns...) AND there is a gap between indexes (could occur if
 				// some track points we want to route to have GPS errors and couldn't be matched on any segment) we have to recalculate indexes of routed segments
-				this.matchingTask.getSegmentMatcher().recalculateSegmentsIndexes(track, routeStartSegment.getEndPointIndex(), routeEndPointIndex, segments);
+				this.matchingTask.getSegmentMatcher().recalculateSegmentsIndexes(track, startPointIndex, routeEndPointIndex, segments);
 			}
 		}
-
+		
+		// This code is buggy: checks also segments found NOT by routing
+		// FIXME
+//		// Check speed between track points of routed part
+//		List<IMatchedWaySegment> segmentsToCheck = new ArrayList<IMatchedWaySegment>();
+//		// TODO maybe a greater start value can be used for the loop (e.g. route start segment)
+//		for (int i = 0; i < clonedBranch.getMatchedWaySegments().size(); i++) {
+//			IMatchedWaySegment segment = clonedBranch.getMatchedWaySegments().get(i);
+//			if (segmentsToCheck.size() > 0 || segment.getEndPointIndex() - segment.getStartPointIndex() > 0) {
+//				segmentsToCheck.add(segment);
+//			}
+//			if (segmentsToCheck.size() >= 2 && segment.getStartPointIndex() < segment.getEndPointIndex()) {
+//				boolean possibleRoute = this.matchingTask.getRoutingMatcher()
+//						.checkImpossibleRoute(segmentsToCheck, track, segmentsToCheck.get(0).getStartPointIndex(), segment.getStartPointIndex());
+//				if (!possibleRoute) {
+//					return null;
+//				}
+//				segmentsToCheck.clear();
+//				segmentsToCheck.add(segment);
+//			}
+//		}
+		
 		/* Number of last parts that are checked: every new segment that matches a point creates
 		 * two parts + a buffer.
 		 */
@@ -479,8 +502,7 @@ public class AlternativePathMatcher {
 		IMatchedWaySegment previousSegment = clonedBranch.getMatchedWaySegments().get(clonedBranch.getMatchedWaySegments().size() - 1);
 		
 		int newStartIndex = matchingTask.getSegmentMatcher().getPossibleLowerStartIndex(previousSegment, 
-				matchedWaySegment, track, startPointIndex, 
-				properties.getMaxMatchingRadiusMeter(), uturnMode);
+				matchedWaySegment, track, startPointIndex, uturnMode);
 		
 		// update matched points of previous segment
 		if (newStartIndex <= previousSegment.getEndPointIndex()) {
@@ -503,6 +525,8 @@ public class AlternativePathMatcher {
 					}
 					
 					clonedBranch.removeLastMatchedWaySegment();
+					previousSegment = null;
+					
 				} else if (previousSegment.isUTurnSegment()) {
 					// if there is an u-turn on the previous segment and all previously matched points
 					// can be rematched to the new segment, remove the previous segment from the path
@@ -512,13 +536,14 @@ public class AlternativePathMatcher {
 					}
 					
 					clonedBranch.removeLastMatchedWaySegment();
+					previousSegment = null;
 					
 					// calculate possible start index again because the previous segment has been removed
 					if (!clonedBranch.getMatchedWaySegments().isEmpty()) {
 						previousSegment = clonedBranch.getMatchedWaySegments().get(clonedBranch.getMatchedWaySegments().size() - 1);
+						// previousSegment.setFromPathSearch(true); // TODO ???
 						newStartIndex = matchingTask.getSegmentMatcher().getPossibleLowerStartIndex(previousSegment, 
-								matchedWaySegment, track, startPointIndex, 
-								properties.getMaxMatchingRadiusMeter(), uturnMode);
+								matchedWaySegment, track, startPointIndex, uturnMode);
 						if (previousSegment.getEndPointIndex() > newStartIndex) {
 							removeDiffDistances(previousSegment, newStartIndex);
 						}
@@ -555,6 +580,7 @@ public class AlternativePathMatcher {
 						 */
 						if (previousSegment.getEndPointIndex() == newStartIndex) {
 							clonedBranch.removeLastMatchedWaySegment();
+							previousSegment = null;
 						} else {
 							matchedWaySegment.setAfterSkippedPart(true);
 							
@@ -564,23 +590,25 @@ public class AlternativePathMatcher {
 						}
 					}
 					
-					removeDiffDistances(previousSegment, newStartIndex);
+					if (previousSegment != null) {
+						removeDiffDistances(previousSegment, newStartIndex);
+					}
 				}
 			}
 		}
 
 		// set matched points + distances for new segment
 		matchedWaySegment.setStartPointIndex(newStartIndex);
-		int endPointIndex =  matchingTask.getSegmentMatcher().getLastPointIndex(matchedWaySegment, startPointIndex, track, properties.getMaxMatchingRadiusMeter());
+		int endPointIndex =  matchingTask.getSegmentMatcher().getLastPointIndex(matchedWaySegment, newStartIndex, track);
 		
 		if (endPointIndex > newStartIndex) {
 			// at least one point matches
-			if (!previousSegment.isAfterSkippedPart() 
+			if (previousSegment != null && !previousSegment.isAfterSkippedPart() 
 					&& matchingTask.getSegmentMatcher().emptySegmentsAtEndOfBranch(clonedBranch)) {
 				// if there are empty segments at the end of the branch, 
 				// rematch all points starting from the last matching segment
-				newStartIndex = matchingTask.getSegmentMatcher().updateMatchesOfPreviousEmptySegments(previousSegment, matchedWaySegment, 
-						clonedBranch, properties.getMaxMatchingRadiusMeter(), track);
+				newStartIndex = matchingTask.getSegmentMatcher().updateMatchesOfPreviousEmptySegments(matchedWaySegment, 
+						clonedBranch, track);
 				// matchedWaySegment has wrong indexes
 //				matchedWaySegment.setStartPointIndex(startPointIndex);
 
@@ -592,12 +620,28 @@ public class AlternativePathMatcher {
 			}
 		}
 		
-		if (newStartIndex > previousSegment.getEndPointIndex() &&
+		if (previousSegment != null && newStartIndex > previousSegment.getEndPointIndex() &&
 			matchedWaySegment.getId() == previousSegment.getId()) {
 			// same segment identified, but new start index is greater than old end index => some points in between could have not been matched
 			// => update previous segment and ignore matched segment
 			previousSegment.setEndPointIndex(endPointIndex);
 			previousSegment.calculateDistances(track);
+			previousSegment.setUTurnSegment(previousSegment.isUTurnSegment() || matchedWaySegment.isUTurnSegment());
+			previousSegment.setFromPathSearch(previousSegment.isFromPathSearch() || matchedWaySegment.isFromPathSearch());
+			// modify direction after merging previousSegment and matchedWaySegment
+			if (previousSegment.getDirection().isEnteringThroughStartNode()) {
+				if (matchedWaySegment.getDirection().isLeavingThroughStartNode()) {
+					previousSegment.setDirection(Direction.START_TO_START);
+				} else if (matchedWaySegment.getDirection().isLeavingThroughEndNode()) {
+					previousSegment.setDirection(Direction.START_TO_END);
+				}
+			} else if (previousSegment.getDirection().isEnteringThroughEndNode()) {
+				if (matchedWaySegment.getDirection().isLeavingThroughStartNode()) {
+					previousSegment.setDirection(Direction.END_TO_START);
+				} else if (matchedWaySegment.getDirection().isLeavingThroughEndNode()) {
+					previousSegment.setDirection(Direction.END_TO_END);
+				}
+			}
 		} else {
 			
 			matchedWaySegment.setEndPointIndex(endPointIndex);
