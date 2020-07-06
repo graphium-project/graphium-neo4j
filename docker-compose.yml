@@ -2,10 +2,7 @@ version: '3.7'
 
 services:
   neo4j:
-    build:
-      context: .
-      args:
-        GRAPHIUM_BRANCH_NAME: develop
+    image: graphiumproject/graphium-neo4j
     container_name: graphium-neo4j-server
     environment:
       - "NEO4J_AUTH=none"
