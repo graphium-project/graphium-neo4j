@@ -161,7 +161,7 @@ If any of the following steps crashes because of a Java heap exception you have 
 ## Routing Example
 
 ```shell script
-curl -X GET "http://localhost:7474/graphium/routing/graphs/osm_andorra/route.do?	coords=1.614733,42.5720773;1.5937977,42.56574"
+curl -X GET "http://localhost:7474/graphium/api/routing/graphs/osm_andorra/route.do?coords=1.614733,42.5720773;1.5937977,42.56574"
 ```
 
 ## Map Matching Example
