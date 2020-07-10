@@ -17,6 +17,10 @@
  */
 package at.srfg.graphium.mapmatching.properties.impl;
 
+import java.io.IOException;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import at.srfg.graphium.mapmatching.properties.IMapMatchingProperties;
 
 
@@ -37,6 +41,11 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 
 	// maximum number of best resulting paths with which will be processed preferable
 	private int maxNrOfBestPaths = 5;
+	
+	// maximum speeds per routing mode and frc/urban (json string)
+	private String maxSpeedForRoutingJson = "";
+	// maximum speeds per routing mode and frc/urban
+	private MaxSpeedForRouting maxSpeedForRouting = null;
 		
 	// number of points to skip during path initialization or alternative path search, when no path can be found for a point
 	private int nrOfPointsToSkip = 3;
@@ -448,6 +457,32 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 	@Override
 	public void setCsvLoggerName(String csvLoggerName) {
 		this.csvLoggerName = csvLoggerName;
+	}
+
+	@Override
+	public String getMaxSpeedForRoutingJson() {
+		return maxSpeedForRoutingJson;
+	}
+
+	@Override
+	public void setMaxSpeedForRoutingJson(String maxSpeedForRoutingJson) {
+		this.maxSpeedForRoutingJson = maxSpeedForRoutingJson;
+		
+		try {
+			this.maxSpeedForRouting = new ObjectMapper().readValue(maxSpeedForRoutingJson, MaxSpeedForRouting.class);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public MaxSpeedForRouting getMaxSpeedForRouting() {
+		return maxSpeedForRouting;
+	}
+
+	@Override
+	public void setMaxSpeedForRouting(MaxSpeedForRouting maxSpeedForRouting) {
+		this.maxSpeedForRouting = maxSpeedForRouting;
 	}
 	
 }

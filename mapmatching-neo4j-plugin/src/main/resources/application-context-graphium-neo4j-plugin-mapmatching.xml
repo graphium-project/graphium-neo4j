@@ -36,6 +36,7 @@
 		<property name="minLength" value="${mapmatcher.minLength}"/>
 		<property name="minSegmentsPerSection" value="${mapmatcher.minSegmentsPerSection}"/>
 		<property name="maxSegmentsForShortestPath" value="${mapmatcher.maxSegmentsForShortestPath}"/>
+		<property name="maxSpeedForRoutingJson" value="${mapmatcher.maxSpeedForRoutingJson}"/>
 		<property name="maxCountLoopsWithoutPathExtension" value="${mapmatcher.maxCountLoopsWithoutPathExtension}"/>
 		<property name="envelopeSideLength" value="${mapmatcher.envelopeSideLengthForStartSegmentSearch}"/>
 		<property name="csvLoggerName" value="${mapmatcher.csvLoggerName}"/>
@@ -109,4 +110,7 @@
     	<property name="service" ref="neo4jMapMatcher"/>
     	<property name="serviceInterface" value="at.srfg.graphium.mapmatching.matcher.IMapMatcher"/>
     </bean>
+    
+    <bean id="mapMatchingCapability" class="at.srfg.graphium.mapmatching.capabilities.impl.MapMatchingCapabilityImpl"/>
+    
 </beans>

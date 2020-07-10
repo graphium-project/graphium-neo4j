@@ -24,4 +24,6 @@
 		<property name="adapterRegistry" ref="routeOutputAdapterRegistry"/>
 	</bean>
 
+	<bean id="routingCapability" class="at.srfg.graphium.routing.neo4j.capabilities.impl.RoutingCapabilityImpl"/>
+
 </beans>

@@ -375,7 +375,6 @@ public class MapMatchingTask implements IMapMatcherTask {
 			if (lastCertainSegment != null) {
 				List<IMatchedWaySegment> newCertainSegments = new ArrayList<>();
 				boolean fillNewCertainSegments = true;
-				List<IMatchedBranch> pathsToRemove = new ArrayList<>();
 	
 				for (IMatchedBranch path : paths) {
 					
@@ -440,14 +439,22 @@ public class MapMatchingTask implements IMapMatcherTask {
 				
 				certainPath.addAll(newCertainSegments);
 				
-				paths.removeAll(pathsToRemove);
-				
 				if (log.isDebugEnabled()) {
 					List<Long> segmentIds = new ArrayList<>(certainPath.size());
 					for (IMatchedWaySegment segment : certainPath) {
 						segmentIds.add(segment.getId());
 					}
 					log.debug("Certain Path = " + StringUtils.join(segmentIds, ", "));
+					
+					
+					///////////////////////////////////////////////////
+					List<String> segmentInfoList = new ArrayList<>(certainPath.size());
+					for (IMatchedWaySegment segment : certainPath) {
+						segmentInfoList.add(segment.getId() + "(" + segment.getStartPointIndex() + "-" + segment.getEndPointIndex() + ")");
+					}
+					log.debug("Certain Path = " + StringUtils.join(segmentInfoList, ", "));
+					///////////////////////////////////////////////////
+
 				}
 				
 			}
@@ -495,21 +502,29 @@ public class MapMatchingTask implements IMapMatcherTask {
 			for (IMatchedWaySegment segment : path.getMatchedWaySegments()) {
 				segmentIds.add(segment.getId());
 			}
-			log.debug("Path " + i++ + ", MatchedFactor = " + path.getMatchedFactor() +
+			log.debug("Path " + i + ", MatchedFactor = " + path.getMatchedFactor() +
 					", step = " + path.getStep() +
 					", empty segments = " + path.getNrOfEmptySegments() +
 					", matched track points = " + path.getMatchedPoints() +
 					", total track points = " + (path.getNrOfTotalTrackPoints()) +
 					", Segments = " + StringUtils.join(segmentIds, ", "));
 			
-//			int prevIdx = 0;
-//			for (IMatchedWaySegment seg : path.getMatchedWaySegments()) {
-//				if (seg.getStartPointIndex() < prevIdx) {
-//					log.debug("////////// (1) Index error at segment " + seg.getId() + ": " + seg.getStartPointIndex() + " < " + prevIdx);
-//				}
-//				prevIdx = seg.getEndPointIndex();
-//			}	
+			///////////////////////////////////////////////////
+			for (IMatchedWaySegment seg : path.getMatchedWaySegments()) {
+				if (seg.getStartPointIndex() > seg.getEndPointIndex()) {
+					log.debug("////////// Index error at segment " + seg.getId() + ": " + seg.getStartPointIndex() + " > " + seg.getEndPointIndex());
+				}
+			}	
+
+			List<String> segmentInfoList = new ArrayList<>(path.getMatchedWaySegments().size());
+			for (IMatchedWaySegment segment : path.getMatchedWaySegments()) {
+				segmentInfoList.add(segment.getId() + "(" + segment.getStartPointIndex() + "-" + segment.getEndPointIndex() + ")");
+			}
+			log.debug("Path " + i + ": " + StringUtils.join(segmentInfoList, ", "));
+			///////////////////////////////////////////////////
 			
+			i++;
+						
 		}
 	}
 
@@ -666,7 +681,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 			IMatchedWaySegment currentSegment = branch.getMatchedWaySegments().get(1);
 			for (int i=2; i<branch.getMatchedWaySegments().size(); i++) {
 				if (previousSegment.getEndPointIndex() > currentSegment.getStartPointIndex()) {
-					updateIndices(currentSegment, previousSegment, properties.getMaxMatchingRadiusMeter());
+					updateIndices(currentSegment, previousSegment);
 				}
 				previousSegment = currentSegment;
 				currentSegment = branch.getMatchedWaySegments().get(i);
@@ -675,10 +690,10 @@ public class MapMatchingTask implements IMapMatcherTask {
 		}
 	}
 
-	private void updateIndices(IMatchedWaySegment currentSegment, IMatchedWaySegment previousSegment,
-			int maxMatchingRadiusMeter) {
-		int newStartIndex = segmentMatcher.updateMatchesOfPreviousSegment(previousSegment.getEndPointIndex(), previousSegment, currentSegment, properties.getMaxMatchingRadiusMeter(), track);
+	private void updateIndices(IMatchedWaySegment currentSegment, IMatchedWaySegment previousSegment) {
+		int newStartIndex = segmentMatcher.updateMatchesOfPreviousSegment(previousSegment.getEndPointIndex(), previousSegment, currentSegment, track);
 		currentSegment.setStartPointIndex(newStartIndex);
+		currentSegment.calculateDistances(track);
 	}
 
 	/**

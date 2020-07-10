@@ -2,7 +2,7 @@
 
 ## Resource URL
 
-`http://localhost/graphium/api/graphs/{graph}/matchtrack?outputVerbose={outputVerbose}&timeoutMs={timeoutMs}&startSegmentId={startSegmentId}`
+`http://localhost/graphium/api/matching/graphs/{graph}/matchtrack?outputVerbose={outputVerbose}&timeoutMs={timeoutMs}&startSegmentId={startSegmentId}`
 
 ## Parameters
 
@@ -20,37 +20,32 @@ Map Matching will be executed on that graph version fitting the tracks start tim
 
 ```json
 {"id":14079459,
- "trackPoints:
+ "trackPoints":
  [{
   "id":0,
   "timestamp":1462535672000,
-  "trackId":14079459,
   "x":14.2717299,
   "y":48.2733533,
-  "z":279.1,
-  "distCalc":"NaN",
-  "hcr":"NaN",
-  "vcalc":"NaN",
-  "acalc":"NaN"
+  "z":279.1
  },{
   "id":0,
   "timestamp":1462535682000,
-  "trackId":14079459,
   "x":14.272935,
   "y":48.274505,
-  "z":272.9,
-  "distCalc":156.21341,
-  "hcr":"NaN",
-  "vcalc":15.621341,
-  "acalc":"NaN"
+  "z":272.9
  },
  ...
+ ]
 }
 ```
 
 ## Example URL
 
-`http://localhost:7474/graphium/api/graphs/osm_at_lower_levels/matchtrack?outputVerbose=true&timeoutMs=60000`
+`http://localhost:7474/graphium/api/matching/graphs/osm_at/matchtrack?outputVerbose=true&timeoutMs=60000`
+
+Using curl:
+
+`curl -H "Accept: application/json" -H "Content-Type: application/json" -X POST "http://localhost:7474/graphium/api/matching/graphs/osm_at/matchtrack?outputVerbose=true&timeoutMs=60000" -d "@/path/to/file"`
 
 ## Example Response
 ```json

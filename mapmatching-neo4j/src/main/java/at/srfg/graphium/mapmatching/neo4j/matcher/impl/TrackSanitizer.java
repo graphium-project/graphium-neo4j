@@ -80,8 +80,9 @@ public class TrackSanitizer {
 				throw new RuntimeException(errorMessage);
 			}
 			if (origTrack.getLineString() != null && !bounds.intersects(origTrack.getLineString())) {
-				log.error("track " + origTrack.getId() + " not in bounds of graph " + graphName + "!");
-				return false;
+				String errorMessage = "track " + origTrack.getId() + " not in bounds of graph " + graphName + "!";
+				log.error(errorMessage);
+				throw new RuntimeException(errorMessage);
 			} else {
 				return true;
 			}

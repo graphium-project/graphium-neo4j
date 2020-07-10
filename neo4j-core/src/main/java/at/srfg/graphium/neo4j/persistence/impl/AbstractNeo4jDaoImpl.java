@@ -98,6 +98,25 @@ public abstract class AbstractNeo4jDaoImpl {
 		}
 	}
 	
+	protected Node getWayGraphVersionMetadataNode(String graphName, String version) {
+		ResourceIterator<Node> nodeIterator = getGraphDatabase().findNodes(Label.label(WayGraphConstants.METADATA_LABEL),
+				WayGraphConstants.METADATA_GRAPHNAME, graphName);
+		Node metadataNode = null;
+		boolean found = false;
+		while (nodeIterator.hasNext() && !found) {
+			metadataNode = nodeIterator.next();
+			if (metadataNode.getProperty(WayGraphConstants.METADATA_VERSION).equals(version)) {
+				found = true;
+			}
+		}
+		nodeIterator.close();
+		if (found) {
+			return metadataNode;
+		} else {
+			return null;
+		}
+	}
+	
 	protected String getSegmentIdIndexName(String graphVersionName) {
 		return "index_" + graphVersionName + "_segment_id";
 	}

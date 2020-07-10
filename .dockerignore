@@ -1,0 +1,14 @@
+target/
+docker-compose.yml
+Dockerfile
+.idea
+*.war
+*.ear
+*.tar.gz
+*.rar
+*.iml
+.git
+.gitignore
+README.md
+neo4j-data
+neo4j-logs

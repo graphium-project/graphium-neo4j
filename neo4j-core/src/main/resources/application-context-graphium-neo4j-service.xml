@@ -49,6 +49,8 @@
     	<property name="indexDao" ref="neo4jWayGraphIndexDao"/>
     	<property name="validityPeriodValidator" ref="graphVersionValidityPeriodValidator"/>
     </bean>
+    
+    <bean id="neo4jCapability" class="at.srfg.graphium.neo4j.capability.impl.Neo4jCapabilityImpl"/>
 
 	<!-- HD way graph importer -->
     <bean id="neo4jQueuingHDGraphVersionImportService" class="at.srfg.graphium.neo4j.service.impl.Neo4jQueuingGraphVersionImportServiceImpl" >

@@ -66,6 +66,10 @@ public class RouteDistanceCalculator extends DistanceCalculator {
 			linestring.setSRID(segment.getGeometry().getSRID());
 		}
 		
+		//quick fix (TODO find reason why srids don't match)
+		matchedPoint.setSRID(4326);
+		linestring.setSRID(4326);
+		
 		return GeometryUtils.distanceOnLineStringInMeter(matchedPoint, linestring);
 	}
 
@@ -83,6 +87,10 @@ public class RouteDistanceCalculator extends DistanceCalculator {
 			linestring = (LineString) linestring.reverse();
 			linestring.setSRID(segment.getGeometry().getSRID());
 		}
+		
+		//quick fix (TODO find reason why srids don't match)
+		matchedPoint.setSRID(4326);
+		linestring.setSRID(4326);
 
 		return GeometryUtils.distanceOnLineStringInMeter(matchedPoint, linestring);
 	}
@@ -105,6 +113,10 @@ public class RouteDistanceCalculator extends DistanceCalculator {
 			matchedPointStart = segment.getMatchedPoint(trackIndexTo);
 			matchedPointEnd = segment.getMatchedPoint(trackIndexFrom);
 		}
+		
+		//quick fix (TODO find reason why srids don't match)
+		matchedPointStart.setSRID(segment.getGeometry().getSRID());
+		matchedPointEnd.setSRID(segment.getGeometry().getSRID());
 		
 		double distanceToStartPoint = GeometryUtils.distanceOnLineStringInMeter(matchedPointStart, segment.getGeometry());
 		double distanceToEndPoint = GeometryUtils.distanceOnLineStringInMeter(matchedPointEnd, segment.getGeometry());

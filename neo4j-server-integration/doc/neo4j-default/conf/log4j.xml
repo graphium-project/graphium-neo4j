@@ -3,25 +3,11 @@
 
 	<!--
 		=====================================================================
-	-->
-	<!--
-	-->
-	<!--
 		Log4j Configuration
-	-->
-	<!--
-	-->
-	<!--
 		=====================================================================
 	-->
 
-	<!--
-		Production log4j configuration. Log-Files are compressed and the catalina.out log is only used for
-		container messages but not for something else.
-	-->
-
-<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/"
-	debug="true">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="true">
 
 	<!-- ============================== -->
 	<!-- Append messages to the console -->
@@ -30,19 +16,17 @@
 		<errorHandler class="org.apache.log4j.helpers.OnlyOnceErrorHandler" />
 		<!-- default target is System.out -->
 		<param name="Target" value="System.out" />
-		<param name="Threshold" value="DEBUG" />
+		<param name="Threshold" value="INFO" />
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%d{HH:mm:ss,SSS} %-5p [%C{1}.%M()]  %m%n" />
 		</layout>
 	</appender>
 
-	<category name="at.srfg.graphium.core.service.impl">
+	<!-- 
+	<category name="at.srfg.graphium">
 		<priority value="DEBUG" />
 	</category>
-	
-	<category name="at.srfg.graphium.postgis.service.impl">
-		<priority value="DEBUG" />
-	</category>
+	-->
 	
 	<root>
         <priority value="INFO"/>       

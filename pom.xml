@@ -33,7 +33,7 @@
 		</developer>
 		<developer>
 			<id>SGroe</id>
-			<name>Simon Gröchenig</name>
+			<name>Simon Gr&#246;chenig</name>
 			<email>simon.groechenig@salzburgresearch.at</email>
 		</developer>
 	</developers>
@@ -158,6 +158,12 @@
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
 				<artifactId>graphium-model</artifactId>
+				<version>${graphium.version}</version>
+			</dependency>
+		
+			<dependency>
+				<groupId>at.srfg.graphium</groupId>
+				<artifactId>graphium-routing</artifactId>
 				<version>${graphium.version}</version>
 			</dependency>
 		
