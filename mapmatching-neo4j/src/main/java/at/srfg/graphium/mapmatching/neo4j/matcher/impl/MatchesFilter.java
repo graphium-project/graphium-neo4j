@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +35,6 @@ import at.srfg.graphium.mapmatching.model.IMatchedBranch;
 import at.srfg.graphium.mapmatching.model.IMatchedWaySegment;
 import at.srfg.graphium.mapmatching.model.ITrack;
 import at.srfg.graphium.mapmatching.neo4j.matcher.impl.AlternativePathMatcher.AlternativePath;
-import at.srfg.graphium.mapmatching.online.MatchedSegmentCounter;
 import at.srfg.graphium.mapmatching.properties.IMapMatchingProperties;
 
 public class MatchesFilter {
@@ -539,7 +537,7 @@ public class MatchesFilter {
 								&& pathA.getMatchedWaySegments().get(0).getId() != pathB.getMatchedWaySegments().get(0).getId() //different first segments
 								&& indexOfSegment > 0 // exists in path and not the first element
 								&& indexOfSegment < pathB.getMatchedWaySegments().size() - 1) { // not the last element
-							removeSegmentsAfterIndex(pathB, indexOfSegment);
+							expandPath(pathA, pathB, indexOfSegment);
 							if (pathA.getMatchedWaySegments().size() >= 2 &&
 								pathB.getMatchedWaySegments().size() >= indexOfSegment) {
 								if (pathA.getMatchedWaySegments().get(pathA.getMatchedWaySegments().size() - 2).getId() !=
@@ -580,6 +578,29 @@ public class MatchesFilter {
 		return singleSegmentbranches;
 	}
 	
+	private void expandPath(IMatchedBranch pathA, IMatchedBranch pathB, int indexOfSegment) {
+		int index = indexOfSegment + 1;
+		IMatchedWaySegment lastSegPathA = pathA.getMatchedWaySegments().get(pathA.getMatchedWaySegments().size()-1);
+		IMatchedWaySegment currentSegPathB = null;
+		while (index < pathB.getMatchedWaySegments().size()) {
+			currentSegPathB = pathB.getMatchedWaySegments().get(index);
+			
+			pathA.getMatchedWaySegments().add(currentSegPathB);
+			if (index == indexOfSegment + 1) {
+				lastSegPathA.setEndPointIndex(pathB.getMatchedWaySegments().get(indexOfSegment).getEndPointIndex());
+				if (lastSegPathA.getStartPointIndex() > lastSegPathA.getEndPointIndex()) {
+					lastSegPathA.setStartPointIndex(pathB.getMatchedWaySegments().get(indexOfSegment).getStartPointIndex());
+					matchingTask.getSegmentMatcher().updateMatchesOfPreviousSegment(lastSegPathA.getEndPointIndex(), 
+							lastSegPathA, pathA.getMatchedWaySegments().get(pathA.getMatchedWaySegments().size()-2), matchingTask.getTrack());
+				}
+			}
+			
+			lastSegPathA = currentSegPathB;
+			index++;
+		}
+		
+	}
+
 	/**
 	 * Determine index of segment within the path
 	 * @param path
