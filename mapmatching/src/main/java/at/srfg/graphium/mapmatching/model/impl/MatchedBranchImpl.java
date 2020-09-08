@@ -75,6 +75,7 @@ public class MatchedBranchImpl implements IMatchedBranch, Cloneable, Serializabl
 		matchedFactorValid = false;
 		matchedPointsValid = false;
 		nrOfTotalTrackPointsValid = false;
+		updateEndPointIndexLastStep();
 	}
 
 	@Override
@@ -136,6 +137,8 @@ public class MatchedBranchImpl implements IMatchedBranch, Cloneable, Serializabl
 		for (IMatchedWaySegment seg : segments) {
 			length += seg.getGeometry().getLength();
 		}
+		
+		updateEndPointIndexLastStep();
 
 	}
 
@@ -146,12 +149,16 @@ public class MatchedBranchImpl implements IMatchedBranch, Cloneable, Serializabl
 
 	@Override
 	public void incrementStep() {
-		if (getNrOfTotalTrackPoints() > endPointIndexLastStep) {
+		if (getNrOfTotalTrackPoints() != endPointIndexLastStep) {
 			step++;
-			endPointIndexLastStep = getNrOfTotalTrackPoints();
+			updateEndPointIndexLastStep();
 		}
 	}
 
+	private void updateEndPointIndexLastStep() {
+		endPointIndexLastStep = getNrOfTotalTrackPoints();
+	}
+	
 	@Override
 	public Object clone() throws CloneNotSupportedException {
 		MatchedBranchImpl cloneObj = (MatchedBranchImpl)super.clone();
@@ -242,7 +249,11 @@ public class MatchedBranchImpl implements IMatchedBranch, Cloneable, Serializabl
 	@Override
 	public int getNrOfTotalTrackPoints() {
 		if (!nrOfTotalTrackPointsValid) {
-			nrOfTotalTrackPoints = segments.get(segments.size()-1).getEndPointIndex();
+			if (segments != null && !segments.isEmpty()) {
+				nrOfTotalTrackPoints = segments.get(segments.size()-1).getEndPointIndex();
+			} else {
+				nrOfTotalTrackPoints = 0;
+			}
 			nrOfTotalTrackPointsValid = true;
 		}
 		return nrOfTotalTrackPoints;

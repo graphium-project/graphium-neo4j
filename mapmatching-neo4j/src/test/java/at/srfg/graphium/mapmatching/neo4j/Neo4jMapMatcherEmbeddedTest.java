@@ -98,7 +98,7 @@ public class Neo4jMapMatcherEmbeddedTest {
 //	private String routingMode = "bike";
 	private String routingMode = "car";
 	
-	@Ignore
+//	@Ignore
 	@Test
 	public void testMatchTrack() {
 //		String graphName = "osm_at";
@@ -111,11 +111,10 @@ public class Neo4jMapMatcherEmbeddedTest {
 //		long trackId = 19991780;
 //		long trackId = 18241517;
 		
-//		String trackId = "97488203";
+		String trackId = "300015596028";
 //		String trackId = "98921998";
 //		String trackId = "89412876";
 //		String trackId = "105868664";
-		String trackId = "200021380678";
 		
 //		long trackId = 4893166;
 		

@@ -479,7 +479,7 @@ public class PathExpanderMatcher {
 							setSegmentDirection(segment, matchedSegment);
 							TraversalDescription newTraversalDescription = buildTraveralDescription(matchedSegment, clonedBranch, false);
 							clonedBranch.addMatchedWaySegment(matchedSegment);
-							matchSegment(matchedSegment, clonedBranch, newTraversalDescription, track, properties, distanceTrackPoints, distanceForBranch, resultBranches, depth++);
+							matchSegment(matchedSegment, clonedBranch, newTraversalDescription, track, properties, distanceTrackPoints, distanceForBranch, resultBranches, ++depth);
 						}
 					}
 				}

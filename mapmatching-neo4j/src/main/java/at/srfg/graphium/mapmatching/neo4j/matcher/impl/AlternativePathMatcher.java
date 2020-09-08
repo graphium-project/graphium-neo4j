@@ -32,7 +32,6 @@ import at.srfg.graphium.mapmatching.model.Direction;
 import at.srfg.graphium.mapmatching.model.IMatchedBranch;
 import at.srfg.graphium.mapmatching.model.IMatchedWaySegment;
 import at.srfg.graphium.mapmatching.model.ITrack;
-import at.srfg.graphium.mapmatching.properties.IMapMatchingProperties;
 import at.srfg.graphium.mapmatching.statistics.MapMatcherStatistics;
 
 
@@ -45,11 +44,9 @@ public class AlternativePathMatcher {
 	private static Logger log = LoggerFactory.getLogger(AlternativePathMatcher.class);
 	
 	private MapMatchingTask matchingTask;
-	private IMapMatchingProperties properties;
 	
-	public AlternativePathMatcher(MapMatchingTask mapMatchingTask, IMapMatchingProperties properties) {
+	public AlternativePathMatcher(MapMatchingTask mapMatchingTask) {
 		this.matchingTask = mapMatchingTask;
-		this.properties = properties;
 	}
 
 	
@@ -75,7 +72,9 @@ public class AlternativePathMatcher {
 			searchPaths.add(new SearchPath(lastSegment.getEndPointIndex(), branch));
 		}
 		
-		searchAlternativePaths2(searchPaths, newBranches, track);
+		if (!searchPaths.isEmpty()) {
+			searchAlternativePaths2(searchPaths, newBranches, track);
+		}
 
 		log.debug("search routes finished");
 
@@ -633,6 +632,7 @@ public class AlternativePathMatcher {
 			if (previousSegment.getDirection().isEnteringThroughStartNode()) {
 				if (matchedWaySegment.getDirection().isLeavingThroughStartNode()) {
 					previousSegment.setDirection(Direction.START_TO_START);
+					previousSegment.setUTurnSegment(true);
 				} else if (matchedWaySegment.getDirection().isLeavingThroughEndNode()) {
 					previousSegment.setDirection(Direction.START_TO_END);
 				} else {
@@ -643,6 +643,7 @@ public class AlternativePathMatcher {
 					previousSegment.setDirection(Direction.END_TO_START);
 				} else if (matchedWaySegment.getDirection().isLeavingThroughEndNode()) {
 					previousSegment.setDirection(Direction.END_TO_END);
+					previousSegment.setUTurnSegment(true);
 				} else {
 					previousSegment.setDirection(Direction.END_TO_CENTER);
 				}
