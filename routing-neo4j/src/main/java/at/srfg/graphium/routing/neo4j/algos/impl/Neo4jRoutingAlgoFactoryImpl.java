@@ -45,6 +45,8 @@ import at.srfg.graphium.routing.model.impl.RoutingAlgorithms;
 import at.srfg.graphium.routing.model.impl.RoutingMode;
 import at.srfg.graphium.routing.neo4j.evaluators.impl.NodeBasedCostEvaluator;
 import at.srfg.graphium.routing.neo4j.evaluators.impl.OffsetAwareNodeBasedCostEvaluator;
+import at.srfg.graphium.routing.neo4j.filters.BlockedRoadNodeFilter;
+import at.srfg.graphium.routing.service.IRestrictionsService;
 /**
  * @author mwimmer
  *
@@ -54,6 +56,8 @@ public class Neo4jRoutingAlgoFactoryImpl<T extends IWaySegment> implements IRout
 	private static Logger log = LoggerFactory.getLogger(Neo4jRoutingAlgoFactoryImpl.class);
 	
 	private STRTreeCacheManager cache;
+	private boolean enableTemporaryRestrictedSegments;
+	private IRestrictionsService restrictionsService;
 
 	@Override
 	public IRoutingAlgo<IRoutingOptions, Node, Double> createInstance(IRoutingOptions routeOptions, Node startNode, 
@@ -80,7 +84,7 @@ public class Neo4jRoutingAlgoFactoryImpl<T extends IWaySegment> implements IRout
 	protected PathExpander<Object> getOutgoingExpander(IRoutingOptions options, Direction direction) {
 		DirectedOutgoingConnectionPathExpander expander = new DirectedOutgoingConnectionPathExpander(null);
 		
-		addOptions(expander, options);
+		addOptions(expander, options, direction);
 
 		return expander;
 	}
@@ -88,12 +92,12 @@ public class Neo4jRoutingAlgoFactoryImpl<T extends IWaySegment> implements IRout
 	protected PathExpander<Object> getIncomingExpander(IRoutingOptions options, Direction direction) {
 		DirectedIncomingConnectionPathExpander expander = new DirectedIncomingConnectionPathExpander(null);
 		
-		addOptions(expander, options);
+		addOptions(expander, options, direction);
 
 		return expander;
 	}
 	
-	private void addOptions(IDirectedConnectionPathExpander expander, IRoutingOptions options) {
+	private void addOptions(IDirectedConnectionPathExpander expander, IRoutingOptions options, Direction direction) {
 		// access type restriction on routing mode
 		if (options.getMode() != null) {
 			Access access = null;
@@ -116,6 +120,10 @@ public class Neo4jRoutingAlgoFactoryImpl<T extends IWaySegment> implements IRout
 				}
 			}
 		} 
+		
+		if (enableTemporaryRestrictedSegments) {
+			expander.addRelationshipFilter(new BlockedRoadNodeFilter(options.getGraphName(), direction, options.getRoutingTimestamp(), restrictionsService));
+		}		
 	}
 
 	protected CostEvaluator<Double> createCostEvaluator(IRoutingOptions options, Node startNode, 
@@ -160,4 +168,20 @@ public class Neo4jRoutingAlgoFactoryImpl<T extends IWaySegment> implements IRout
 		this.cache = cache;
 	}
 
+	public boolean isEnableTemporaryRestrictedSegments() {
+		return enableTemporaryRestrictedSegments;
+	}
+
+	public void setEnableTemporaryRestrictedSegments(boolean enableTemporaryRestrictedSegments) {
+		this.enableTemporaryRestrictedSegments = enableTemporaryRestrictedSegments;
+	}
+
+	public IRestrictionsService getRestrictionsService() {
+		return restrictionsService;
+	}
+
+	public void setRestrictionsService(IRestrictionsService restrictionsService) {
+		this.restrictionsService = restrictionsService;
+	}
+	
 }

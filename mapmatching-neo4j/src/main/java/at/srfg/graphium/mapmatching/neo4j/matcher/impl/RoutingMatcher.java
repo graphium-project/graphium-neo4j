@@ -17,6 +17,7 @@
  */
 package at.srfg.graphium.mapmatching.neo4j.matcher.impl;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -102,6 +103,10 @@ public class RoutingMatcher {
 		} else {
 			routingAlgorithm = RoutingAlgorithms.DIJKSTRA;
 		}
+		
+		
+		// TODO: routingOptions => routingTimestamp setzen!!! ???
+		
 		
 		routingOptions = new RoutingOptionsImpl(matchingTask.getGraphName(), mapMatchingTask.getGraphVersion());
 		routingOptions.setAlgorithm(routingAlgorithm);
@@ -587,7 +592,7 @@ public class RoutingMatcher {
 	 * Returns the shortest (fastest) path between two segments.
 	 */
 	List<IMatchedWaySegment> getShortestPath(
-			IWaySegment fromSegment, 
+			IMatchedWaySegment fromSegment, 
 			IWaySegment toSegment, 
 			int maxSegmentsForShortestPath,
 			INeo4jWayGraphReadDao graphDao,
@@ -626,6 +631,11 @@ public class RoutingMatcher {
 			// if a path can be found with at most 'maxSegmentsForShortestPath' segments, run exact routing 
 			IRoute<IWaySegment, Node> route = null;
 			try {
+				if (fromSegment.getEndPointIndex() > 0 && fromSegment.getEndPointIndex() <= matchingTask.getTrack().getTrackPoints().size()) {
+					routingOptions.setRoutingTimestamp(
+								matchingTask.getTrack().getTrackPoints().get(fromSegment.getEndPointIndex()).getTimestamp()
+									.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());	
+				}
 				route = routingClient.routePerSegmentIds(routingOptions, segmentIds);
 			} catch (UnkownRoutingAlgoException | RoutingException e) {
 				log.error("Could not route!", e);
