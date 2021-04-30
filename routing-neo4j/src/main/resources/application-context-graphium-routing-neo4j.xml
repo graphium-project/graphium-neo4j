@@ -27,6 +27,10 @@
 	<bean id="neo4jRoutingNodeResolver" class="at.srfg.graphium.routing.neo4j.algos.impl.Neo4jRoutingNodeResolverImpl">
 		<constructor-arg name="graphReadDao" ref="neo4jWayGraphReadDao"/>
 	</bean>
+	
+	<bean id="restrictionsService" class="at.srfg.graphium.routing.service.impl.RestrictionsServiceImpl">
+		<property name="maxTTLInSeconds" value="${routing.restrictions.maxTTLInSeconds}"/>
+	</bean>
 
 	<bean id="neo4jRoutingService" class="at.srfg.graphium.routing.service.neo4j.impl.Neo4jRoutingServiceImpl">
 		<property name="pointToRoutingNodeResolver" ref="neo4jRoutingNodeResolver"/>
@@ -40,6 +44,8 @@
 	<!-- factories -->
 	<bean id="neo4jRoutingAlgoFactory" class="at.srfg.graphium.routing.neo4j.algos.impl.Neo4jRoutingAlgoFactoryImpl">
 		<property name="cache" ref="strtreeCacheManager"/>
+		<property name="restrictionsService" ref="restrictionsService"/>
+		<property name="enableTemporaryRestrictedSegments" value="${routing.restrictions.enableTemporaryRestrictedSegments}"/>
 	</bean>
 	
 	<!-- evaluators factory -->
