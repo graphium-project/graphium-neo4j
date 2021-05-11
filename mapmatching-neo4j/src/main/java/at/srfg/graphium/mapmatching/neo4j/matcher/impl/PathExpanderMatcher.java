@@ -47,6 +47,7 @@ import at.srfg.graphium.model.IBaseSegment;
 import at.srfg.graphium.model.IWaySegment;
 import at.srfg.graphium.model.IWaySegmentConnection;
 import at.srfg.graphium.model.OneWay;
+import at.srfg.graphium.model.hd.IHDWaySegment;
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
 import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
 import at.srfg.graphium.neo4j.persistence.Neo4jUtil;
@@ -557,6 +558,11 @@ public class PathExpanderMatcher {
 	 */
 	private TraversalDescription buildTraveralDescription(IMatchedWaySegment currentSegment, IMatchedBranch branch, boolean firstSegment) {
 		// Determine next driving directions
+		boolean isHdGraph = false;
+		if (currentSegment instanceof IHDWaySegment) {
+			isHdGraph = true;
+		};
+		
 		WaySegmentRelationshipType[] relationshipTypes;
 		MutableBoolean reversed = new MutableBoolean(Boolean.FALSE);
 		if (firstSegment) {
@@ -565,7 +571,7 @@ public class PathExpanderMatcher {
 				relationshipTypes = new WaySegmentRelationshipType[] {
 						WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
 						WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
-				if (currentSegment.isOneway().equals(OneWay.ONEWAY_BKW)) {
+				if (isHdGraph && currentSegment.isOneway().equals(OneWay.ONEWAY_BKW)) {
 					// traversing against oneway (only possible in hd-matching)
 					reversed.setTrue();
 				}
@@ -573,7 +579,7 @@ public class PathExpanderMatcher {
 				relationshipTypes = new WaySegmentRelationshipType[] {
 						WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE,
 						WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
-				if (currentSegment.isOneway().equals(OneWay.ONEWAY_TOW)) {
+				if (isHdGraph && currentSegment.isOneway().equals(OneWay.ONEWAY_TOW)) {
 					// traversing against oneway (only possible in hd-matching)
 					reversed.setTrue();
 				}
@@ -588,7 +594,7 @@ public class PathExpanderMatcher {
 				relationshipTypes = new WaySegmentRelationshipType[] {
 						WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE,
 						WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
-				if (currentSegment.isOneway().equals(OneWay.ONEWAY_BKW)) {
+				if (isHdGraph && currentSegment.isOneway().equals(OneWay.ONEWAY_BKW)) {
 					// traversing against oneway (only possible in hd-matching)
 					reversed.setTrue();
 				}
@@ -596,7 +602,7 @@ public class PathExpanderMatcher {
 				relationshipTypes = new WaySegmentRelationshipType[] {
 						WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
 						WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
-				if (currentSegment.isOneway().equals(OneWay.ONEWAY_TOW)) {
+				if (isHdGraph && currentSegment.isOneway().equals(OneWay.ONEWAY_TOW)) {
 					// traversing against oneway (only possible in hd-matching)
 					reversed.setTrue();
 				}
