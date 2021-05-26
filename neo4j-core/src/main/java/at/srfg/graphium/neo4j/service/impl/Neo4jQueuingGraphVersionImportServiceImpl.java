@@ -29,6 +29,7 @@ import org.neo4j.graphdb.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import at.srfg.graphium.core.exception.GraphAlreadyExistException;
 import at.srfg.graphium.core.exception.GraphImportException;
 import at.srfg.graphium.core.exception.GraphNotExistsException;
 import at.srfg.graphium.core.helper.GraphVersionHelper;
@@ -92,7 +93,11 @@ public class Neo4jQueuingGraphVersionImportServiceImpl<T extends IWaySegment> ex
 		log.error(e.toString(), e);
 		// Hier muss manuell ein Rollback getriggered werden => Löschen der Graphversion + Metadata + Spatial Layer
 		try {
-			deleteGraphVersion(graphName, version);
+			if (e instanceof GraphAlreadyExistException) {
+				// we must not delete the graph version
+			} else {
+				deleteGraphVersion(graphName, version);
+			}
 		} catch (GraphNotExistsException e1) {
 			// do nothing
 		}
