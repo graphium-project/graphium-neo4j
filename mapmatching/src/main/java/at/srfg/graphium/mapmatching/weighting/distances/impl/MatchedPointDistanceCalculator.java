@@ -144,10 +144,12 @@ public class MatchedPointDistanceCalculator extends DistanceCalculator {
 	public Double getPenaltyForBikesAgainstOneWay(final IMatchedWaySegment segment, IMatchedWaySegment previousSegment) {
 		double penalty = 0;
 	
-		if (segment.getDirection().isEnteringThroughStartNode() && 
+		if (segment.getDirection().isEnteringThroughStartNode() &&
+			segment.getAccessTow() != null &&
 			!segment.getAccessTow().contains(Access.BIKE)) {
 			penalty = penaltyForBikesOnWalkways;
 		} else if (segment.getDirection().isEnteringThroughEndNode() && 
+				   segment.getAccessBkw() != null &&
 				   !segment.getAccessBkw().contains(Access.BIKE)) {
 			penalty = penaltyForBikesAgainstOneWays;
 		}
@@ -160,10 +162,12 @@ public class MatchedPointDistanceCalculator extends DistanceCalculator {
 		double penalty = 0;
 	
 		if (segment.getDirection().isEnteringThroughStartNode() && 
+			segment.getAccessTow() != null &&
 			segment.getAccessTow().contains(Access.PEDESTRIAN) &&
 			!segment.getAccessTow().contains(Access.BIKE)) {
 			penalty = penaltyForBikesOnWalkways;
 		} else if (segment.getDirection().isEnteringThroughEndNode() && 
+				   segment.getAccessBkw() != null &&
 				   segment.getAccessBkw().contains(Access.PEDESTRIAN) &&
 				   !segment.getAccessBkw().contains(Access.BIKE)) {
 			penalty = penaltyForBikesOnWalkways;
