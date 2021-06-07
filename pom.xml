@@ -44,7 +44,7 @@
 		<neo4j.version>3.2.5</neo4j.version>	 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<slf4j-log4j12.version>1.7.21</slf4j-log4j12.version>
-		<junit.version>4.12</junit.version>
+		<junit.version>4.13.1</junit.version>
 		<jts.version>1.13</jts.version>
 		<jackson.json.legacy.version>1.9.6</jackson.json.legacy.version>
 		<jackson.json.version>2.8.2</jackson.json.version>
