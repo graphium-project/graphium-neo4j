@@ -60,24 +60,25 @@ import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphIndexDao;
 import at.srfg.graphium.neo4j.persistence.INeo4jWaySegmentHelper;
 import at.srfg.graphium.neo4j.persistence.configuration.IGraphDatabaseProvider;
+import at.srfg.graphium.neo4j.persistence.nodemapper.utils.Neo4jTagMappingUtils;
 import at.srfg.graphium.neo4j.persistence.propertyhandler.IConnectionXInfoPropertyHandler;
 import at.srfg.graphium.neo4j.persistence.propertyhandler.ISegmentXInfoPropertyHandler;
 import at.srfg.graphium.neo4j.persistence.propertyhandler.impl.ConnectionXInfoPropertyHandlerRegistry;
 import at.srfg.graphium.neo4j.persistence.propertyhandler.impl.SegmentXInfoPropertyHandlerRegistry;
 
 /**
- * @author User
+ * @author mwimmer
  */
-public class Neo4jWayGraphWriteDaoImpl
-	extends AbstractNeo4jDaoImpl implements IWayGraphWriteDao<IWaySegment> {
+public class Neo4jWayGraphWriteDaoImpl<W extends IWaySegment>
+	extends AbstractNeo4jDaoImpl implements IWayGraphWriteDao<W> {
 
 	private static Logger log = LoggerFactory.getLogger(Neo4jWayGraphWriteDaoImpl.class);
 	
-	private INeo4jWaySegmentHelper<IWaySegment> segmentHelper;
-	private INeo4jWayGraphIndexDao indexDao;
-	private SegmentXInfoPropertyHandlerRegistry segmentPropertyHandlerRegistry;
-	private ConnectionXInfoPropertyHandlerRegistry connectionPropertyHandlerRegistry;
-	private int batchSizeForNodeDeletion = 1000;
+	protected INeo4jWaySegmentHelper<W> segmentHelper;
+	protected INeo4jWayGraphIndexDao indexDao;
+	protected SegmentXInfoPropertyHandlerRegistry segmentPropertyHandlerRegistry;
+	protected ConnectionXInfoPropertyHandlerRegistry connectionPropertyHandlerRegistry;
+	protected int batchSizeForNodeDeletion = 1000;
 	
 	@Override
 	public void createGraph(String graphName, String version, boolean overrideGraphIfExsists) throws GraphAlreadyExistException {
@@ -91,12 +92,12 @@ public class Neo4jWayGraphWriteDaoImpl
 			}
 		}
 	}
-
+	
 	private boolean checkIfMetadataExists(String graphName, String version) {
 		return getWayGraphVersionMetadataNode(graphName, version) != null;
 	}
 
-	private void deleteGraphVersionSegmentNodes(String graphVersionName) {
+	protected void deleteGraphVersionSegmentNodes(String graphVersionName) {
 		log.info("deleting nodes ...");
 		long count = 0;
 		long totalDeleted = 0;
@@ -145,19 +146,19 @@ public class Neo4jWayGraphWriteDaoImpl
 	}
 
 	@Override
-	public void saveSegments(List<IWaySegment> segments, String graphName, String version) {
+	public void saveSegments(List<W> segments, String graphName, String version) {
 		saveSegments(segments, graphName, version, null);
 	}
 	
 	@Override
-	public void saveSegments(List<IWaySegment> segments, String graphName, String version, List<String> excludedXInfosList) {
+	public void saveSegments(List<W> segments, String graphName, String version, List<String> excludedXInfosList) {
 		String graphVersionName = GraphVersionHelper.createGraphVersionName(graphName, version); 
 		try (Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx()) {
 			if (segments != null && !segments.isEmpty()) {
 				
 				Index<Node> indexSegmentId = getSegmentIdIndex(graphVersionName);
 //				
-				for (IWaySegment segment : segments) {
+				for (W segment : segments) {
 					// create node
 					Node segmentNode = segmentHelper.createNode(getGraphDatabase(), segment, graphVersionName);
 	
@@ -178,20 +179,20 @@ public class Neo4jWayGraphWriteDaoImpl
 	}
 
 	@Override
-	public void updateSegments(List<IWaySegment> segments, String graphName, String version) {
+	public void updateSegments(List<W> segments, String graphName, String version) {
 		updateSegmentAttributes(segments, graphName, version);
 		updateConnections(segments, graphName, version);
 	}
 	
 	@Override
-	public long updateSegmentAttributes(List<IWaySegment> segments, String graphName, String version) {
+	public long updateSegmentAttributes(List<W> segments, String graphName, String version) {
 		String graphVersionName = GraphVersionHelper.createGraphVersionName(graphName, version); 
 		try (Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx()) {
 			int updatedCount = 0;
 			
 			if (segments != null && !segments.isEmpty()) {
 				
-				for (IWaySegment segment : segments) {
+				for (W segment : segments) {
 					// read Node from index
 					Node node = getSegmentNode(graphVersionName, segment.getId());
 					if (node != null) {
@@ -213,12 +214,12 @@ public class Neo4jWayGraphWriteDaoImpl
 	}
 	
 	@Override
-	public long updateConnections(List<IWaySegment> segments, String graphName, String version) {
+	public long updateConnections(List<W> segments, String graphName, String version) {
 		String graphVersionName = GraphVersionHelper.createGraphVersionName(graphName, version);
 		try (Transaction tx = graphDatabaseProvider.getGraphDatabase().beginTx()) {
 			int updatedCount = 0;
 			List<IWaySegmentConnection> connsWithXInfo = null;
-			for (IWaySegment segment : segments) {
+			for (W segment : segments) {
 				connsWithXInfo = new ArrayList<>();
 				if (segment.getStartNodeCons() != null) {
 					connsWithXInfo.addAll(segment.getStartNodeCons());
@@ -242,12 +243,13 @@ public class Neo4jWayGraphWriteDaoImpl
 		}
 	}
 
-	private Map<IWaySegmentConnection,Relationship> mapRelationShips(Node segmentNode, List<IWaySegmentConnection> connections) {
+	protected Map<IWaySegmentConnection,Relationship> mapRelationShips(Node segmentNode, List<IWaySegmentConnection> connections) {
 		Map<IWaySegmentConnection,Relationship> result = new HashMap<>();
 		if (segmentNode != null && connections != null && !connections.isEmpty()) {
 			Iterable<Relationship> rels = segmentNode.getRelationships(Direction.OUTGOING,
 					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
-					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE);
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE,
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE);
 			rels.forEach(rel -> {
 				connections.forEach(conn -> {
 					if ((long)(rel.getProperty(WayGraphConstants.CONNECTION_NODE_ID)) == conn.getNodeId()
@@ -260,12 +262,13 @@ public class Neo4jWayGraphWriteDaoImpl
 		return result;
 	}
 
-	private Relationship getRelationShip(Node segmentNode, IWaySegmentConnection conn) {
+	protected Relationship getRelationShip(Node segmentNode, IWaySegmentConnection conn) {
 		Relationship rel = null;
 		if (segmentNode != null && conn != null) {
 			Iterable<Relationship> rels = segmentNode.getRelationships(Direction.OUTGOING,
 					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
-					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE);
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE,
+					WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE);
 			Iterator<Relationship> relsIt = rels.iterator();
 			boolean found = false;
 			while (relsIt.hasNext() && !found) {
@@ -283,7 +286,7 @@ public class Neo4jWayGraphWriteDaoImpl
 	}
 
 	@Override
-	public long saveConnectionsOnSegments(List<IWaySegment> segmentsWithConnections, boolean saveSegments,
+	public long saveConnectionsOnSegments(List<W> segmentsWithConnections, boolean saveSegments,
 			String graphName, String version) {
 		return 0;
 	}
@@ -304,12 +307,17 @@ public class Neo4jWayGraphWriteDaoImpl
 						RelationshipType relType;
 						if ((Long) fromSegmentNode.getProperty(WayGraphConstants.SEGMENT_STARTNODE_ID) == connection.getNodeId()) {
 							relType = WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE;
-						} else {
+						} else if ((Long) fromSegmentNode.getProperty(WayGraphConstants.SEGMENT_ENDNODE_ID) == connection.getNodeId()) {
 							relType = WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE;
+						} else {
+							relType = WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE;
 						}
 						Relationship rel = fromSegmentNode.createRelationshipTo(toSegmentNode, relType);
 						rel.setProperty(WayGraphConstants.CONNECTION_ACCESS, Neo4jWaySegmentHelperImpl.createAccessArray(connection.getAccess()));
 						rel.setProperty(WayGraphConstants.CONNECTION_NODE_ID, connection.getNodeId());
+						if (connection.getTags() != null) {
+							Neo4jTagMappingUtils.createTagProperties(rel, connection.getTags(), WayGraphConstants.CONNECTION_TAG_PREFIX);
+						}
 						
 						// if XInfo exists for connection
 						saveConnectionXInfo(connection, rel, null);
@@ -339,7 +347,7 @@ public class Neo4jWayGraphWriteDaoImpl
 		//TODO Implement ME
 	}
 
-	private void saveSegmentXInfo(GraphDatabaseService graphDb, IWaySegment segment, Node segmentNode, List<String> excludedXInfosList) {
+	protected void saveSegmentXInfo(GraphDatabaseService graphDb, W segment, Node segmentNode, List<String> excludedXInfosList) {
 		if (segment.getXInfo() != null && !segment.getXInfo().isEmpty()) {
 			ISegmentXInfoPropertyHandler<ISegmentXInfo> propertySetter;
 			List<ISegmentXInfo> xInfos = segment.getXInfo();
@@ -359,7 +367,7 @@ public class Neo4jWayGraphWriteDaoImpl
 		}
 	}
 
-	private void saveConnectionXInfo(IWaySegmentConnection connection, Relationship connectionRelationship, List<String> excludedXInfos) {
+	protected void saveConnectionXInfo(IWaySegmentConnection connection, Relationship connectionRelationship, List<String> excludedXInfos) {
 		if (connection.getXInfo() != null && !connection.getXInfo().isEmpty()) {
 			IConnectionXInfoPropertyHandler propertyHandler;
 			List<? extends IConnectionXInfo> xInfos = connection.getXInfo();
@@ -414,7 +422,8 @@ public class Neo4jWayGraphWriteDaoImpl
 				nodes.forEachRemaining(node -> {
 					Iterable<Relationship> rels = node.getRelationships(Direction.OUTGOING,
 							WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
-							WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE);
+							WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE,
+							WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE);
 					rels.forEach(relationship -> {
 						for (String type : types) {
 							IConnectionXInfoPropertyHandler<? extends IConnectionXInfo> propertyHandler = connectionPropertyHandlerRegistry.get(type);
@@ -476,11 +485,11 @@ public class Neo4jWayGraphWriteDaoImpl
 		this.graphDatabaseProvider = graphDatabaseProvider;
 	}
 
-	public INeo4jWaySegmentHelper<IWaySegment> getSegmentHelper() {
+	public INeo4jWaySegmentHelper<W> getSegmentHelper() {
 		return segmentHelper;
 	}
 
-	public void setSegmentHelper(INeo4jWaySegmentHelper<IWaySegment> segmentHelper) {
+	public void setSegmentHelper(INeo4jWaySegmentHelper<W> segmentHelper) {
 		this.segmentHelper = segmentHelper;
 	}
 

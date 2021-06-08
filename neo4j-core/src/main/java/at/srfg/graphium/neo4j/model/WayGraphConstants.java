@@ -65,10 +65,18 @@ public class WayGraphConstants {
 	public static final String SEGMENT_END_Y = "end_y";
 	public static final String SEGMENT_TAG_PREFIX = "segtag:";
 
+	public static final String HDSEGMENT_LEFT_BORDER_GEOM = "left_border_geom";
+	public static final String HDSEGMENT_LEFT_BORDER_STARTNODE_ID = "left_border_startnode_id";
+	public static final String HDSEGMENT_LEFT_BORDER_ENDNODE_ID = "left_border_endnode_id";
+	public static final String HDSEGMENT_RIGHT_BORDER_GEOM = "right_border_geom";
+	public static final String HDSEGMENT_RIGHT_BORDER_STARTNODE_ID = "right_border_startnode_id";
+	public static final String HDSEGMENT_RIGHT_BORDER_ENDNODE_ID = "right_border_endnode_id";
+
 	public static final String SEGMENT_XINFO_DIRECTION_TOW = "segxinfo_direction_tow";
 	
 	public static final String CONNECTION_ACCESS = "access";
 	public static final String CONNECTION_NODE_ID = "node_id";
+	public static final String CONNECTION_TAG_PREFIX = "conntag:";
 	
 	public static final String METADATA_GRAPHNAME = "meta_graphname";
 	public static final String METADATA_GRAPHVERSIONNAME = "meta_graphversionname";
@@ -118,5 +126,13 @@ public class WayGraphConstants {
 	public static final String SUBSCRIPTION_PASSWORD = "subscription_password";
 
 	public static final String WAYGRAPH_NAME = "waygraph_name";
+	
+	// HD specific constants
+	
+	public static final String CONNECTION_TYPE = "connectionType";
+	public static final String CONNECTION_TYPE_CONNECTS = "connects";
+	public static final String CONNECTION_TYPE_CONNECTS_FORBIDDEN = "connects_forbidden";
+	public static final String CONNECTION_DIRECTION = "direction";
+	public static final String CONNECTION_DIRECTION_REVERSE = "reverse";
 	
 }

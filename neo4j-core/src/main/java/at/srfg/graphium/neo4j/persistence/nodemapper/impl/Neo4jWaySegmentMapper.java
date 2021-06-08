@@ -42,21 +42,21 @@ import at.srfg.graphium.neo4j.service.impl.STRTreeCacheManager;
  * @author mwimmer
  *
  */
-public class Neo4jWaySegmentMapper implements INeo4jXInfoNodeMapper<IWaySegment> {
+public class Neo4jWaySegmentMapper<W extends IWaySegment> implements INeo4jXInfoNodeMapper<W> {
 
 	private static Logger log = LoggerFactory.getLogger(Neo4jWayGraphWriteDaoImpl.class);
 	
-	private IWayGraphModelFactory<IWaySegment> factory;
+	protected IWayGraphModelFactory<W> factory;
 	private STRTreeCacheManager cache;
 	
 	@Override
-	public IWaySegment map(Node node) {
+	public W map(Node node) {
 		return this.mapWithXInfoTypes(node, null, null);
 	}
 
 	@Override
-	public IWaySegment mapWithXInfoTypes(Node node, String graphName, String version, String... types) {
-		IWaySegment segment = factory.newSegment();
+	public W mapWithXInfoTypes(Node node, String graphName, String version, String... types) {
+		W segment = factory.newSegment();
 
 		Map<String, Object> properties = node.getAllProperties();
 		segment.setId((long) properties.get(WayGraphConstants.SEGMENT_ID));
@@ -162,11 +162,11 @@ public class Neo4jWaySegmentMapper implements INeo4jXInfoNodeMapper<IWaySegment>
 		}
 	}
 
-	public IWayGraphModelFactory<IWaySegment> getFactory() {
+	public IWayGraphModelFactory<W> getFactory() {
 		return factory;
 	}
 
-	public void setFactory(IWayGraphModelFactory<IWaySegment> factory) {
+	public void setFactory(IWayGraphModelFactory<W> factory) {
 		this.factory = factory;
 	}
 

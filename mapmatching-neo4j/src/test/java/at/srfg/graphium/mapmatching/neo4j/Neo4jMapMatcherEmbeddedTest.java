@@ -130,7 +130,8 @@ public class Neo4jMapMatcherEmbeddedTest {
 	@Ignore
 	@Test
 	public void testMatchTrackAsync() {
-		String graphName = "gip_at_miv";
+//		String graphName = "gip_at_miv";
+		String graphName = "osm_at_with_lower_level_streets";
 		String trackId = "63541687";
 		String fileName = "C:/development/project_data/mapmatcher/testsuite/tracks_json/" + trackId + ".json";
 		int nrOfThreads = 8;
@@ -187,6 +188,7 @@ public class Neo4jMapMatcherEmbeddedTest {
 		return true;
 	}
 
+	@Ignore
 	@Test
 	public void testMatchTrackWithTimeoutGuard() {
 //		String graphName = "osm_at";

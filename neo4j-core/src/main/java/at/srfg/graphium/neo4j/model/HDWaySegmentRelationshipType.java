@@ -1,6 +1,6 @@
 /**
  * Graphium Neo4j - Module of Graphserver for Neo4j extension
- * Copyright © 2017 Salzburg Research Forschungsgesellschaft (graphium@salzburgresearch.at)
+ * Copyright © 2019 Salzburg Research Forschungsgesellschaft (graphium@salzburgresearch.at)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,10 +23,9 @@ import org.neo4j.graphdb.RelationshipType;
  * @author mwimmer
  *
  */
-public enum WaySegmentRelationshipType implements RelationshipType {
-
-	SEGMENT_CONNECTION_ON_STARTNODE,
-	SEGMENT_CONNECTION_ON_ENDNODE,
-	SEGMENT_CONNECTION_WITHOUT_NODE;
-
+public enum HDWaySegmentRelationshipType implements RelationshipType {
+	
+	CONNECTS,
+	CONNECTS_FORBIDDEN;
+	
 }

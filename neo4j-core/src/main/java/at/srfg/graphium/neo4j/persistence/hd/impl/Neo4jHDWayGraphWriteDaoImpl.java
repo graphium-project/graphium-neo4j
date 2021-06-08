@@ -1,6 +1,6 @@
 /**
  * Graphium Neo4j - Module of Graphserver for Neo4j extension
- * Copyright © 2017 Salzburg Research Forschungsgesellschaft (graphium@salzburgresearch.at)
+ * Copyright © 2019 Salzburg Research Forschungsgesellschaft (graphium@salzburgresearch.at)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,18 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package at.srfg.graphium.neo4j.model;
+package at.srfg.graphium.neo4j.persistence.hd.impl;
 
-import org.neo4j.graphdb.RelationshipType;
+import at.srfg.graphium.model.hd.IHDWaySegment;
+import at.srfg.graphium.neo4j.persistence.impl.Neo4jWayGraphWriteDaoImpl;
 
 /**
  * @author mwimmer
  *
  */
-public enum WaySegmentRelationshipType implements RelationshipType {
-
-	SEGMENT_CONNECTION_ON_STARTNODE,
-	SEGMENT_CONNECTION_ON_ENDNODE,
-	SEGMENT_CONNECTION_WITHOUT_NODE;
+public class Neo4jHDWayGraphWriteDaoImpl<W extends IHDWaySegment> extends Neo4jWayGraphWriteDaoImpl<W> {
 
 }

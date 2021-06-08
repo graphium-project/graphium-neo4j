@@ -635,6 +635,8 @@ public class AlternativePathMatcher {
 					previousSegment.setUTurnSegment(true);
 				} else if (matchedWaySegment.getDirection().isLeavingThroughEndNode()) {
 					previousSegment.setDirection(Direction.START_TO_END);
+				} else {
+					previousSegment.setDirection(Direction.START_TO_CENTER);
 				}
 			} else if (previousSegment.getDirection().isEnteringThroughEndNode()) {
 				if (matchedWaySegment.getDirection().isLeavingThroughStartNode()) {
@@ -642,10 +644,20 @@ public class AlternativePathMatcher {
 				} else if (matchedWaySegment.getDirection().isLeavingThroughEndNode()) {
 					previousSegment.setDirection(Direction.END_TO_END);
 					previousSegment.setUTurnSegment(true);
+				} else {
+					previousSegment.setDirection(Direction.END_TO_CENTER);
+				}
+			} else {
+				if (matchedWaySegment.getDirection().isLeavingThroughStartNode()) {
+					previousSegment.setDirection(Direction.CENTER_TO_START);
+				} else if (matchedWaySegment.getDirection().isLeavingThroughEndNode()) {
+					previousSegment.setDirection(Direction.CENTER_TO_END);
+				} else {
+					previousSegment.setDirection(Direction.CENTER_TO_CENTER);
 				}
 			}
-		} else {
 			
+		} else {
 			matchedWaySegment.setEndPointIndex(endPointIndex);
 			
 			// calculate distances for matched points

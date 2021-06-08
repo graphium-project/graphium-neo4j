@@ -23,15 +23,21 @@
 		<property name="ignoreUnresolvablePlaceholders" value="true" />
 		<property name="ignoreResourceNotFound" value="true" />		
 	</bean>
+	
+    <bean id="mapmatchingHdConfigurer"
+		class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
+        <property name="location" value="#{environment.getProperty('graphium.conf.path','classpath:')}mapmatcher_hd.properties" />
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="ignoreResourceNotFound" value="true" />		
+	</bean>
 
 	<bean id="neo4jUtil" class="at.srfg.graphium.neo4j.persistence.Neo4jUtil" lazy-init="true" >
 		<property name="graphDatabaseProvider" ref="graphDatabaseProvider"/>
 	</bean>
 
 	<bean id="mapMatcherGlobalStatistics" class="at.srfg.graphium.mapmatching.statistics.MapMatcherGlobalStatistics" lazy-init="true" />
-
-	<!-- Map Matcher -->
-	<bean id="neo4jMapMatcher" class="at.srfg.graphium.mapmatching.neo4j.matcher.impl.Neo4jMapMatcher" lazy-init="true" >
+	
+	<bean id="mapMatcherProperties" class="at.srfg.graphium.mapmatching.properties.impl.MapMatchingProperties" lazy-init="true">
 		<property name="intialRadiusMeter" value="${mapmatcher.intialRadiusMeter}"/>
 		<property name="maxMatchingRadiusMeter" value="${mapmatcher.maxMatchingRadiusInMeter}"/>
 		<property name="maxNrOfBestPaths" value="${mapmatcher.maxNrOfBestPaths}"/>
@@ -42,12 +48,7 @@
 		<property name="maxSpeedForRoutingJson" value="${mapmatcher.maxSpeedForRoutingJson}"/>
 		<property name="maxCountLoopsWithoutPathExtension" value="${mapmatcher.maxCountLoopsWithoutPathExtension}"/>
 		<property name="envelopeSideLength" value="${mapmatcher.envelopeSideLengthForStartSegmentSearch}"/>
-		<property name="graphDao" ref="neo4jWayGraphReadDao"/>
-		<property name="metadataService" ref="graphVersionMetadataService"/>
-		<property name="neo4jUtil" ref="neo4jUtil"/>
-		<property name="routingService" ref="neo4jRoutingService"/>
 		<property name="csvLoggerName" value="${mapmatcher.csvLoggerName}"/>
-		<property name="globalStatistics" ref="mapMatcherGlobalStatistics"/>
 		<property name="thresholdForLowSamplingsInSecs" value="${mapmatcher.thresholdForLowSamplingsInSecs}"/>
 		<property name="thresholdSamplingIntervalForTryingFurtherPathSearches" value="${mapmatcher.thresholdSamplingIntervalInSecsForTryingFurtherPathSearches}"/>
 		<property name="pointsDiffThresholdForSkipRouting" value="${mapmatcher.pointsDiffThresholdForSkipRouting}"/>
@@ -56,6 +57,38 @@
 		<property name="routingAlgorithm" value="${mapmatcher.routingAlgorithm}"/>
 		<property name="activateExtendedPathMatching" value="${mapmatcher.extendedPathMatching.enable}"/>
 		<property name="maxDistanceForExtendedPathMatching" value="${mapmatcher.extendedPathMatching.maxDistance}"/>
+	</bean>
+	
+	<bean id="mapMatcherPropertiesHd" class="at.srfg.graphium.mapmatching.properties.impl.MapMatchingProperties" lazy-init="true">
+		<property name="intialRadiusMeter" value="${mapmatcher_hd.intialRadiusMeter}"/>
+		<property name="maxMatchingRadiusMeter" value="${mapmatcher_hd.maxMatchingRadiusInMeter}"/>
+		<property name="maxNrOfBestPaths" value="${mapmatcher_hd.maxNrOfBestPaths}"/>
+		<property name="minNrOfPoints" value="${mapmatcher_hd.minNrOfPoints}"/>
+		<property name="minLength" value="${mapmatcher_hd.minLength}"/>
+		<property name="minSegmentsPerSection" value="${mapmatcher_hd.minSegmentsPerSection}"/>
+		<property name="maxSegmentsForShortestPath" value="${mapmatcher_hd.maxSegmentsForShortestPath}"/>
+		<property name="maxCountLoopsWithoutPathExtension" value="${mapmatcher_hd.maxCountLoopsWithoutPathExtension}"/>
+		<property name="envelopeSideLength" value="${mapmatcher_hd.envelopeSideLengthForStartSegmentSearch}"/>
+		<property name="csvLoggerName" value="${mapmatcher_hd.csvLoggerName}"/>
+		<property name="thresholdForLowSamplingsInSecs" value="${mapmatcher_hd.thresholdForLowSamplingsInSecs}"/>
+		<property name="thresholdSamplingIntervalForTryingFurtherPathSearches" value="${mapmatcher_hd.thresholdSamplingIntervalInSecsForTryingFurtherPathSearches}"/>
+		<property name="pointsDiffThresholdForSkipRouting" value="${mapmatcher_hd.pointsDiffThresholdForSkipRouting}"/>
+		<property name="routingMode" value="${mapmatcher_hd.routingMode}"/>
+		<property name="routingCriteria" value="${mapmatcher_hd.routingCriteria}"/>
+		<property name="routingAlgorithm" value="${mapmatcher_hd.routingAlgorithm}"/>
+		<property name="activateExtendedPathMatching" value="${mapmatcher_hd.extendedPathMatching.enable}"/>
+		<property name="maxDistanceForExtendedPathMatching" value="${mapmatcher_hd.extendedPathMatching.maxDistance}"/>
+	</bean>
+	
+	<!-- Map Matcher -->
+	<bean id="neo4jMapMatcher" class="at.srfg.graphium.mapmatching.neo4j.matcher.impl.Neo4jMapMatcher" lazy-init="true" >
+		<property name="properties" ref="mapMatcherProperties"/>
+		<property name="propertiesHd" ref="mapMatcherPropertiesHd"/>
+		<property name="graphDao" ref="neo4jWayGraphReadDao"/>
+		<property name="metadataService" ref="graphVersionMetadataService"/>
+		<property name="neo4jUtil" ref="neo4jUtil"/>
+		<property name="routingService" ref="neo4jRoutingService"/>
+		<property name="globalStatistics" ref="mapMatcherGlobalStatistics"/>
 	</bean>
 	
 	<bean id="mapMatcherTimerService" class="at.srfg.graphium.mapmatching.timer.MapMatcherTimerService" lazy-init="true" >

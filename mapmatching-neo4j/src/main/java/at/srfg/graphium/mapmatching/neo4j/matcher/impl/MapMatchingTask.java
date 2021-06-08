@@ -662,8 +662,11 @@ public class MapMatchingTask implements IMapMatcherTask {
 			if (startSegment.getEndNodeId() == nextSegment.getStartNodeId() || 
 				startSegment.getEndNodeId() == nextSegment.getEndNodeId()) {
 				startSegment.setDirection(Direction.START_TO_END);
-			} else {
+			} else if (startSegment.getStartNodeId() == nextSegment.getStartNodeId() || 
+					startSegment.getStartNodeId() == nextSegment.getEndNodeId()) {
 				startSegment.setDirection(Direction.END_TO_START);
+			} else {
+				startSegment.setDirection(Direction.CENTER_TO_CENTER);
 			}
 		}
 		

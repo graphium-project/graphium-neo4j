@@ -52,4 +52,20 @@
     
     <bean id="neo4jCapability" class="at.srfg.graphium.neo4j.capability.impl.Neo4jCapabilityImpl"/>
 
+	<!-- HD way graph importer -->
+    <bean id="neo4jQueuingHDGraphVersionImportService" class="at.srfg.graphium.neo4j.service.impl.Neo4jQueuingGraphVersionImportServiceImpl" >
+    	<property name="metadataDao" ref="neo4jWayGraphVersionMetadataDao"/>    
+    	<property name="inputFormat" ref="jacksonQueuingGraphInputFormat"/>
+    	<property name="segmentAdpaterRegistry" ref="autodetectingSegmentAdapterRegistry"/>
+    	<property name="queueSize" value="${graphium.import.queueSize}"/>
+    	<property name="batchSize" value="${graphium.import.batchSize}"/>
+    	<property name="sourceDao" ref="neo4jWayGraphSourceDao"/>
+    	<property name="writeDao" ref="neo4jHDWayGraphWriteDao"/>
+    	<property name="serverStatus" ref="serverStatus"/>
+    	<property name="viewDao" ref="neo4jWayGraphViewDao"/>
+    	<property name="graphDatabaseProvider" ref="graphDatabaseProvider"/>
+    	<property name="indexDao" ref="neo4jWayGraphIndexDao"/>
+    	<property name="validityPeriodValidator" ref="graphVersionValidityPeriodValidator"/>
+    </bean>
+
 </beans>

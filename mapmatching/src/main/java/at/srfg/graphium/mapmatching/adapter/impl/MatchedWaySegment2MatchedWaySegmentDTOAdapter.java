@@ -36,8 +36,11 @@ public class MatchedWaySegment2MatchedWaySegmentDTOAdapter implements IAdapter<M
 		MatchedWaySegmentDTO segment = new MatchedWaySegmentDTO();
 		segment.setEndPointIndex(segmentToAdapt.getEndPointIndex());
 		segment.setEnteringThroughStartNode(segmentToAdapt.getDirection().isEnteringThroughStartNode());
+		segment.setEnteringThroughEndNode(segmentToAdapt.getDirection().isEnteringThroughEndNode());
 		segment.setFromPathSearch(segmentToAdapt.isFromPathSearch());
 		segment.setLeavingThroughStartNode(segmentToAdapt.getDirection().isLeavingThroughStartNode());
+		segment.setLeavingThroughEndNode(segmentToAdapt.getDirection().isLeavingThroughEndNode());
+		segment.setAfterSkippedPart(segmentToAdapt.isAfterSkippedPart());
 		segment.setSegmentId(segmentToAdapt.getSegment().getId());
 		segment.setStartPointIndex(segmentToAdapt.getStartPointIndex());
 		segment.setStartSegment(segmentToAdapt.isStartSegment());

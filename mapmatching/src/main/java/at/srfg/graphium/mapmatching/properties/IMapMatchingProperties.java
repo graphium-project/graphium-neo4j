@@ -114,6 +114,9 @@ public interface IMapMatchingProperties {
 	int getMaxDistanceForExtendedPathMatching();
 	void setMaxDistanceForExtendedPathMatching(int maxDistanceForExtendedPathMatching);
 	
+	String getCsvLoggerName();
+	void setCsvLoggerName(String csvLoggerName);
+
 	String getMaxSpeedForRoutingJson();
 	void setMaxSpeedForRoutingJson(String maxSpeedForRoutingJson);
 	

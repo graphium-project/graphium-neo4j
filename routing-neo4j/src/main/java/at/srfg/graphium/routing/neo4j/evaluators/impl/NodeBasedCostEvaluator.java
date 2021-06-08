@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import at.srfg.graphium.neo4j.model.WayGraphConstants;
+import at.srfg.graphium.neo4j.model.WaySegmentRelationshipType;
 import at.srfg.graphium.neo4j.service.impl.STRTreeCacheManager;
 import at.srfg.graphium.routing.model.impl.RoutingCriteria;
 
@@ -42,7 +43,7 @@ public class NodeBasedCostEvaluator extends AbstractSegmentEvaluator implements 
 	}
 	
 	@Override
-	public Double getCost(Relationship relationship, Direction direction) {		
+	public Double getCost(Relationship relationship, Direction direction) {
 		if (log.isDebugEnabled()) {
 			long targetSegmentId = (long) relationship.getEndNode().getProperty(WayGraphConstants.SEGMENT_ID);
 			log.debug("Relationship: " + relationship.getStartNode().getProperty(WayGraphConstants.SEGMENT_ID) + 
@@ -78,6 +79,21 @@ public class NodeBasedCostEvaluator extends AbstractSegmentEvaluator implements 
 		}
 		if (cost.doubleValue() < LOWERCOSTTRESH) {
 			return LOWERCOSTTRESH;
+		}
+		
+		if (relationship.isType(WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE)) {
+			// adjust cost value (lane change)
+			if (relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE)) != null
+					&& !relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE))
+							.equals(WayGraphConstants.CONNECTION_TYPE_CONNECTS_FORBIDDEN)) {
+				// low value for allowed lane changes
+				cost = new Double(cost.doubleValue() * super.getLaneChangeCostFactor());
+			} else if (relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE)) != null
+					&& relationship.getProperty(WayGraphConstants.CONNECTION_TAG_PREFIX.concat(WayGraphConstants.CONNECTION_TYPE))
+							.equals(WayGraphConstants.CONNECTION_TYPE_CONNECTS_FORBIDDEN)) {
+				// high value for forbidden lane changes
+				costObject = new Double(super.getForbiddenLaneChangeCostValue());
+			}
 		}
 		
 		return cost.doubleValue();

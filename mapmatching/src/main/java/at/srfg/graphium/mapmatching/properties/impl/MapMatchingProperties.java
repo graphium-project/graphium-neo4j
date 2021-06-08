@@ -81,6 +81,8 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 	// statistically this methodology results in worse paths for higher sampling intervals
 	private int thresholdSamplingIntervalForTryingFurtherPathSearches = 90;
 	
+	private String csvLoggerName = null;
+	
 	/**
 	 * In case of routing we won't route for parts of track which possible left the underlying graph. Usually such parts of track consist of a number of valid
 	 * GPS points. In that case we want to skip routing and start a new path, which means we create a gap within the routing paths. On the other hand routing 
@@ -445,6 +447,16 @@ public class MapMatchingProperties implements Cloneable, IMapMatchingProperties 
 	@Override
 	public void setMaxDistanceForExtendedPathMatching(int maxDistanceForExtendedPathMatching) {
 		this.maxDistanceForExtendedPathMatching = maxDistanceForExtendedPathMatching;
+	}
+
+	@Override
+	public String getCsvLoggerName() {
+		return csvLoggerName;
+	}
+
+	@Override
+	public void setCsvLoggerName(String csvLoggerName) {
+		this.csvLoggerName = csvLoggerName;
 	}
 
 	@Override

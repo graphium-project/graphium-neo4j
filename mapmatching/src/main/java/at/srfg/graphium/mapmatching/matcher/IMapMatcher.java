@@ -19,6 +19,7 @@ package at.srfg.graphium.mapmatching.matcher;
 
 import at.srfg.graphium.core.exception.GraphNotExistsException;
 import at.srfg.graphium.mapmatching.model.ITrack;
+import at.srfg.graphium.mapmatching.properties.impl.MapMatchingProperties;
 import at.srfg.graphium.routing.exception.RoutingParameterException;
 
 public interface IMapMatcher {
@@ -31,58 +32,11 @@ public interface IMapMatcher {
 	
 	public String getDefaultGraphName();
 	public void setDefaultGraphName(String defaultGraphName);
-	
-	public int getMaxMatchingRadiusMeter();
-	public void setMaxMatchingRadiusMeter(int maxMatchingRadiusMeter);
 
-	public int getSrid();
-	public void setSrid(int srid);
+	public MapMatchingProperties getProperties();
+	public void setProperties(MapMatchingProperties properties);
 
-	public int getIntialRadiusMeter();
-	public void setIntialRadiusMeter(int intialRadiusMeter);
-
-	public int getMaxSegmentsForShortestPath();
-	public void setMaxSegmentsForShortestPath(int maxSegmentsForShortestPath);
-
-	public boolean isOnlyBestResult();
-	public void setOnlyBestResult(boolean onlyBestResult);
-
-	int getMaxNrOfBestPaths();
-	void setMaxNrOfBestPaths(int maxNrOfBestPaths);
-
-	public int getMinNrOfPoints();
-	public void setMinNrOfPoints(int minNrOfPoints);
-
-	public int getMinLength();
-	public void setMinLength(int length);
-
-	public int getMinSegmentsPerSection();
-	public void setMinSegmentsPerSection(int minSegmentsPerSection);
-
-	int getNrOfPointsForInitialMatch();
-	void setNrOfPointsForInitialMatch(int nrOfPointsForInitialMatch);
-
-	int getMaxCountLoopsWithoutPathExtension();
-	void setMaxCountLoopsWithoutPathExtension(
-			int maxCountLoopsWithoutPathExtension);
-
-	int getEnvelopeSideLength();
-	void setEnvelopeSideLength(int envelopeSideLength);
-
-	int getNrOfHops();
-	void setNrOfHops(int nrOfHops);
-
-	int getRouteCacheSize();
-	void setRouteCacheSize(int routeCacheSize);
-
-	int getThresholdForLowSamplingsInSecs();
-	void setThresholdForLowSamplingsInSecs(int thresholdForLowSamplingsInSecs);
-
-	int getThresholdSamplingIntervalForTryingFurtherPathSearches();
-	void setThresholdSamplingIntervalForTryingFurtherPathSearches(int thresholdSamplingIntervalForTryingFurtherPathSearches);
-
-	int getPointsDiffThresholdForSkipRouting();
-
-	void setPointsDiffThresholdForSkipRouting(int pointsDiffThresholdForSkipRouting);
+	public MapMatchingProperties getPropertiesHd();
+	public void setPropertiesHd(MapMatchingProperties propertiesHd);
 
 }
