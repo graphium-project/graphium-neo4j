@@ -169,6 +169,12 @@
 		
 			<dependency>
 				<groupId>at.srfg.graphium</groupId>
+				<artifactId>graphium-routing-api</artifactId>
+				<version>${graphium.version}</version>
+			</dependency>
+		
+			<dependency>
+				<groupId>at.srfg.graphium</groupId>
 				<artifactId>graphium-utils</artifactId>
 				<version>${graphium.version}</version>
 			</dependency>
