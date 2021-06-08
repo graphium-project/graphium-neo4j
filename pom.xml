@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>at.srfg.graphium</groupId>
 	<artifactId>graphium-neo4j-parent</artifactId>
-	<version>1.1.1-SNAPSHOT</version>
+	<version>1.1.1</version>
 	<packaging>pom</packaging>
 
 	<name>graphium-builder</name>
@@ -39,7 +39,7 @@
 	</developers>
  	
 	<properties>
-		<graphium-neo4j.version>1.1.1-SNAPSHOT</graphium-neo4j.version>
+		<graphium-neo4j.version>1.1.1</graphium-neo4j.version>
 		<graphium.version>1.1.1-SNAPSHOT</graphium.version>
 		<neo4j.version>3.2.5</neo4j.version>	 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
