@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +35,6 @@ import at.srfg.graphium.mapmatching.model.IMatchedBranch;
 import at.srfg.graphium.mapmatching.model.IMatchedWaySegment;
 import at.srfg.graphium.mapmatching.model.ITrack;
 import at.srfg.graphium.mapmatching.neo4j.matcher.impl.AlternativePathMatcher.AlternativePath;
-import at.srfg.graphium.mapmatching.online.MatchedSegmentCounter;
 import at.srfg.graphium.mapmatching.properties.IMapMatchingProperties;
 
 public class MatchesFilter {
@@ -525,6 +523,7 @@ public class MatchesFilter {
 		// find parts with same segments and remove following segments,
 		// only applicable at beginning of track when more than one initial segment can occur
 		if (!hasCertainPath && paths.size() > 1) {
+			List<IMatchedBranch> expandedPaths = new ArrayList<>();
 			for (IMatchedBranch pathA : paths) {
 
 				if (pathA.getStep() == maxStep) {
@@ -539,7 +538,7 @@ public class MatchesFilter {
 								&& pathA.getMatchedWaySegments().get(0).getId() != pathB.getMatchedWaySegments().get(0).getId() //different first segments
 								&& indexOfSegment > 0 // exists in path and not the first element
 								&& indexOfSegment < pathB.getMatchedWaySegments().size() - 1) { // not the last element
-							removeSegmentsAfterIndex(pathB, indexOfSegment);
+							expandedPaths.add(expandPath(pathA, pathB, indexOfSegment));
 							if (pathA.getMatchedWaySegments().size() >= 2 &&
 								pathB.getMatchedWaySegments().size() >= indexOfSegment) {
 								if (pathA.getMatchedWaySegments().get(pathA.getMatchedWaySegments().size() - 2).getId() !=
@@ -551,6 +550,7 @@ public class MatchesFilter {
 					}
 				}
 			}
+			paths.addAll(expandedPaths);
 		}
 
 		// first get the best path for each last segment of the paths	
@@ -580,6 +580,35 @@ public class MatchesFilter {
 		return singleSegmentbranches;
 	}
 	
+	private IMatchedBranch expandPath(IMatchedBranch pathA, IMatchedBranch pathB, int indexOfSegment) {
+		IMatchedBranch clonedBranch = matchingTask.getSegmentMatcher().getClonedBranch(pathA);
+		if (clonedBranch == null) {
+			return null;
+		}
+		int index = indexOfSegment + 1;
+		IMatchedWaySegment lastSegPathA = clonedBranch.getMatchedWaySegments().get(clonedBranch.getMatchedWaySegments().size()-1);
+		IMatchedWaySegment currentSegPathB = null;
+		while (index < pathB.getMatchedWaySegments().size()) {
+			currentSegPathB = pathB.getMatchedWaySegments().get(index);
+			
+			clonedBranch.getMatchedWaySegments().add(currentSegPathB);
+			if (index == indexOfSegment + 1) {
+				lastSegPathA.setEndPointIndex(pathB.getMatchedWaySegments().get(indexOfSegment).getEndPointIndex());
+				if (lastSegPathA.getStartPointIndex() > lastSegPathA.getEndPointIndex()) {
+					lastSegPathA.setStartPointIndex(pathB.getMatchedWaySegments().get(indexOfSegment).getStartPointIndex());
+					matchingTask.getSegmentMatcher().updateMatchesOfPreviousSegment(lastSegPathA.getEndPointIndex(), 
+							lastSegPathA, clonedBranch.getMatchedWaySegments().get(clonedBranch.getMatchedWaySegments().size()-2), matchingTask.getTrack());
+				} else {
+					lastSegPathA.calculateDistances(matchingTask.getTrack());
+				}
+			}
+			
+			lastSegPathA = currentSegPathB;
+			index++;
+		}
+		return clonedBranch;
+	}
+
 	/**
 	 * Determine index of segment within the path
 	 * @param path

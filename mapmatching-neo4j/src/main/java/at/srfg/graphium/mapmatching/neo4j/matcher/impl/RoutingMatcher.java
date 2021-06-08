@@ -17,6 +17,7 @@
  */
 package at.srfg.graphium.mapmatching.neo4j.matcher.impl;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -102,6 +103,10 @@ public class RoutingMatcher {
 		} else {
 			routingAlgorithm = RoutingAlgorithms.DIJKSTRA;
 		}
+		
+		
+		// TODO: routingOptions => routingTimestamp setzen!!! ???
+		
 		
 		routingOptions = new RoutingOptionsImpl(matchingTask.getGraphName(), mapMatchingTask.getGraphVersion());
 		routingOptions.setAlgorithm(routingAlgorithm);
@@ -271,96 +276,129 @@ public class RoutingMatcher {
 			int initialPointIndexRoutingFrom, List<AlternativePath> potentialShortestPaths, List<AlternativePath> skippedPaths, List<AlternativePath> fallbackRoutes) {
 		boolean foundTargetSegment = false;
 		// get segments near the next point
-					List<SegmentDistance<IWaySegment>> targetSegments = matchingTask.getInitialMatcher()
-																		.findStartSegments(track, pointIndex, radius, maxNrOfTargetSegments);
+		List<SegmentDistance<IWaySegment>> targetSegments = matchingTask.getInitialMatcher()
+															.findStartSegments(track, pointIndex, radius, maxNrOfTargetSegments);
+		
+		// find path for the first five end segments, beginning with the nearest segment
+		Iterator<SegmentDistance<IWaySegment>> it = targetSegments.iterator();
+		while (it.hasNext()) {
+			List<IMatchedWaySegment> shortestPath = null;
+			SegmentDistance<IWaySegment> targetSegment = it.next();
+
+			/* There is at least one segment near the target point. No matter if we find a valid 
+			 * route or not, stop after the current point.
+			 */
+			foundTargetSegment = true;
+			
+				int pointDiff = (int) (track.getTrackPoints().get(pointIndex).getTimestamp().getTime() - 
+									   track.getTrackPoints().get(lastSegment.getEndPointIndex()).getTimestamp().getTime()) / 60000;
+				
+				int pointDiffThreshold = properties.getPointsDiffThresholdForSkipRouting();
+				if (properties.isLowSamplingInterval()) {
+					pointDiffThreshold = pointDiffThreshold / 2;
+				}
+				pointDiffThreshold = Math.max(2, pointDiffThreshold);
+				
+				if (pointDiff < pointDiffThreshold &&
+					targetSegment.getSegment().getId() != lastSegment.getId()) {
+					/* only try to find a shortest path between the last and the target segment, if
+					 * they are not the same segment and if not too much points have been skipped
+					 */
+					shortestPath = getShortestPath(
+							lastSegment, 
+							targetSegment.getSegment(),
+							properties.getTempMaxSegmentsForShortestPath(),
+							matchingTask.getGraphDao(), 
+							matchingTask.getGraphName(),
+							matchingTask.getGraphVersion());
 					
-					// find path for the first five end segments, beginning with the nearest segment
-					Iterator<SegmentDistance<IWaySegment>> it = targetSegments.iterator();
-					while (it.hasNext()) {
-						List<IMatchedWaySegment> shortestPath = null;
-						SegmentDistance<IWaySegment> targetSegment = it.next();
-
-						/* There is at least one segment near the target point. No matter if we find a valid 
-						 * route or not, stop after the current point.
-						 */
-						foundTargetSegment = true;
-
-						int pointDiff = (int) (track.getTrackPoints().get(pointIndex).getTimestamp().getTime() - 
-											   track.getTrackPoints().get(lastSegment.getEndPointIndex()).getTimestamp().getTime()) / 60000;
+					if (shortestPath != null && !shortestPath.isEmpty()) {
 						
-						int pointDiffThreshold = properties.getPointsDiffThresholdForSkipRouting();
-						if (properties.isLowSamplingInterval()) {
-							pointDiffThreshold = pointDiffThreshold / 2;
-						}
-						pointDiffThreshold = Math.max(2, pointDiffThreshold);
-						
-						if (pointDiff < pointDiffThreshold &&
-							targetSegment.getSegment().getId() != lastSegment.getId()) {
-							/* only try to find a shortest path between the last and the target segment, if
-							 * they are not the same segment and if not too much points have been skipped
-							 */
-							shortestPath = getShortestPath(
-									lastSegment, 
-									targetSegment.getSegment(),
-									properties.getTempMaxSegmentsForShortestPath(),
-									matchingTask.getGraphDao(), 
-									matchingTask.getGraphName(),
-									matchingTask.getGraphVersion());
-							
-							if (shortestPath != null && !shortestPath.isEmpty()) {
-								
-								// If routing started from a segment without matched points add all segments until the last matched point
-								// has been found; checkImpossibleRoute() needs the whole route between two track points!
-								List<IMatchedWaySegment> routedSegments = new ArrayList<>();
-								if (lastSegment.getStartPointIndex() == lastSegment.getEndPointIndex()) {
-									boolean finished = false;
-									IMatchedWaySegment currentSeg = null;
-									if (branch.getMatchedWaySegments().size() >= 2) {
-										// start at the last but one
-										for (int i=branch.getMatchedWaySegments().size()-2; !finished && i>=0; i--) {
-											currentSeg = branch.getMatchedWaySegments().get(i);
-											routedSegments.add(currentSeg);
-											if (currentSeg.getStartPointIndex() != currentSeg.getEndPointIndex()) {
-												finished = true;
-											}		
-										}
-									}
-									Collections.reverse(routedSegments); 
-								}
-								routedSegments.addAll(shortestPath);
-								
-								// check if route is possible regarding speed
-								if (checkImpossibleRoute(routedSegments, track, initialPointIndexRoutingFrom, pointIndex)) {
-									potentialShortestPaths.add(AlternativePath.fromRouting(shortestPath));
+						// If routing started from a segment without matched points add all segments until the last matched point
+						// has been found; checkImpossibleRoute() needs the whole route between two track points!
+						List<IMatchedWaySegment> routedSegments = new ArrayList<>();
+						if (lastSegment.getStartPointIndex() == lastSegment.getEndPointIndex()) {
+							boolean finished = false;
+							IMatchedWaySegment currentSeg = null;
+							if (branch.getMatchedWaySegments().size() >= 2) {
+								// start at the last but one
+								for (int i=branch.getMatchedWaySegments().size()-2; !finished && i>=0; i--) {
+									currentSeg = branch.getMatchedWaySegments().get(i);
+									routedSegments.add(currentSeg);
+									if (currentSeg.getStartPointIndex() != currentSeg.getEndPointIndex()) {
+										finished = true;
+									}		
 								}
 							}
-
-							matchingTask.statistics.incrementValue(MapMatcherStatistics.SHORTEST_PATH_SEARCH);
-
+							Collections.reverse(routedSegments); 
 						}
-
-						if (skippedPoints > skippedPointsThresholdToCreateNewPath || 
-								(potentialShortestPaths.isEmpty() && (shortestPath == null || shortestPath.isEmpty()))) {
-							/* No route found or points skipped, split the track at this position
-							 * and find new segments after the skipped points
-							 */
-//							skippedPaths.clear();
-							addSegmentsAfterSkippedPoints(targetSegment, pointIndex, 
-									skippedPaths, track);
+						routedSegments.addAll(shortestPath);
+						
+						// check if route is possible regarding speed
+						if (checkImpossibleRoute(routedSegments, track, initialPointIndexRoutingFrom, pointIndex)) {
+							potentialShortestPaths.add(AlternativePath.fromRouting(shortestPath));
+						}
+						
+					} else {
+						
+						// check if target segment is neighbour segment
+						// there could be a graph error (missing connection) in this case => no routing needed, target segment should be valid
+						IWaySegment nextSegment = targetSegment.getSegment();
+						boolean validNeighbourSegment = checkMissingConnection(lastSegment, targetSegment.getSegment());
+						if (validNeighbourSegment) {
+							Direction direction = null;
+							shortestPath = new ArrayList<>();
+							if (lastSegment.getEndNodeId() == nextSegment.getStartNodeId() ||
+								lastSegment.getEndNodeId() == nextSegment.getEndNodeId()) {
+								// the first segment was left through the end node
+								direction = Direction.START_TO_END;
+							} else {
+								direction = Direction.END_TO_START;
+							}
 							
-						} else {
-							/* Even if a route was found or no points were skipped, remember the found segment.
-							 * In case it is not possible to create a valid branch from the found routes,
-							 * the segment can still be used as fallback.
-							 */
-							addSegmentsAfterSkippedPoints(targetSegment, pointIndex, 
-									fallbackRoutes, track);
+							addSegment(shortestPath, nextSegment, direction);
+							potentialShortestPaths.add(AlternativePath.fromRouting(shortestPath));
 						}
+						
 					}
+
+					matchingTask.statistics.incrementValue(MapMatcherStatistics.SHORTEST_PATH_SEARCH);
+
+				}
+
+				if (skippedPoints > skippedPointsThresholdToCreateNewPath || 
+						(potentialShortestPaths.isEmpty() && (shortestPath == null || shortestPath.isEmpty()))) {
+					/* No route found or points skipped, split the track at this position
+					 * and find new segments after the skipped points
+					 */
+//							skippedPaths.clear();
+					addSegmentsAfterSkippedPoints(targetSegment, pointIndex, 
+							skippedPaths, track);
+					
+				} else {
+					/* Even if a route was found or no points were skipped, remember the found segment.
+					 * In case it is not possible to create a valid branch from the found routes,
+					 * the segment can still be used as fallback.
+					 */
+					addSegmentsAfterSkippedPoints(targetSegment, pointIndex, 
+							fallbackRoutes, track);
+				}
+//			}
+		}
 		return foundTargetSegment;
 
 	}
 
+	private boolean checkMissingConnection(IMatchedWaySegment lastSegment, IWaySegment nextSegment) {
+		if (lastSegment.getStartNodeId() == nextSegment.getStartNodeId() ||
+			lastSegment.getStartNodeId() == nextSegment.getEndNodeId() ||
+			lastSegment.getEndNodeId() == nextSegment.getStartNodeId() ||
+			lastSegment.getEndNodeId() == nextSegment.getEndNodeId()) {
+			return true;
+		}
+		return false;
+	}
+	
 	/**
      * @return false if route is possible so the average time the route takes to drive through could match the track
      */
@@ -491,6 +529,7 @@ public class RoutingMatcher {
 		matchedWaySegment.setSegment(segmentAfterSkippedPart.getSegment());
 		matchedWaySegment.setStartPointIndex(pointIndexAfterSkippedPart);
 		matchedWaySegment.setAfterSkippedPart(true);
+		matchedWaySegment.calculateDistances(track);
 		
 		List<IMatchedBranch> branches = matchingTask.getInitialMatcher().initializePaths(
 				matchedWaySegment, 
@@ -553,7 +592,7 @@ public class RoutingMatcher {
 	 * Returns the shortest (fastest) path between two segments.
 	 */
 	List<IMatchedWaySegment> getShortestPath(
-			IWaySegment fromSegment, 
+			IMatchedWaySegment fromSegment, 
 			IWaySegment toSegment, 
 			int maxSegmentsForShortestPath,
 			INeo4jWayGraphReadDao graphDao,
@@ -592,6 +631,11 @@ public class RoutingMatcher {
 			// if a path can be found with at most 'maxSegmentsForShortestPath' segments, run exact routing 
 			IRoute<IWaySegment, Node> route = null;
 			try {
+				if (fromSegment.getEndPointIndex() > 0 && fromSegment.getEndPointIndex() <= matchingTask.getTrack().getTrackPoints().size()) {
+					routingOptions.setRoutingTimestamp(
+								matchingTask.getTrack().getTrackPoints().get(fromSegment.getEndPointIndex()).getTimestamp()
+									.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());	
+				}
 				route = routingClient.routePerSegmentIds(routingOptions, segmentIds);
 			} catch (UnkownRoutingAlgoException | RoutingException e) {
 				log.error("Could not route!", e);

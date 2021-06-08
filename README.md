@@ -60,6 +60,11 @@ For both routing and map matching a valid graph version (especially validity has
 - [GET route segments](docs/api/get_routeSegments.md)
 - [GET route segments on graph version](docs/api/get_routeSegmentsOnGraphVersion.md)
 
+### Defining road blocks
+- [POST road blocks](docs/api/post_setBlockedRoads.md)
+- [PUT road blocks](docs/api/put_addBlockedRoads.md)
+- [DELETE road blocks](docs/api/delete_blockedRoads.md)
+
 ### Map Matching
 
 - [POST match track](docs/api/post_matchTrack.md)

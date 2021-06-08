@@ -502,12 +502,12 @@ public class MapMatchingTask implements IMapMatcherTask {
 			for (IMatchedWaySegment segment : path.getMatchedWaySegments()) {
 				segmentIds.add(segment.getId());
 			}
-			log.debug("Path " + i + ", MatchedFactor = " + path.getMatchedFactor() +
+			log.debug("Path " + i + ": MatchedFactor = " + path.getMatchedFactor() +
 					", step = " + path.getStep() +
 					", empty segments = " + path.getNrOfEmptySegments() +
 					", matched track points = " + path.getMatchedPoints() +
-					", total track points = " + (path.getNrOfTotalTrackPoints()) +
-					", Segments = " + StringUtils.join(segmentIds, ", "));
+					", total track points = " + (path.getNrOfTotalTrackPoints()));
+			log.debug("Path " + i + ": - Segments = " + StringUtils.join(segmentIds, ", "));
 			
 			///////////////////////////////////////////////////
 			for (IMatchedWaySegment seg : path.getMatchedWaySegments()) {
@@ -520,7 +520,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 			for (IMatchedWaySegment segment : path.getMatchedWaySegments()) {
 				segmentInfoList.add(segment.getId() + "(" + segment.getStartPointIndex() + "-" + segment.getEndPointIndex() + ")");
 			}
-			log.debug("Path " + i + ": " + StringUtils.join(segmentInfoList, ", "));
+			log.debug("Path " + i + ": - " + StringUtils.join(segmentInfoList, ", "));
 			///////////////////////////////////////////////////
 			
 			i++;

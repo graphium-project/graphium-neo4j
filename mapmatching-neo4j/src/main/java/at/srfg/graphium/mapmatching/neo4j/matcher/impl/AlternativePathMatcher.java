@@ -632,6 +632,7 @@ public class AlternativePathMatcher {
 			if (previousSegment.getDirection().isEnteringThroughStartNode()) {
 				if (matchedWaySegment.getDirection().isLeavingThroughStartNode()) {
 					previousSegment.setDirection(Direction.START_TO_START);
+					previousSegment.setUTurnSegment(true);
 				} else if (matchedWaySegment.getDirection().isLeavingThroughEndNode()) {
 					previousSegment.setDirection(Direction.START_TO_END);
 				}
@@ -640,6 +641,7 @@ public class AlternativePathMatcher {
 					previousSegment.setDirection(Direction.END_TO_START);
 				} else if (matchedWaySegment.getDirection().isLeavingThroughEndNode()) {
 					previousSegment.setDirection(Direction.END_TO_END);
+					previousSegment.setUTurnSegment(true);
 				}
 			}
 		} else {

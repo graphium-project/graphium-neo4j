@@ -174,17 +174,20 @@ public class SegmentMatcher {
 	}
 
 	/**
-	 * if the last 5 distances are greater than threshold (10 * matching radius) => following points are out of range
+	 * if the previous distances are greater than matching radius => following points are out of range
 	 * @param tempDistances
 	 * @param properties
 	 * @return
 	 */
 	private boolean pointsValid(List<Double> tempDistances, IMapMatchingProperties properties) {
 		int nrOfPossibleWrongPoints = 5;
+		if (properties.isLowSamplingInterval()) {
+			nrOfPossibleWrongPoints = 2;
+		}
 		if (tempDistances != null && tempDistances.size() >= nrOfPossibleWrongPoints) {
 			int nrOfOutOfRange = 0;
 			for (int i=tempDistances.size()-1; i>tempDistances.size()-1-nrOfPossibleWrongPoints; i--) {
-				if (tempDistances.get(i) > (10 * properties.getMaxMatchingRadiusMeter())) {
+				if (tempDistances.get(i) > properties.getMaxMatchingRadiusMeter()) {
 					nrOfOutOfRange++;
 				}
 			}
