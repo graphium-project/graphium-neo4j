@@ -85,6 +85,7 @@
 		<property name="properties" ref="mapMatcherProperties"/>
 		<property name="propertiesHd" ref="mapMatcherPropertiesHd"/>
 		<property name="graphDao" ref="neo4jWayGraphReadDao"/>
+		<property name="graphHdDao" ref="neo4jHDWayGraphReadDao" />
 		<property name="metadataService" ref="graphVersionMetadataService"/>
 		<property name="neo4jUtil" ref="neo4jUtil"/>
 		<property name="routingService" ref="neo4jRoutingService"/>

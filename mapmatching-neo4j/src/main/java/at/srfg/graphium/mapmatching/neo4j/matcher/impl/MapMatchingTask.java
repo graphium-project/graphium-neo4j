@@ -36,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import at.srfg.graphium.io.dto.impl.HDWaySegmentDTO;
 import at.srfg.graphium.mapmatching.matcher.IMapMatcher;
 import at.srfg.graphium.mapmatching.matcher.IMapMatcherTask;
 import at.srfg.graphium.mapmatching.matcher.impl.SegmentMatcher;
@@ -86,6 +87,7 @@ public class MapMatchingTask implements IMapMatcherTask {
 	private IWeightingStrategyFactory weightingStrategyFactory;
 	private IWeightingStrategy weightingStrategy;
 	private static Logger csvLogger = null;
+	private String hdSegmentType = null;
 
 	public MapMatchingTask(Neo4jMapMatcher mapMatcher, MapMatchingProperties properties, IWayGraphVersionMetadata graphMetadata, Neo4jUtil neo4jUtil, 
 			ITrack origTrack, String csvLoggerName, MapMatcherGlobalStatistics globalStatistics) throws RoutingParameterException {
@@ -116,6 +118,12 @@ public class MapMatchingTask implements IMapMatcherTask {
 
 		if (csvLoggerName != null && csvLoggerName.length() > 0) {
 			csvLogger = LoggerFactory.getLogger(csvLoggerName);
+		}
+
+		try {
+			hdSegmentType = HDWaySegmentDTO.class.newInstance().getSegmentType();
+		} catch (InstantiationException | IllegalAccessException e) {
+			e.printStackTrace();
 		}
 		
 		log.info("matching properties: " + properties.toString());
@@ -823,7 +831,11 @@ public class MapMatchingTask implements IMapMatcherTask {
 	}
 
 	public INeo4jWayGraphReadDao getGraphDao() {
-		return mapMatcher.getGraphDao();
+		if (graphMetadata.getType().equals(hdSegmentType)) {
+			return mapMatcher.getGraphHdDao();
+		} else {
+			return mapMatcher.getGraphDao();
+		}
 	}
 
 	@Override

@@ -36,6 +36,7 @@ import at.srfg.graphium.mapmatching.statistics.MapMatcherGlobalStatistics;
 import at.srfg.graphium.model.IBaseSegment;
 import at.srfg.graphium.model.IWayGraphVersionMetadata;
 import at.srfg.graphium.model.IWaySegment;
+import at.srfg.graphium.model.hd.IHDWaySegment;
 import at.srfg.graphium.neo4j.persistence.INeo4jWayGraphReadDao;
 import at.srfg.graphium.neo4j.persistence.Neo4jUtil;
 import at.srfg.graphium.routing.exception.RoutingParameterException;
@@ -49,7 +50,8 @@ public class Neo4jMapMatcher implements IMapMatcher {
 	private MapMatchingProperties properties;
 	private MapMatchingProperties propertiesHd;
 	
-	private INeo4jWayGraphReadDao graphDao;
+	private INeo4jWayGraphReadDao<IWaySegment> graphDao;
+	private INeo4jWayGraphReadDao<IHDWaySegment> graphHdDao;
 
 	private IGraphVersionMetadataService metadataService;
 	
@@ -126,8 +128,12 @@ public class Neo4jMapMatcher implements IMapMatcher {
 		return propertiesHd;
 	}
 	
-	public INeo4jWayGraphReadDao getGraphDao() {
+	public INeo4jWayGraphReadDao<IWaySegment> getGraphDao() {
 		return graphDao;
+	}
+	
+	public INeo4jWayGraphReadDao<IHDWaySegment> getGraphHdDao() {
+		return graphHdDao;
 	}
 
 	public IRoutingService<IWaySegment, Node, IRoutingOptions> getRoutingService() {
@@ -160,8 +166,12 @@ public class Neo4jMapMatcher implements IMapMatcher {
 		this.propertiesHd = propertiesHd;
 	}
 
-	public void setGraphDao(INeo4jWayGraphReadDao graphDao) {
+	public void setGraphDao(INeo4jWayGraphReadDao<IWaySegment> graphDao) {
 		this.graphDao = graphDao;
+	}
+
+	public void setGraphHdDao(INeo4jWayGraphReadDao<IHDWaySegment> graphHdDao) {
+		this.graphHdDao = graphHdDao;
 	}
 
 	public void setRoutingService(IRoutingService<IWaySegment, Node, IRoutingOptions> routingService) {
