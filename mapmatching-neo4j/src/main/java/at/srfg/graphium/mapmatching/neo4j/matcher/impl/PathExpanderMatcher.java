@@ -192,8 +192,7 @@ public class PathExpanderMatcher {
 	 * @param newBranches
 	 * @param incomingBranchesWithDeadEnd
 	 * @param unmanipulatedBranches
-	 * @param matchingTask
-	 * @return True, it at least one point of a connected segment could be matched.
+	 * @return True if at least one point of a connected segment could be matched
 	 */
 	protected boolean processPath(IMatchedBranch branch,
 			ITrack track, List<IMatchedBranch> newBranches,
@@ -552,12 +551,13 @@ public class PathExpanderMatcher {
 	 * Determines the relationship types for the upcoming traversal and builds the
 	 * traversal description
 	 * 
-	 * @param currentSegment
-	 * @param branch
+	 * @param currentSegment last segment in current branch
+	 * @param branch current branch
+	 * @param firstSegment indicates if first path expansion or not
 	 * @return traversal description
 	 */
-	private TraversalDescription buildTraveralDescription(IMatchedWaySegment currentSegment, IMatchedBranch branch, boolean firstSegment) {
-		// Determine next driving directions
+	private TraversalDescription buildTraveralDescription(IMatchedWaySegment currentSegment,
+			IMatchedBranch branch, boolean firstSegment) {
 		boolean isHdGraph = false;
 		if (currentSegment instanceof IHDWaySegment) {
 			isHdGraph = true;
@@ -565,22 +565,26 @@ public class PathExpanderMatcher {
 		
 		WaySegmentRelationshipType[] relationshipTypes;
 		MutableBoolean reversed = new MutableBoolean(Boolean.FALSE);
+		
+		/**
+		 * The direction is fixed at the first path expansion 
+		 */
 		if (firstSegment) {
-			// u-turn is possible -> consider end node
+			// Consider leaving node
 			if (currentSegment.getDirection().isLeavingThroughStartNode()) {
 				relationshipTypes = new WaySegmentRelationshipType[] {
 						WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
 						WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
-				if (isHdGraph && currentSegment.isOneway().equals(OneWay.ONEWAY_BKW)) {
-					// traversing against oneway (only possible in hd-matching)
+				if (isHdGraph && currentSegment.isOneway().equals(OneWay.ONEWAY_TOW)) {
+					// traversing against one-way (only possible in HD-matching)
 					reversed.setTrue();
 				}
 			} else if (currentSegment.getDirection().isLeavingThroughEndNode()) {
 				relationshipTypes = new WaySegmentRelationshipType[] {
 						WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE,
 						WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
-				if (isHdGraph && currentSegment.isOneway().equals(OneWay.ONEWAY_TOW)) {
-					// traversing against oneway (only possible in hd-matching)
+				if (isHdGraph && currentSegment.isOneway().equals(OneWay.ONEWAY_BKW)) {
+					// traversing against one-way (only possible in HD-matching)
 					reversed.setTrue();
 				}
 			} else {
@@ -589,13 +593,13 @@ public class PathExpanderMatcher {
 						WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
 			}
 		} else {
-			// leaving end node can be unknown -> consider start node
+			// Consider entering node because leaving node can be unknown
 			if (currentSegment.getDirection().isEnteringThroughStartNode()) {
 				relationshipTypes = new WaySegmentRelationshipType[] {
 						WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_ENDNODE,
 						WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
 				if (isHdGraph && currentSegment.isOneway().equals(OneWay.ONEWAY_BKW)) {
-					// traversing against oneway (only possible in hd-matching)
+					// traversing against one-way (only possible in HD-matching)
 					reversed.setTrue();
 				}
 			} else if (currentSegment.getDirection().isEnteringThroughEndNode()) {
@@ -603,7 +607,7 @@ public class PathExpanderMatcher {
 						WaySegmentRelationshipType.SEGMENT_CONNECTION_ON_STARTNODE,
 						WaySegmentRelationshipType.SEGMENT_CONNECTION_WITHOUT_NODE };
 				if (isHdGraph && currentSegment.isOneway().equals(OneWay.ONEWAY_TOW)) {
-					// traversing against oneway (only possible in hd-matching)
+					// traversing against one-way (only possible in HD-matching)
 					reversed.setTrue();
 				}
 			} else {
@@ -758,22 +762,48 @@ public class PathExpanderMatcher {
 		return matchedSegment;
 	}
 
-	static boolean isMatchedSegmentDirectionTow(IWaySegment previousSegment, IWaySegment matchedSegment) {
-		if (previousSegment.getStartNodeId() == matchedSegment.getStartNodeId() ||
-			previousSegment.getEndNodeId()   == matchedSegment.getStartNodeId()) {
-			return true;
-		} else {
-			return false;
+	static boolean isMatchedSegmentDirectionTow(IMatchedWaySegment previousSegment, IMatchedWaySegment matchedSegment) {
+		if (previousSegment.getDirection() == null) {
+			if (previousSegment.getStartNodeId() == matchedSegment.getStartNodeId() ||
+				previousSegment.getEndNodeId()   == matchedSegment.getStartNodeId()) {
+				return true;
+			}
+		} else if (previousSegment.getDirection().equals(at.srfg.graphium.mapmatching.model.Direction.START_TO_END) ||
+				previousSegment.getDirection().equals(at.srfg.graphium.mapmatching.model.Direction.CENTER_TO_END) ||
+				previousSegment.getDirection().equals(at.srfg.graphium.mapmatching.model.Direction.CENTER_TO_CENTER)) {
+			if (previousSegment.getEndNodeId() == matchedSegment.getStartNodeId()) {
+				return true;
+			}
+		} else if (previousSegment.getDirection().equals(at.srfg.graphium.mapmatching.model.Direction.END_TO_START) ||
+				previousSegment.getDirection().equals(at.srfg.graphium.mapmatching.model.Direction.CENTER_TO_START) ||
+				previousSegment.getDirection().equals(at.srfg.graphium.mapmatching.model.Direction.CENTER_TO_CENTER)) {
+			if (previousSegment.getStartNodeId() == matchedSegment.getStartNodeId()) {
+				return true;
+			}
 		}
+		return false;
 	}
 
-	static boolean isMatchedSegmentDirectionBkw(IWaySegment previousSegment, IWaySegment matchedSegment) {
-		if (previousSegment.getStartNodeId() == matchedSegment.getEndNodeId() ||
-			previousSegment.getEndNodeId()   == matchedSegment.getEndNodeId()) {
-			return true;
-		} else {
-			return false;
+	static boolean isMatchedSegmentDirectionBkw(IMatchedWaySegment previousSegment, IMatchedWaySegment matchedSegment) {
+		if (previousSegment.getDirection() == null) {
+			if (previousSegment.getStartNodeId() == matchedSegment.getEndNodeId() ||
+				previousSegment.getEndNodeId()   == matchedSegment.getEndNodeId()) {
+				return true;
+			}
+		} else if (previousSegment.getDirection().equals(at.srfg.graphium.mapmatching.model.Direction.START_TO_END) ||
+				previousSegment.getDirection().equals(at.srfg.graphium.mapmatching.model.Direction.CENTER_TO_END) ||
+				previousSegment.getDirection().equals(at.srfg.graphium.mapmatching.model.Direction.CENTER_TO_CENTER)) {
+			if (previousSegment.getEndNodeId() == matchedSegment.getEndNodeId()) {
+				return true;
+			}
+		} else if (previousSegment.getDirection().equals(at.srfg.graphium.mapmatching.model.Direction.END_TO_START) ||
+				previousSegment.getDirection().equals(at.srfg.graphium.mapmatching.model.Direction.CENTER_TO_START) ||
+				previousSegment.getDirection().equals(at.srfg.graphium.mapmatching.model.Direction.CENTER_TO_CENTER)) {
+			if (previousSegment.getStartNodeId() == matchedSegment.getEndNodeId()) {
+				return true;
+			}
 		}
+		return false;
 	}
 	
 //	@Deprecated
