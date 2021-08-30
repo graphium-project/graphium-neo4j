@@ -104,3 +104,9 @@ persistentVolume:
   ## server data Persistent Volume size
   ##
   size: 1Gi
+
+  ## provide storage class if required
+  #storageClassName: ""
+
+  ## provide storage annotations if required
+  #annotations: {}

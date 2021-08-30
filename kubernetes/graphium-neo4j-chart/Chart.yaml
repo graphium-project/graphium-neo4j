@@ -3,5 +3,5 @@ name: graphium-neo4j
 description: A Helm chart Graphium-Neo4j on Kubernetes
 
 type: application
-version: 0.1.1
+version: 0.1.2
 appVersion: 1.1.0
