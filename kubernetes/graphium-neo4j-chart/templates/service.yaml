@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "graphium-neo4j.fullname" . }}
+  labels:
+    {{- include "graphium-neo4j.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.httpPort }}
+      targetPort: 7474
+      protocol: TCP
+      name: http
+    - port: {{ .Values.service.boltPort }}
+      targetPort: 7687
+      protocol: TCP
+      name: bolt
+  selector:
+    {{- include "graphium-neo4j.selectorLabels" . | nindent 4 }}
