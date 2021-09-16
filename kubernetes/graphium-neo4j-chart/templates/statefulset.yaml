@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "graphium-neo4j.fullname" . }}
+  labels:
+    {{- include "graphium-neo4j.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ template "graphium-neo4j.fullname" . }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "graphium-neo4j.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "graphium-neo4j.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "graphium-neo4j.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            {{- if .Values.authEnabled }}
+            - name: AUTH_ENABLED
+              value: "{{ .Values.authEnabled }}"
+            - name: NEO4J_SECRETS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "graphium-neo4j.secrets.fullname" . }}
+                  key: neo4j-password
+            {{- end }}
+            - name: NEO4J_dbms_memory_heap_initial__size
+              value: {{ .Values.neo4j.memory.heap.inital }}
+            - name: NEO4J_dbms_memory_heap_max__size
+              value: {{ .Values.neo4j.memory.heap.max }}
+          command:
+            - "/bin/bash"
+            - "-c"
+            - |
+              if [ "${AUTH_ENABLED:-}" == "true" ]; then
+                export NEO4J_AUTH="neo4j/${NEO4J_SECRETS_PASSWORD}"
+              else
+                export NEO4J_AUTH="none"
+              fi
+              unset NEO4J_SECRETS_PASSWORD
+              exec /docker-graphium-entrypoint.sh "neo4j"
+          ports:
+            - name: http
+              containerPort: 7474
+              protocol: TCP
+            - name: bolt
+              containerPort: 7687
+              protocol: TCP
+          volumeMounts:
+            - name: datadir
+              mountPath: "{{ .Values.persistentVolume.mountPath }}"
+          livenessProbe:
+            httpGet:
+              path: /graphium/api/status
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /graphium/api/status
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: datadir
+      {{- with .Values.persistentVolume.annotations }}
+        annotations:
+        {{- range $key, $value := . }}
+          {{ $key }}: {{ $value }}
+        {{- end }}
+      {{- end }}
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: {{ .Values.persistentVolume.size }}
+      {{- if .Values.persistentVolume.storageClass }}
+      {{- if (eq "-" .Values.persistentVolume.storageClass) }}
+        storageClassName: ""
+      {{- else }}
+        storageClassName: "{{ .Values.persistentVolume.storageClass }}"
+      {{- end }}
+      {{- end }}
