@@ -1,5 +1,14 @@
 #!/bin/bash -eu
 
+# execute pre start scripts
+for SCRIPT in /pre-start-scripts/*.sh
+  do
+    if [ -f $SCRIPT -a -x $SCRIPT ]
+      then
+        $SCRIPT
+    fi
+  done
+
 if [[ -v GRAPHIUM_SERVER_NAME ]]; then
   sed -i "s~^graphium\.server\.name=.*~graphium.server.name=${GRAPHIUM_SERVER_NAME}~" /var/lib/neo4j/conf/server.properties
 fi

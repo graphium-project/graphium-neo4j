@@ -2,6 +2,7 @@ FROM maven:3.5.3-jdk-8 as builder
 
 ARG GRAPHIUM_BRANCH_NAME=master
 
+# TODO: check if still required, java fx classes should have been removed in current version
 # install openjfx
 RUN apt-get update \
     && apt-get install --no-install-recommends -y openjfx \
