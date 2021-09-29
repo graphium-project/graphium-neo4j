@@ -67,17 +67,20 @@ spec:
           volumeMounts:
             - name: datadir
               mountPath: "{{ .Values.persistentVolume.mountPath }}"
+            {{- with .Values.extraVolumeMounts }}
+            {{- (tpl . $) | nindent 12 }}
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /graphium/api/status
               port: http
-            initialDelaySeconds: 30
+            initialDelaySeconds: 90
             periodSeconds: 5
           readinessProbe:
             httpGet:
               path: /graphium/api/status
               port: http
-            initialDelaySeconds: 30
+            initialDelaySeconds: 90
             periodSeconds: 5
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
@@ -93,6 +96,10 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+        {{- with .Values.extraVolume }}
+        {{- (tpl . $) | nindent 8 }}
+        {{- end }}
   volumeClaimTemplates:
     - metadata:
         name: datadir
