@@ -28,6 +28,8 @@
 		<property name="graphDatabaseProvider" ref="graphDatabaseProvider"/>
 	</bean>
 	
+	<bean id="mapMatcherGlobalStatistics" class="at.srfg.graphium.mapmatching.statistics.MapMatcherGlobalStatistics" lazy-init="true" />
+	
 	<bean id="mapMatcherProperties" class="at.srfg.graphium.mapmatching.properties.impl.MapMatchingProperties" lazy-init="true">
 		<property name="intialRadiusMeter" value="${mapmatcher.intialRadiusMeter}"/>
 		<property name="maxMatchingRadiusMeter" value="${mapmatcher.maxMatchingRadiusInMeter}"/>
