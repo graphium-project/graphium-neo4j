@@ -281,6 +281,7 @@ public class PathExpanderMatcher {
 					  matchedSegment.getStartPointIndex() == matchedSegment.getEndPointIndex()) && 	// no points could be matched because it is a short segment
 					 connectedPathCounter == 0 && !connectedPaths.hasNext() &&
 					 connectedSegment.getFrc().equals(FuncRoadClass.MOTORWAY_FREEWAY_OR_OTHER_MAJOR_MOTORWAY)) {
+					// Only on MOTORWAY_FREEWAY_OR_OTHER_MAJOR_MOTORWAY:
 					// next segment could not be matched, but it is the only segment connected to current (previous segment)
 					// => try to match all further connected segments while the connection sizes are 1 (no crossing)
 					int emptySegmentsCounter = 0;
@@ -683,9 +684,10 @@ public class PathExpanderMatcher {
 		if (segmentWithCons != null) {
 			for (IWaySegmentConnection conn : segmentWithCons.getCons()) {
 				if (conn.getToSegmentId() == nextSegment.getId()) {
-					if (conn.getTags().get(WayGraphConstants.CONNECTION_DIRECTION) != null
-							&& conn.getTags().get(WayGraphConstants.CONNECTION_DIRECTION)
-									.equals(WayGraphConstants.CONNECTION_DIRECTION_REVERSE)) {
+					if (conn.getTags() != null
+						&& conn.getTags().get(WayGraphConstants.CONNECTION_DIRECTION) != null
+						&& conn.getTags().get(WayGraphConstants.CONNECTION_DIRECTION)
+								.equals(WayGraphConstants.CONNECTION_DIRECTION_REVERSE)) {
 						return true;
 					}
 				}

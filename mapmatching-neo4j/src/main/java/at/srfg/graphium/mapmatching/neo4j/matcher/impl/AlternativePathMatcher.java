@@ -111,6 +111,7 @@ public class AlternativePathMatcher {
 			List<AlternativePath> skippedPaths = new ArrayList<AlternativePath>();
 			
 			long startTime = System.currentTimeMillis();
+			// route to next point
 			int newSearchIndex = matchingTask.getRoutingMatcher().routeToNextPoint(
 					searchPath.getBranch(), lastSegment, searchPath.getSearchIndex(),
 					alternativePaths, newBranches, skippedPaths, fallbackRoutes, track);
