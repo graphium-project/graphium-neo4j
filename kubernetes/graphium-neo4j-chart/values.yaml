@@ -78,6 +78,13 @@ tolerations: []
 
 affinity: {}
 
+probes:
+  livenessProbe:
+    initialDelaySeconds: 180
+    periodSeconds: 10
+  readinessProbe:
+    initialDelaySeconds: 180
+    periodSeconds: 10
 
 # Use password authentication
 authEnabled: true

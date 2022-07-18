@@ -74,14 +74,14 @@ spec:
             httpGet:
               path: /graphium/api/status
               port: http
-            initialDelaySeconds: 90
-            periodSeconds: 5
+            initialDelaySeconds: {{ .Values.probes.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.livenessProbe.periodSeconds }}
           readinessProbe:
             httpGet:
               path: /graphium/api/status
               port: http
-            initialDelaySeconds: 90
-            periodSeconds: 5
+            initialDelaySeconds: {{ .Values.probes.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readinessProbe.periodSeconds }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
